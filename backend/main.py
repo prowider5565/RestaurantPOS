@@ -4,6 +4,8 @@ from fastapi.staticfiles import StaticFiles
 
 from config.database import Base, engine
 from config.settings import settings
+from orders.models import Order, OrderItem  # noqa: F401
+from orders.router import router as orders_router
 from products.models import Product, ProductCategory  # noqa: F401
 from products.router import router as products_router
 
@@ -26,8 +28,10 @@ def on_startup() -> None:
 
 
 app.include_router(products_router)
+app.include_router(orders_router)
 
 
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
+
