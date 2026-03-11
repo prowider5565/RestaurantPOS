@@ -2,6 +2,8 @@ import CloseIcon from '@mui/icons-material/Close'
 import FastfoodIcon from '@mui/icons-material/Fastfood'
 import HistoryIcon from '@mui/icons-material/History'
 import LocalCafeIcon from '@mui/icons-material/LocalCafe'
+import LogoutIcon from '@mui/icons-material/Logout'
+import SettingsIcon from '@mui/icons-material/Settings'
 import UploadFileIcon from '@mui/icons-material/UploadFile'
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu'
 import SearchIcon from '@mui/icons-material/Search'
@@ -27,6 +29,7 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Tooltip,
   ToggleButton,
   ToggleButtonGroup,
   Toolbar,
@@ -216,6 +219,44 @@ export default function OrderHistoryPage() {
               ),
             }}
           />
+
+          <Stack direction="row" alignItems="center" gap={1}>
+            <Tooltip title="Settings" placement="bottom">
+              <IconButton
+                aria-label="Settings"
+                onClick={() => window.dispatchEvent(new CustomEvent('app:navigate', { detail: 'settings' }))}
+                sx={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 999,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                }}
+              >
+                <SettingsIcon />
+              </IconButton>
+            </Tooltip>
+
+            <Tooltip title="Logout" placement="bottom">
+              <IconButton
+                aria-label="Logout"
+                sx={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 999,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  '&:hover': {
+                    borderColor: 'error.main',
+                    color: 'error.main',
+                    bgcolor: 'rgba(211, 47, 47, 0.06)',
+                  },
+                }}
+              >
+                <LogoutIcon />
+              </IconButton>
+            </Tooltip>
+          </Stack>
         </Toolbar>
       </AppBar>
 

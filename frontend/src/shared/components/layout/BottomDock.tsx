@@ -2,10 +2,9 @@ import HistoryIcon from '@mui/icons-material/History'
 import AddIcon from '@mui/icons-material/Add'
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong'
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu'
-import SettingsIcon from '@mui/icons-material/Settings'
 import { Button, Paper, Tooltip } from '@mui/material'
 
-export type DockItemId = 'menu' | 'orders' | 'order_history' | 'settings'
+export type DockItemId = 'menu' | 'orders' | 'order_history'
 
 export default function BottomDock({
   active,
@@ -62,15 +61,6 @@ export default function BottomDock({
         sx={{ fontWeight: 900, borderRadius: 999, px: 2, py: 1.25, fontSize: 18 }}
       >
         Order history
-      </Button>
-      <Button
-        color={active === 'settings' ? 'primary' : 'inherit'}
-        size="large"
-        startIcon={<SettingsIcon fontSize="large" />}
-        onClick={() => onChange('settings')}
-        sx={{ fontWeight: 900, borderRadius: 999, px: 2, py: 1.25, fontSize: 18 }}
-      >
-        Settings
       </Button>
 
       <Tooltip title="Add new food & Drinks" placement="top">

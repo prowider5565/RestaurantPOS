@@ -1,8 +1,10 @@
 import AddIcon from '@mui/icons-material/Add'
 import CloseIcon from '@mui/icons-material/Close'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
+import LogoutIcon from '@mui/icons-material/Logout'
 import RemoveIcon from '@mui/icons-material/Remove'
 import SearchIcon from '@mui/icons-material/Search'
+import SettingsIcon from '@mui/icons-material/Settings'
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu'
 import {
   AppBar,
@@ -29,6 +31,7 @@ import {
   Select,
   Stack,
   TextField,
+  Tooltip,
   Toolbar,
   Typography,
 } from '@mui/material'
@@ -181,6 +184,44 @@ export default function PosPage() {
               ),
             }}
           />
+
+          <Stack direction="row" alignItems="center" gap={1}>
+            <Tooltip title="Settings" placement="bottom">
+              <IconButton
+                aria-label="Settings"
+                onClick={() => window.dispatchEvent(new CustomEvent('app:navigate', { detail: 'settings' }))}
+                sx={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 999,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                }}
+              >
+                <SettingsIcon />
+              </IconButton>
+            </Tooltip>
+
+            <Tooltip title="Logout" placement="bottom">
+              <IconButton
+                aria-label="Logout"
+                sx={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 999,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  '&:hover': {
+                    borderColor: 'error.main',
+                    color: 'error.main',
+                    bgcolor: 'rgba(211, 47, 47, 0.06)',
+                  },
+                }}
+              >
+                <LogoutIcon />
+              </IconButton>
+            </Tooltip>
+          </Stack>
         </Toolbar>
       </AppBar>
 
