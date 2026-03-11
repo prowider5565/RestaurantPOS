@@ -20,7 +20,9 @@ def _expand_vars(value: str) -> str:
     return pattern.sub(repl, value)
 
 
-def _manual_load_dotenv(dotenv_path: Path, *, initial_keys: set[str], loaded_keys: set[str]) -> None:
+def _manual_load_dotenv(
+    dotenv_path: Path, *, initial_keys: set[str], loaded_keys: set[str]
+) -> None:
     if not dotenv_path.exists():
         return
 
@@ -59,11 +61,19 @@ def _load_env_files(app_env: str) -> None:
     initial_keys = set(os.environ.keys())
     loaded_keys: set[str] = set()
 
-    _manual_load_dotenv(backend_dir / ".env", initial_keys=initial_keys, loaded_keys=loaded_keys)
+    _manual_load_dotenv(
+        backend_dir / ".env", initial_keys=initial_keys, loaded_keys=loaded_keys
+    )
     if env in {"prod", "production"}:
-        _manual_load_dotenv(backend_dir / ".env.prod", initial_keys=initial_keys, loaded_keys=loaded_keys)
+        _manual_load_dotenv(
+            backend_dir / ".env.prod",
+            initial_keys=initial_keys,
+            loaded_keys=loaded_keys,
+        )
     else:
-        _manual_load_dotenv(backend_dir / ".env.dev", initial_keys=initial_keys, loaded_keys=loaded_keys)
+        _manual_load_dotenv(
+            backend_dir / ".env.dev", initial_keys=initial_keys, loaded_keys=loaded_keys
+        )
 
 
 def _normalize_database_url(value: str | None) -> str:
@@ -79,6 +89,7 @@ def _normalize_database_url(value: str | None) -> str:
 class Settings:
     database_url: str
     media_storage_path: str
+    cors_allowed_origins: list[str]
 
 
 @lru_cache(maxsize=1)
@@ -86,7 +97,9 @@ def get_settings() -> Settings:
     app_env = os.getenv("APP_ENV", "dev")
     _load_env_files(app_env)
 
-    media_storage_path = os.getenv("MEDIA_STORAGE_PATH") or os.getenv("FILE_STORAGE_PATH") or "./"
+    media_storage_path = (
+        os.getenv("MEDIA_STORAGE_PATH") or os.getenv("FILE_STORAGE_PATH") or "./"
+    )
     media_dir = Path(media_storage_path)
     if not media_dir.is_absolute():
         media_dir = (_backend_dir() / media_dir).resolve()
@@ -95,8 +108,12 @@ def get_settings() -> Settings:
     return Settings(
         database_url=_normalize_database_url(os.getenv("DATABASE_URL")),
         media_storage_path=str(media_dir),
+        cors_allowed_origins=(
+            os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
+            if os.getenv("CORS_ALLOWED_ORIGINS")
+            else []
+        ),
     )
 
 
 settings = get_settings()
-

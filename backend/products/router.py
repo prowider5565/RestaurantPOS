@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from config.database import get_db
 
-from .handlers import create_product, get_product, update_product
+from .handlers import create_product, get_product, get_products_list, update_product
 from .schemas import ProductCreate, ProductOut, ProductUpdate
 
 
@@ -24,6 +24,11 @@ def create_product_api(
 @router.get("/{product_id}", response_model=ProductOut)
 def get_product_api(product_id: int, db: Session = Depends(get_db)) -> ProductOut:
     return get_product(db, product_id)
+
+
+@router.get("", response_model=list[ProductOut])
+def get_products_api(db: Session = Depends(get_db)) -> list[ProductOut]:
+    return get_products_list(db)
 
 
 @router.put("/{product_id}", response_model=ProductOut)

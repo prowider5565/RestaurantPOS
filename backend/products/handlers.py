@@ -39,6 +39,10 @@ def get_product(db: Session, product_id: int) -> Product:
     return get_product_or_404(db, product_id)
 
 
+def get_products_list(db: Session) -> list[Product]:
+    return db.query(Product).all()
+
+
 def update_product(
     db: Session,
     product_id: int,
