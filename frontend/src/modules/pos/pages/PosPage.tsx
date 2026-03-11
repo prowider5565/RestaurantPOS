@@ -55,10 +55,26 @@ function formatMoney(value: number) {
   return value.toLocaleString(undefined, { style: 'currency', currency: 'USD' })
 }
 
+function onlyDigits(value: string) {
+  return value.replaceAll(/[^\d]/g, '')
+}
+
+function formatIntegerForInput(digits: string) {
+  if (!digits) return ''
+  try {
+    return new Intl.NumberFormat('uz-UZ').format(BigInt(digits))
+  } catch {
+    const n = Number(digits)
+    if (!Number.isFinite(n)) return digits
+    return new Intl.NumberFormat('uz-UZ').format(n)
+  }
+}
+
 export default function PosPage() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all')
   const [search, setSearch] = useState('')
   const [cart, setCart] = useState<Record<string, CartLine>>({})
+  const [menuCategories, setMenuCategories] = useState(categories)
   const [menuProducts, setMenuProducts] = useState<Product[]>(products)
   const [createOpen, setCreateOpen] = useState(false)
   const [newFood, setNewFood] = useState<NewFoodForm>({
@@ -68,6 +84,8 @@ export default function PosPage() {
     imageFile: null,
   })
   const [newFoodPreviewUrl, setNewFoodPreviewUrl] = useState<string>('')
+  const [createCategoryOpen, setCreateCategoryOpen] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState('')
 
   const cartLines = useMemo(() => Object.values(cart), [cart])
   const cartCount = useMemo(
@@ -125,6 +143,35 @@ export default function PosPage() {
     setCreateOpen(false)
   }
 
+  function openCreateCategory() {
+    setNewCategoryName('')
+    setCreateCategoryOpen(true)
+  }
+
+  function closeCreateCategory() {
+    setCreateCategoryOpen(false)
+  }
+
+  function createCategory() {
+    const label = newCategoryName.trim()
+    if (!label) return
+
+    const baseId = label
+      .toLowerCase()
+      .replaceAll('&', 'and')
+      .replaceAll(/[^a-z0-9]+/g, '_')
+      .replaceAll(/^_+|_+$/g, '')
+
+    const idExists = (id: string) => menuCategories.some((c) => c.id === id)
+    let id = baseId || `cat_${Date.now()}`
+    if (idExists(id)) id = `${id}_${Date.now()}`
+
+    const next = { id, label }
+    setMenuCategories((prev) => [...prev, next])
+    setNewFood((prev) => ({ ...prev, categoryId: id }))
+    setCreateCategoryOpen(false)
+  }
+
   function onPickImage(file: File | null) {
     setNewFood((prev) => ({ ...prev, imageFile: file }))
     if (newFoodPreviewUrl) URL.revokeObjectURL(newFoodPreviewUrl)
@@ -133,7 +180,8 @@ export default function PosPage() {
 
   function createFood() {
     const name = newFood.name.trim()
-    const price = Number(newFood.price)
+    const priceDigits = onlyDigits(newFood.price)
+    const price = Number(priceDigits)
     if (!name || !Number.isFinite(price) || price <= 0) return
 
     const imageSrc = newFoodPreviewUrl || '/mock-images/photo_1_2026-03-11_22-51-02.jpg'
@@ -160,7 +208,7 @@ export default function PosPage() {
   }, [])
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
       <AppBar position="sticky" color="inherit" elevation={0} sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
         <Toolbar sx={{ gap: 2 }}>
           <Stack direction="row" alignItems="center" gap={1} sx={{ minWidth: 220 }}>
@@ -229,10 +277,14 @@ export default function PosPage() {
         sx={{
           p: 2,
           pb: 12,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+          height: { xs: 'calc(100dvh - 56px)', sm: 'calc(100dvh - 64px)' },
         }}
       >
         <Stack direction="row" gap={1} flexWrap="wrap" sx={{ mb: 2 }}>
-          {categories.map((c) => (
+          {menuCategories.map((c) => (
             <Chip
               key={c.id}
               label={c.label}
@@ -250,54 +302,76 @@ export default function PosPage() {
             display: 'grid',
             gridTemplateColumns: { xs: '1fr', lg: '1fr 380px' },
             gap: 2,
-            alignItems: 'start',
+            alignItems: { xs: 'start', lg: 'stretch' },
+            flex: 1,
+            minHeight: 0,
+            height: { xs: 'auto', lg: '100%' },
+            overflow: { xs: 'visible', lg: 'hidden' },
           }}
         >
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', xl: 'repeat(4, 1fr)' },
-              gap: 2,
-            }}
-          >
-            {visibleProducts.map((p) => (
-              <Card key={p.id} variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
-                <CardActionArea onClick={() => addToCart(p)} sx={{ height: '100%' }}>
-                  <Box
-                    sx={{
-                      position: 'relative',
-                      height: 150,
-                      backgroundImage: `url("${p.imageSrc}")`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                    }}
-                    role="img"
-                    aria-label={p.name}
-                  >
+          <Box sx={{ minHeight: 0, height: { lg: '100%' }, overflow: { xs: 'visible', lg: 'auto' }, pr: { lg: 1 } }}>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: {
+                  xs: '1fr',
+                  sm: 'repeat(2, 1fr)',
+                  md: 'repeat(3, 1fr)',
+                  xl: 'repeat(4, 1fr)',
+                },
+                gap: 2,
+              }}
+            >
+              {visibleProducts.map((p) => (
+                <Card key={p.id} variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
+                  <CardActionArea onClick={() => addToCart(p)} sx={{ height: '100%' }}>
                     <Box
                       sx={{
-                        position: 'absolute',
-                        inset: 0,
-                        background:
-                          'linear-gradient(180deg, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0.55) 100%)',
+                        position: 'relative',
+                        height: 150,
+                        backgroundImage: `url("${p.imageSrc}")`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
                       }}
-                    />
+                      role="img"
+                      aria-label={p.name}
+                    >
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          inset: 0,
+                          background:
+                            'linear-gradient(180deg, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0.55) 100%)',
+                        }}
+                      />
 
-                    <Box sx={{ position: 'absolute', left: 12, right: 12, bottom: 12, color: 'common.white' }}>
-                      <Typography sx={{ fontWeight: 900, fontSize: 24, lineHeight: 1.1 }} noWrap>
-                        {p.name}
-                      </Typography>
-                      <Typography sx={{ opacity: 0.95, fontWeight: 800, fontSize: 21, lineHeight: 1.2 }}>
-                        {formatMoney(p.price)}
-                      </Typography>
+                      <Box sx={{ position: 'absolute', left: 12, right: 12, bottom: 12, color: 'common.white' }}>
+                        <Typography sx={{ fontWeight: 900, fontSize: 24, lineHeight: 1.1 }} noWrap>
+                          {p.name}
+                        </Typography>
+                        <Typography sx={{ opacity: 0.95, fontWeight: 800, fontSize: 21, lineHeight: 1.2 }}>
+                          {formatMoney(p.price)}
+                        </Typography>
+                      </Box>
                     </Box>
-                  </Box>
-                </CardActionArea>
-              </Card>
-            ))}
+                  </CardActionArea>
+                </Card>
+              ))}
+            </Box>
           </Box>
 
-          <Paper variant="outlined" sx={{ borderRadius: 3, p: 2, height: 'fit-content' }}>
+          <Paper
+            variant="outlined"
+            sx={{
+              borderRadius: 3,
+              p: 2,
+              height: { xs: 'fit-content', md: '100%' },
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: 0,
+              overflow: 'hidden',
+            }}
+          >
           <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
             <Box>
               <Typography sx={{ fontWeight: 900 }}>Current Order</Typography>
@@ -312,7 +386,7 @@ export default function PosPage() {
 
           <Divider sx={{ my: 1 }} />
 
-          <List dense disablePadding sx={{ maxHeight: { xs: 220, lg: 420 }, overflow: 'auto' }}>
+          <List dense disablePadding sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
             {cartLines.length === 0 ? (
               <Box sx={{ py: 6, textAlign: 'center', color: 'text.secondary' }}>
                 <Typography sx={{ fontWeight: 700 }}>No items yet</Typography>
@@ -384,14 +458,10 @@ export default function PosPage() {
 
           <Divider sx={{ my: 1.5 }} />
 
-          <Stack gap={1} sx={{ mb: 2 }}>
-            <Stack direction="row" justifyContent="space-between">
-              <Typography color="text.secondary">Subtotal</Typography>
-              <Typography sx={{ fontWeight: 800 }}>{formatMoney(subtotal)}</Typography>
-            </Stack>
-            <Stack direction="row" justifyContent="space-between">
-              <Typography sx={{ fontWeight: 900 }}>Total</Typography>
-              <Typography sx={{ fontWeight: 900 }}>{formatMoney(total)}</Typography>
+          <Stack sx={{ mb: 2, mt: 'auto' }}>
+            <Stack direction="row" justifyContent="space-between" alignItems="baseline">
+              <Typography sx={{ fontWeight: 1000, fontSize: 22 }}>Total</Typography>
+              <Typography sx={{ fontWeight: 1100, fontSize: 28 }}>{formatMoney(total)}</Typography>
             </Stack>
           </Stack>
 
@@ -429,28 +499,46 @@ export default function PosPage() {
             <Stack direction={{ xs: 'column', sm: 'row' }} gap={2}>
               <TextField
                 label="Price"
-                value={newFood.price}
-                onChange={(e) => setNewFood((prev) => ({ ...prev, price: e.target.value }))}
-                fullWidth
-                inputMode="decimal"
+                value={formatIntegerForInput(onlyDigits(newFood.price))}
+                onChange={(e) => setNewFood((prev) => ({ ...prev, price: onlyDigits(e.target.value).slice(0, 18) }))}
+                sx={{ flex: 1 }}
+                inputMode="numeric"
               />
-              <FormControl fullWidth>
-                <InputLabel id="new-food-category-label">Category</InputLabel>
-                <Select
-                  labelId="new-food-category-label"
-                  label="Category"
-                  value={newFood.categoryId}
-                  onChange={(e) => setNewFood((prev) => ({ ...prev, categoryId: String(e.target.value) }))}
-                >
-                  {categories
-                    .filter((c) => c.id !== 'all')
-                    .map((c) => (
-                      <MenuItem key={c.id} value={c.id}>
-                        {c.label}
-                      </MenuItem>
-                    ))}
-                </Select>
-              </FormControl>
+              <Stack direction="row" gap={1} sx={{ flex: 1 }}>
+                <FormControl fullWidth>
+                  <InputLabel id="new-food-category-label">Category</InputLabel>
+                  <Select
+                    labelId="new-food-category-label"
+                    label="Category"
+                    value={newFood.categoryId}
+                    onChange={(e) => setNewFood((prev) => ({ ...prev, categoryId: String(e.target.value) }))}
+                  >
+                    {menuCategories
+                      .filter((c) => c.id !== 'all')
+                      .map((c) => (
+                        <MenuItem key={c.id} value={c.id}>
+                          {c.label}
+                        </MenuItem>
+                      ))}
+                  </Select>
+                </FormControl>
+                <Tooltip title="Add category" placement="top">
+                  <IconButton
+                    aria-label="Add category"
+                    onClick={openCreateCategory}
+                    sx={{
+                      width: 52,
+                      height: 52,
+                      borderRadius: 2,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      flex: '0 0 auto',
+                    }}
+                  >
+                    <AddIcon />
+                  </IconButton>
+                </Tooltip>
+              </Stack>
             </Stack>
 
             <Paper variant="outlined" sx={{ borderRadius: 2, p: 2, display: 'grid', gap: 1 }}>
@@ -504,6 +592,28 @@ export default function PosPage() {
             Cancel
           </Button>
           <Button color="success" variant="contained" onClick={createFood}>
+            Create
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={createCategoryOpen} onClose={closeCreateCategory} fullWidth maxWidth="xs">
+        <DialogTitle sx={{ fontWeight: 1000 }}>Create category</DialogTitle>
+        <DialogContent sx={{ pt: 1 }}>
+          <TextField
+            autoFocus
+            label="Category name"
+            value={newCategoryName}
+            onChange={(e) => setNewCategoryName(e.target.value)}
+            fullWidth
+            sx={{ mt: 1 }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button color="error" variant="contained" onClick={closeCreateCategory}>
+            Cancel
+          </Button>
+          <Button color="success" variant="contained" onClick={createCategory}>
             Create
           </Button>
         </DialogActions>
