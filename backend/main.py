@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi_pagination import add_pagination
 
 from config.database import Base, engine
 from config.settings import settings
@@ -29,9 +30,9 @@ def on_startup() -> None:
 
 app.include_router(products_router)
 app.include_router(orders_router)
+add_pagination(app)
 
 
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
-

@@ -90,6 +90,7 @@ export default function PosPage() {
   const [search, setSearch] = useState('')
   const [cart, setCart] = useState<Record<string, CartLine>>({})
   const [menuProducts, setMenuProducts] = useState<UiProduct[]>([])
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false)
 
   const [createOpen, setCreateOpen] = useState(false)
   const [newFood, setNewFood] = useState<NewFoodForm>({
@@ -137,6 +138,30 @@ export default function PosPage() {
 
   function clearCart() {
     setCart({})
+  }
+
+  async function placeOrder(status: 'Pending' | 'Completed') {
+    if (cartLines.length === 0 || isPlacingOrder) return
+
+    setIsPlacingOrder(true)
+    try {
+      const payload = {
+        total,
+        status,
+        items: cartLines.map((line) => ({ product: line.product.id, quantity: line.qty })),
+      }
+
+      const res = await fetch(`${API_URL}/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) return
+
+      clearCart()
+    } finally {
+      setIsPlacingOrder(false)
+    }
   }
 
   function closeCreateFood() {
@@ -473,13 +498,31 @@ export default function PosPage() {
             </Stack>
 
             <Stack direction={{ xs: 'column', sm: 'row', lg: 'column' }} gap={1}>
-              <Button color="success" variant="contained" disabled={cartCount === 0} sx={{ py: 1.2 }}>
+              <Button
+                color="success"
+                variant="contained"
+                disabled={cartCount === 0 || isPlacingOrder}
+                onClick={() => placeOrder('Completed')}
+                sx={{ py: 1.2 }}
+              >
                 Pay Now
               </Button>
-              <Button color="warning" variant="contained" disabled={cartCount === 0} sx={{ py: 1.2 }}>
+              <Button
+                color="warning"
+                variant="contained"
+                disabled={cartCount === 0 || isPlacingOrder}
+                onClick={() => placeOrder('Pending')}
+                sx={{ py: 1.2 }}
+              >
                 Hold Order
               </Button>
-              <Button color="error" variant="contained" disabled={cartCount === 0} sx={{ py: 1.2 }}>
+              <Button
+                color="error"
+                variant="contained"
+                disabled={cartCount === 0 || isPlacingOrder}
+                onClick={clearCart}
+                sx={{ py: 1.2 }}
+              >
                 Cancel
               </Button>
             </Stack>

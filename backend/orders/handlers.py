@@ -1,9 +1,10 @@
 from __future__ import annotations
+import datetime
+from datetime import date, datetime, time
 
-from fastapi import HTTPException
-from sqlalchemy.orm import Session
-
-from products.models import Product
+from fastapi_pagination import Page, Params
+from fastapi_pagination.ext.sqlalchemy import paginate
+from sqlalchemy.orm import Session, selectinload
 
 from .models import Order, OrderItem
 from .schemas import OrderCreate
@@ -38,3 +39,15 @@ def create_order(db: Session, payload: OrderCreate) -> tuple[Order, list[OrderIt
 
     return order, items
 
+
+def get_order_history(
+    db: Session, from_date: date | None, to_date: date | None, params: Params
+):
+    query = db.query(Order).options(selectinload(Order.items))
+    if from_date is not None:
+        query = query.filter(Order.created_at >= datetime.combine(from_date, time.min))
+    if to_date is not None:
+        query = query.filter(Order.created_at <= datetime.combine(to_date, time.max))
+
+    query = query.order_by(Order.created_at.desc())
+    return paginate(db, query, params)

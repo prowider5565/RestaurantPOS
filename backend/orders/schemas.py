@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict, Field
 
 from .types import OrderStatus
@@ -32,3 +34,13 @@ class OrderOut(BaseModel):
     status: OrderStatus
     items: list[OrderItemOut]
 
+
+class OrderHistoryRowOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    code: str | None = None
+    total_price: float
+    status: OrderStatus
+    created_at: datetime
+    items: list[OrderItemOut]
