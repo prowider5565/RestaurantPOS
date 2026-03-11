@@ -1,11 +1,11 @@
 import HistoryIcon from '@mui/icons-material/History'
-import Inventory2Icon from '@mui/icons-material/Inventory2'
+import AddIcon from '@mui/icons-material/Add'
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong'
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu'
 import SettingsIcon from '@mui/icons-material/Settings'
-import { Button, Paper } from '@mui/material'
+import { Button, Paper, Tooltip } from '@mui/material'
 
-export type DockItemId = 'menu' | 'orders' | 'order_history' | 'inventory' | 'settings'
+export type DockItemId = 'menu' | 'orders' | 'order_history' | 'settings'
 
 export default function BottomDock({
   active,
@@ -18,22 +18,24 @@ export default function BottomDock({
     <Paper
       variant="outlined"
       sx={{
-        position: 'fixed',
         left: 16,
         right: 16,
         bottom: 16,
         borderRadius: 999,
         px: 1,
+        pr: 11,
         py: 1,
         minHeight: 72,
         bgcolor: 'background.paper',
+        position: 'fixed',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-around',
-        gap: 1,
         zIndex: (t) => t.zIndex.appBar,
+        overflow: 'visible',
       }}
     >
+      {/* Reserve space for the add button so spacing stays even */}
       <Button
         color={active === 'menu' ? 'primary' : 'inherit'}
         size="large"
@@ -62,15 +64,6 @@ export default function BottomDock({
         Order history
       </Button>
       <Button
-        color={active === 'inventory' ? 'primary' : 'inherit'}
-        size="large"
-        startIcon={<Inventory2Icon fontSize="large" />}
-        onClick={() => onChange('inventory')}
-        sx={{ fontWeight: 900, borderRadius: 999, px: 2, py: 1.25, fontSize: 18 }}
-      >
-        Inventory
-      </Button>
-      <Button
         color={active === 'settings' ? 'primary' : 'inherit'}
         size="large"
         startIcon={<SettingsIcon fontSize="large" />}
@@ -79,7 +72,31 @@ export default function BottomDock({
       >
         Settings
       </Button>
+
+      <Tooltip title="Add new food & Drinks" placement="top">
+        <Button
+          aria-label="Add new food & Drinks"
+          onClick={() => window.dispatchEvent(new CustomEvent('pos:createFood'))}
+          sx={{
+            position: 'absolute',
+            right: 10,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            minWidth: 0,
+            width: 56,
+            height: 56,
+            borderRadius: 999,
+            bgcolor: 'primary.main',
+            color: 'common.white',
+            border: '1px solid',
+            borderColor: 'primary.dark',
+            boxShadow: 3,
+            '&:hover': { bgcolor: 'primary.dark', boxShadow: 6 },
+          }}
+        >
+          <AddIcon sx={{ fontSize: 28 }} />
+        </Button>
+      </Tooltip>
     </Paper>
   )
 }
-
