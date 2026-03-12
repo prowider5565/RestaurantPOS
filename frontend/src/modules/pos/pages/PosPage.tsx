@@ -13,12 +13,11 @@ import {
   Button,
   Card,
   CardActionArea,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  Divider,
+  Divider,  
   FormControl,
   IconButton,
   InputAdornment,
@@ -63,6 +62,7 @@ type CartLine = {
 type Category = {
   id: string
   label: string
+  imageSrc: string
 }
 
 type NewFoodForm = {
@@ -100,14 +100,35 @@ function toImageSrc(apiProduct: ApiProduct) {
 }
 
 const DEFAULT_CATEGORIES: Category[] = [
-  { id: 'all', label: 'All' },
-  { id: 'uncategorized', label: 'Uncategorized' },
-  { id: 'pizza', label: 'Pizza' },
-  { id: 'burger', label: 'Burgers' },
-  { id: 'salad', label: 'Salads' },
-  { id: 'drink', label: 'Drinks' },
-  { id: 'dessert', label: 'Desserts' },
+  { id: 'all', label: 'All', imageSrc: '/mock-images/photo_1_2026-03-11_22-51-02.jpg' },
+  { id: 'uncategorized', label: 'Uncategorized', imageSrc: '/mock-images/photo_2_2026-03-11_22-51-02.jpg' },
+  { id: 'pizza', label: 'Pizza', imageSrc: '/mock-images/photo_3_2026-03-11_22-51-02.jpg' },
+  { id: 'burger', label: 'Burgers', imageSrc: '/mock-images/photo_4_2026-03-11_22-51-02.jpg' },
+  { id: 'salad', label: 'Salads', imageSrc: '/mock-images/photo_5_2026-03-11_22-51-02.jpg' },
+  { id: 'drink', label: 'Drinks', imageSrc: '/mock-images/photo_6_2026-03-11_22-51-02.jpg' },
+  { id: 'dessert', label: 'Desserts', imageSrc: '/mock-images/photo_7_2026-03-11_22-51-02.jpg' },
 ]
+
+const MOCK_IMAGE_PATHS = [
+  '/mock-images/photo_1_2026-03-11_22-51-02.jpg',
+  '/mock-images/photo_2_2026-03-11_22-51-02.jpg',
+  '/mock-images/photo_3_2026-03-11_22-51-02.jpg',
+  '/mock-images/photo_4_2026-03-11_22-51-02.jpg',
+  '/mock-images/photo_5_2026-03-11_22-51-02.jpg',
+  '/mock-images/photo_6_2026-03-11_22-51-02.jpg',
+  '/mock-images/photo_7_2026-03-11_22-51-02.jpg',
+  '/mock-images/photo_8_2026-03-11_22-51-02.jpg',
+  '/mock-images/photo_9_2026-03-11_22-51-02.jpg',
+  '/mock-images/photo_10_2026-03-11_22-51-02.jpg',
+  '/mock-images/photo_11_2026-03-11_22-51-02.jpg',
+]
+
+function ensureCategoryImages(list: Category[]) {
+  return list.map((c, idx) => ({
+    ...c,
+    imageSrc: c.imageSrc || MOCK_IMAGE_PATHS[idx % MOCK_IMAGE_PATHS.length],
+  }))
+}
 
 function loadJson<T>(key: string, fallback: T): T {
   try {
@@ -134,7 +155,7 @@ export default function PosPage() {
   const [menuProducts, setMenuProducts] = useState<UiProduct[]>([])
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
   const [menuCategories, setMenuCategories] = useState<Category[]>(() =>
-    loadJson<Category[]>('pos.categories', DEFAULT_CATEGORIES),
+    ensureCategoryImages(loadJson<Category[]>('pos.categories', DEFAULT_CATEGORIES)),
   )
   const [productCategoryMap, setProductCategoryMap] = useState<Record<string, string>>(() =>
     loadJson<Record<string, string>>('pos.productCategories', {}),
@@ -372,8 +393,12 @@ export default function PosPage() {
     let id = baseId || `cat_${Date.now()}`
     if (idExists(id)) id = `${id}_${Date.now()}`
 
-    const next = { id, label }
-    const updated = [...menuCategories, next]
+    const next: Category = {
+      id,
+      label,
+      imageSrc: MOCK_IMAGE_PATHS[menuCategories.length % MOCK_IMAGE_PATHS.length],
+    }
+    const updated = ensureCategoryImages([...menuCategories, next])
     setMenuCategories(updated)
     saveJson('pos.categories', updated)
 
@@ -532,19 +557,56 @@ export default function PosPage() {
           height: { xs: 'calc(100dvh - 56px)', sm: 'calc(100dvh - 64px)' },
         }}
       >
-        <Stack direction="row" gap={1} flexWrap="wrap" sx={{ mb: 2 }}>
-          {menuCategories.map((c) => (
-            <Chip
-              key={c.id}
-              label={c.label}
-              clickable
-              color={c.id === selectedCategoryId ? 'primary' : 'default'}
-              variant={c.id === selectedCategoryId ? 'filled' : 'outlined'}
-              onClick={() => setSelectedCategoryId(c.id)}
-              sx={{ fontWeight: 700 }}
-            />
-          ))}
-        </Stack>
+        <Box
+          sx={{
+            mb: 2,
+            overflowX: 'auto',
+            pb: 0.5,
+            display: 'flex',
+            gap: 2,
+            alignItems: 'flex-start',
+            WebkitOverflowScrolling: 'touch',
+          }}
+        >
+          {menuCategories.map((c) => {
+            const selected = c.id === selectedCategoryId
+            return (
+              <Box
+                key={c.id}
+                onClick={() => setSelectedCategoryId(c.id)}
+                sx={{
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                  flex: '0 0 auto',
+                  width: 92,
+                  textAlign: 'center',
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 80,
+                    height: 80,
+                    mx: 'auto',
+                    borderRadius: 999,
+                    backgroundImage: `url("${c.imageSrc}")`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    border: '3px solid',
+                    borderColor: selected ? 'primary.main' : 'divider',
+                    boxShadow: selected ? 2 : 0,
+                  }}
+                />
+                <Typography
+                  variant="body2"
+                  sx={{ mt: 0.75, fontWeight: selected ? 1000 : 800, lineHeight: 1.1 }}
+                  noWrap
+                >
+                  {c.label}
+                </Typography>
+              </Box>
+            )
+          })}
+        </Box>
 
         <Box
           sx={{
@@ -592,7 +654,8 @@ export default function PosPage() {
                     xs: '1fr',
                     sm: 'repeat(2, 1fr)',
                     md: 'repeat(3, 1fr)',
-                    xl: 'repeat(4, 1fr)',
+                    lg: 'repeat(4, 1fr)',
+                    xl: 'repeat(5, 1fr)',
                   },
                   gap: 2,
                 }}
@@ -621,16 +684,16 @@ export default function PosPage() {
                         />
 
                         <Box sx={{ position: 'absolute', left: 12, right: 12, bottom: 12, color: 'common.white' }}>
-                          <Typography sx={{ fontWeight: 900, fontSize: 24, lineHeight: 1.1 }} noWrap>
-                            {p.name}
-                          </Typography>
-                          <Typography sx={{ opacity: 0.95, fontWeight: 800, fontSize: 21, lineHeight: 1.2 }}>
-                            {formatMoney(p.price)}
-                          </Typography>
-                        </Box>
+                        <Typography sx={{ fontWeight: 900, fontSize: 24, lineHeight: 1.1 }} noWrap>
+                          {p.name}
+                        </Typography>
+                        <Typography sx={{ opacity: 0.95, fontWeight: 900, fontSize: 42, lineHeight: 1.05 }}>
+                          {formatMoney(p.price)}
+                        </Typography>
                       </Box>
-                    </CardActionArea>
-                  </Card>
+                    </Box>
+                  </CardActionArea>
+                </Card>
                 ))}
               </Box>
             )}
