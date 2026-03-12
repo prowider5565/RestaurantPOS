@@ -1,5 +1,7 @@
 import AddIcon from '@mui/icons-material/Add'
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import CloseIcon from '@mui/icons-material/Close'
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import LogoutIcon from '@mui/icons-material/Logout'
 import RemoveIcon from '@mui/icons-material/Remove'
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu'
@@ -71,7 +73,7 @@ type NewFoodForm = {
 }
 
 function formatMoney(value: number) {
-  return value.toLocaleString(undefined, { style: 'currency', currency: 'USD' })
+  return `${new Intl.NumberFormat('uz-UZ').format(Math.round(value))} so'm`
 }
 
 function formatIntegerForInput(digits: string) {
@@ -207,8 +209,14 @@ export default function PosPage() {
 
     const threshold = 110
     const clamp = (v: number) => Math.max(-160, Math.min(160, v))
+    const progress = Math.min(1, Math.abs(translateX) / threshold)
+    const leftActive = translateX > 0
+    const rightActive = translateX < 0
 
     function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+      const target = e.target as HTMLElement
+      if (target.closest('button, [role="button"], input, textarea, select, a')) return
+
       startXRef.current = e.clientX
       lastXRef.current = e.clientX
       hasMovedRef.current = false
@@ -263,6 +271,37 @@ export default function PosPage() {
             transition: 'opacity 180ms ease',
           }}
         />
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            px: 2,
+            pointerEvents: 'none',
+            color: 'common.white',
+          }}
+        >
+          <Box
+            sx={{
+              opacity: leftActive ? progress : 0,
+              transform: `scale(${0.85 + progress * 0.25})`,
+              transition: dragging ? 'none' : 'opacity 180ms ease, transform 180ms ease',
+            }}
+          >
+            <DeleteOutlineIcon />
+          </Box>
+          <Box
+            sx={{
+              opacity: rightActive ? progress : 0,
+              transform: `scale(${0.85 + progress * 0.25})`,
+              transition: dragging ? 'none' : 'opacity 180ms ease, transform 180ms ease',
+            }}
+          >
+            <DeleteOutlineIcon />
+          </Box>
+        </Box>
         <Box
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
@@ -645,8 +684,15 @@ export default function PosPage() {
                             size="small"
                             aria-label="Decrease quantity"
                             onClick={() => setQty(line.product.id, line.qty - 1)}
+                            sx={{
+                              width: 44,
+                              height: 44,
+                              borderRadius: 999,
+                              bgcolor: 'action.hover',
+                              '&:hover': { bgcolor: 'action.selected' },
+                            }}
                           >
-                            <RemoveIcon fontSize="small" />
+                            <RemoveIcon />
                           </IconButton>
                           <Typography sx={{ width: 22, textAlign: 'center', fontWeight: 800 }}>
                             {line.qty}
@@ -655,8 +701,15 @@ export default function PosPage() {
                             size="small"
                             aria-label="Increase quantity"
                             onClick={() => setQty(line.product.id, line.qty + 1)}
+                            sx={{
+                              width: 44,
+                              height: 44,
+                              borderRadius: 999,
+                              bgcolor: 'action.hover',
+                              '&:hover': { bgcolor: 'action.selected' },
+                            }}
                           >
-                            <AddIcon fontSize="small" />
+                            <AddIcon />
                           </IconButton>
                         </Stack>
                       }
@@ -669,7 +722,7 @@ export default function PosPage() {
                           sx={{
                             width: 44,
                             height: 44,
-                            borderRadius: 0,
+                            borderRadius: 999,
                             border: '1px solid',
                             borderColor: 'divider',
                             bgcolor: 'background.paper',
@@ -701,35 +754,36 @@ export default function PosPage() {
               </Stack>
             </Stack>
 
-            <Stack direction={{ xs: 'column', sm: 'row', lg: 'column' }} gap={1}>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: '1fr 1fr' },
+                gap: 1,
+              }}
+            >
               <Button
                 color="success"
                 variant="contained"
                 disabled={cartCount === 0 || isPlacingOrder}
                 onClick={() => placeOrder('Completed')}
-                sx={{ py: 1.2 }}
+                startIcon={<CheckCircleOutlineIcon />}
+                sx={{ py: 2.2, borderRadius: 2, fontSize: 18 }}
+                fullWidth
               >
                 Pay Now
-              </Button>
-              <Button
-                color="warning"
-                variant="contained"
-                disabled={cartCount === 0 || isPlacingOrder}
-                onClick={() => placeOrder('Pending')}
-                sx={{ py: 1.2 }}
-              >
-                Hold Order
               </Button>
               <Button
                 color="error"
                 variant="contained"
                 disabled={cartCount === 0 || isPlacingOrder}
                 onClick={clearCart}
-                sx={{ py: 1.2 }}
+                startIcon={<CloseIcon />}
+                sx={{ py: 2.2, borderRadius: 2, fontSize: 18 }}
+                fullWidth
               >
                 Cancel
               </Button>
-            </Stack>
+            </Box>
           </Paper>
         </Box>
       </Box>

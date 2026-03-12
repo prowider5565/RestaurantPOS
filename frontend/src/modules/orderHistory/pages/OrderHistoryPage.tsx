@@ -40,7 +40,7 @@ import { useMemo, useState } from 'react'
 import { orderHistory, type OrderHistoryRow, type OrderItem } from '../mock'
 
 function formatMoney(value: number) {
-  return value.toLocaleString(undefined, { style: 'currency', currency: 'USD' })
+  return `${new Intl.NumberFormat('uz-UZ').format(Math.round(value))} so'm`
 }
 
 function toYmd(d: Date) {
