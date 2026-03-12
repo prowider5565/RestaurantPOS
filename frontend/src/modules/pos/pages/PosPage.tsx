@@ -13,7 +13,6 @@ import {
   Button,
   Card,
   CardActionArea,
-  Drawer,
   Dialog,
   DialogActions,
   DialogContent,
@@ -24,12 +23,10 @@ import {
   InputAdornment,
   InputLabel,
   List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
   MenuItem,
   Paper,
   Select,
+  Slide,
   Stack,
   TextField,
   Toolbar,
@@ -756,6 +753,7 @@ export default function PosPage() {
           <Paper
             variant="outlined"
             sx={{
+              position: 'relative',
               borderRadius: 3,
               p: 2,
               height: { xs: 'fit-content', md: '100%' },
@@ -774,30 +772,60 @@ export default function PosPage() {
 
             <Divider sx={{ my: 1 }} />
 
-            <List dense disablePadding sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
-              {cartLines.length === 0 ? (
-                <Box sx={{ py: 6, textAlign: 'center', color: 'text.secondary' }}>
-                  <Typography sx={{ fontWeight: 700 }}>No items yet</Typography>
-                  <Typography variant="body2">Tap a product to add it to the order.</Typography>
-                </Box>
-              ) : (
-                cartLines.map((line) => (
-                  <SwipeToDeleteRow key={line.product.id} onDelete={() => setQty(line.product.id, 0)}>
-                    <ListItem
-                      disableGutters
-                      sx={{
-                        px: 0,
-                        cursor: 'pointer',
-                        '&.MuiListItem-secondaryAction': { pr: 0 },
-                        '& .MuiListItemSecondaryAction-root': { right: 0 },
-                      }}
-                      onClick={(e) => {
-                        const target = e.target as HTMLElement
-                        if (target.closest('button, [role="button"]')) return
-                        openQtyEditor(line.product, line.qty)
-                      }}
-                      secondaryAction={
-                        <Stack direction="row" alignItems="center" gap={0.5}>
+            <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+              <List dense disablePadding sx={{ height: '100%', overflow: 'auto' }}>
+                {cartLines.length === 0 ? (
+                  <Box sx={{ py: 6, textAlign: 'center', color: 'text.secondary' }}>
+                    <Typography sx={{ fontWeight: 700 }}>No items yet</Typography>
+                    <Typography variant="body2">Tap a product to add it to the order.</Typography>
+                  </Box>
+                ) : (
+                  cartLines.map((line) => (
+                    <SwipeToDeleteRow key={line.product.id} onDelete={() => setQty(line.product.id, 0)}>
+                      <Box
+                        sx={{
+                          px: 0,
+                          py: 1.25,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1.25,
+                        }}
+                      >
+                        <Box
+                          component="img"
+                          src={line.product.imageSrc}
+                          alt={line.product.name}
+                          sx={{
+                            width: 44,
+                            height: 44,
+                            borderRadius: 999,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            bgcolor: 'background.paper',
+                            objectFit: 'cover',
+                            flex: '0 0 auto',
+                          }}
+                        />
+
+                        <Box
+                          onClick={() => openQtyEditor(line.product, line.qty)}
+                          sx={{
+                            flex: 1,
+                            minWidth: 0,
+                            cursor: 'pointer',
+                            userSelect: 'none',
+                          }}
+                          aria-label={`Edit quantity for ${line.product.name}`}
+                        >
+                          <Typography sx={{ fontWeight: 800 }} noWrap>
+                            {line.product.name}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 800 }} noWrap>
+                            {formatMoney(line.product.price * line.qty)}
+                          </Typography>
+                        </Box>
+
+                        <Stack direction="row" alignItems="center" gap={0.5} sx={{ flex: '0 0 auto' }}>
                           <IconButton
                             size="small"
                             aria-label="Decrease quantity"
@@ -830,38 +858,12 @@ export default function PosPage() {
                             <AddIcon />
                           </IconButton>
                         </Stack>
-                      }
-                    >
-                      <ListItemAvatar>
-                        <Box
-                          component="img"
-                          src={line.product.imageSrc}
-                          alt={line.product.name}
-                          sx={{
-                            width: 44,
-                            height: 44,
-                            borderRadius: 999,
-                            border: '1px solid',
-                            borderColor: 'divider',
-                            bgcolor: 'background.paper',
-                            objectFit: 'cover',
-                          }}
-                        />
-                      </ListItemAvatar>
-                      <ListItemText
-                        sx={{ pr: 10 }}
-                        primary={
-                          <Typography sx={{ fontWeight: 800 }} noWrap>
-                            {line.product.name}
-                          </Typography>
-                        }
-                        secondary={formatMoney(line.product.price * line.qty)}
-                      />
-                    </ListItem>
-                  </SwipeToDeleteRow>
-                ))
-              )}
-            </List>
+                      </Box>
+                    </SwipeToDeleteRow>
+                  ))
+                )}
+              </List>
+            </Box>
 
             <Divider sx={{ my: 1.5 }} />
 
@@ -902,6 +904,79 @@ export default function PosPage() {
                 Cancel
               </Button>
             </Box>
+
+            <Slide direction="right" in={qtyEditor.open} mountOnEnter unmountOnExit>
+              <Paper
+                elevation={0}
+                sx={{
+                  position: 'absolute',
+                  inset: 0,
+                  p: 2,
+                  borderRadius: 3,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 1.5,
+                  bgcolor: 'background.paper',
+                  zIndex: 2,
+                }}
+              >
+                <Stack direction="row" alignItems="center" justifyContent="space-between">
+                  <Typography sx={{ fontWeight: 1000 }}>
+                    {qtyEditor.product ? qtyEditor.product.name : 'Quantity'}
+                  </Typography>
+                  <IconButton onClick={closeQtyEditor} aria-label="Close">
+                    <CloseIcon />
+                  </IconButton>
+                </Stack>
+
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+                  <Typography sx={{ fontWeight: 1200, fontSize: 44 }}>{qtyEditor.value || '0'}</Typography>
+                  <Button
+                    color="success"
+                    variant="contained"
+                    onClick={qtyApply}
+                    sx={{ px: 3, py: 1.4, borderRadius: 2 }}
+                  >
+                    Apply
+                  </Button>
+                </Box>
+
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, mt: 'auto' }}>
+                  {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((d) => (
+                    <Button
+                      key={d}
+                      variant="outlined"
+                      onClick={() => qtyAppend(d)}
+                      sx={{ py: 2, borderRadius: 2, fontSize: 20, fontWeight: 1000 }}
+                    >
+                      {d}
+                    </Button>
+                  ))}
+                  <Button
+                    color="error"
+                    variant="outlined"
+                    onClick={qtyClear}
+                    sx={{ py: 2, borderRadius: 2, fontSize: 16, fontWeight: 1000 }}
+                  >
+                    Clear
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    onClick={() => qtyAppend('0')}
+                    sx={{ py: 2, borderRadius: 2, fontSize: 20, fontWeight: 1000 }}
+                  >
+                    0
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    onClick={qtyBackspace}
+                    sx={{ py: 2, borderRadius: 2, fontSize: 16, fontWeight: 1000 }}
+                  >
+                    ←
+                  </Button>
+                </Box>
+              </Paper>
+            </Slide>
           </Paper>
         </Box>
       </Box>
@@ -1046,80 +1121,6 @@ export default function PosPage() {
         </DialogActions>
       </Dialog>
 
-      <Drawer
-        anchor="bottom"
-        open={qtyEditor.open}
-        onClose={closeQtyEditor}
-        PaperProps={{ sx: { borderTopLeftRadius: 24, borderTopRightRadius: 24, p: 2 } }}
-      >
-        <Stack spacing={1.5}>
-          <Stack direction="row" alignItems="center" justifyContent="space-between">
-            <Typography sx={{ fontWeight: 1000 }}>
-              {qtyEditor.product ? qtyEditor.product.name : 'Quantity'}
-            </Typography>
-            <IconButton onClick={closeQtyEditor} aria-label="Close">
-              <CloseIcon />
-            </IconButton>
-          </Stack>
-
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 2,
-            }}
-          >
-            <Typography sx={{ fontWeight: 1200, fontSize: 44 }}>
-              {qtyEditor.value || '0'}
-            </Typography>
-            <Button color="success" variant="contained" onClick={qtyApply} sx={{ px: 3, py: 1.4, borderRadius: 2 }}>
-              Apply
-            </Button>
-          </Box>
-
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: 1,
-            }}
-          >
-            {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((d) => (
-              <Button
-                key={d}
-                variant="outlined"
-                onClick={() => qtyAppend(d)}
-                sx={{ py: 2, borderRadius: 2, fontSize: 20, fontWeight: 1000 }}
-              >
-                {d}
-              </Button>
-            ))}
-            <Button
-              color="error"
-              variant="outlined"
-              onClick={qtyClear}
-              sx={{ py: 2, borderRadius: 2, fontSize: 16, fontWeight: 1000 }}
-            >
-              Clear
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={() => qtyAppend('0')}
-              sx={{ py: 2, borderRadius: 2, fontSize: 20, fontWeight: 1000 }}
-            >
-              0
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={qtyBackspace}
-              sx={{ py: 2, borderRadius: 2, fontSize: 16, fontWeight: 1000 }}
-            >
-              ←
-            </Button>
-          </Box>
-        </Stack>
-      </Drawer>
     </Box>
   )
 }
