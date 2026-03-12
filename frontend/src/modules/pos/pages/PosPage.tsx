@@ -1,6 +1,5 @@
 import AddIcon from '@mui/icons-material/Add'
 import CloseIcon from '@mui/icons-material/Close'
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import LogoutIcon from '@mui/icons-material/Logout'
 import RemoveIcon from '@mui/icons-material/Remove'
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu'
@@ -12,25 +11,30 @@ import {
   Button,
   Card,
   CardActionArea,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
+  FormControl,
   IconButton,
   InputAdornment,
+  InputLabel,
   List,
   ListItem,
   ListItemAvatar,
   ListItemText,
+  MenuItem,
   Paper,
+  Select,
   Stack,
   TextField,
   Toolbar,
   Tooltip,
   Typography,
 } from '@mui/material'
-import { useEffect, useMemo, useState } from 'react'
+import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
 
@@ -46,6 +50,7 @@ type UiProduct = {
   name: string
   price: number
   imageSrc: string
+  categoryId: string
 }
 
 type CartLine = {
@@ -53,10 +58,16 @@ type CartLine = {
   qty: number
 }
 
+type Category = {
+  id: string
+  label: string
+}
+
 type NewFoodForm = {
   name: string
   priceDigits: string
   imageFile: File | null
+  categoryId: string
 }
 
 function formatMoney(value: number) {
@@ -86,28 +97,69 @@ function toImageSrc(apiProduct: ApiProduct) {
   return `${API_URL}/media/products/${filename}`
 }
 
+const DEFAULT_CATEGORIES: Category[] = [
+  { id: 'all', label: 'All' },
+  { id: 'uncategorized', label: 'Uncategorized' },
+  { id: 'pizza', label: 'Pizza' },
+  { id: 'burger', label: 'Burgers' },
+  { id: 'salad', label: 'Salads' },
+  { id: 'drink', label: 'Drinks' },
+  { id: 'dessert', label: 'Desserts' },
+]
+
+function loadJson<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key)
+    if (!raw) return fallback
+    return JSON.parse(raw) as T
+  } catch {
+    return fallback
+  }
+}
+
+function saveJson(key: string, value: unknown) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value))
+  } catch {
+    // ignore
+  }
+}
+
 export default function PosPage() {
   const [search, setSearch] = useState('')
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all')
   const [cart, setCart] = useState<Record<string, CartLine>>({})
   const [menuProducts, setMenuProducts] = useState<UiProduct[]>([])
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
+  const [menuCategories, setMenuCategories] = useState<Category[]>(() =>
+    loadJson<Category[]>('pos.categories', DEFAULT_CATEGORIES),
+  )
+  const [productCategoryMap, setProductCategoryMap] = useState<Record<string, string>>(() =>
+    loadJson<Record<string, string>>('pos.productCategories', {}),
+  )
 
   const [createOpen, setCreateOpen] = useState(false)
   const [newFood, setNewFood] = useState<NewFoodForm>({
     name: '',
     priceDigits: '',
     imageFile: null,
+    categoryId: 'uncategorized',
   })
   const [newFoodPreviewUrl, setNewFoodPreviewUrl] = useState<string>('')
+  const [createCategoryOpen, setCreateCategoryOpen] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState('')
 
   const cartLines = useMemo(() => Object.values(cart), [cart])
   const cartCount = useMemo(() => cartLines.reduce((sum, line) => sum + line.qty, 0), [cartLines])
 
   const visibleProducts = useMemo(() => {
     const q = search.trim().toLowerCase()
-    if (!q) return menuProducts
-    return menuProducts.filter((p) => p.name.toLowerCase().includes(q))
-  }, [menuProducts, search])
+    return menuProducts.filter((p) => {
+      const matchesCategory = selectedCategoryId === 'all' || p.categoryId === selectedCategoryId
+      const matchesSearch = !q || p.name.toLowerCase().includes(q)
+      return matchesCategory && matchesSearch
+    })
+  }, [menuProducts, search, selectedCategoryId])
 
   const total = useMemo(
     () => cartLines.reduce((sum, line) => sum + line.qty * line.product.price, 0),
@@ -140,6 +192,95 @@ export default function PosPage() {
     setCart({})
   }
 
+  function SwipeToDeleteRow({
+    children,
+    onDelete,
+  }: {
+    children: ReactNode
+    onDelete: () => void
+  }) {
+    const [translateX, setTranslateX] = useState(0)
+    const [dragging, setDragging] = useState(false)
+    const startXRef = useRef(0)
+    const lastXRef = useRef(0)
+    const hasMovedRef = useRef(false)
+
+    const threshold = 110
+    const clamp = (v: number) => Math.max(-160, Math.min(160, v))
+
+    function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+      startXRef.current = e.clientX
+      lastXRef.current = e.clientX
+      hasMovedRef.current = false
+      setDragging(true)
+      ;(e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId)
+    }
+
+    function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
+      if (!dragging) return
+      const dx = e.clientX - startXRef.current
+      const step = e.clientX - lastXRef.current
+      lastXRef.current = e.clientX
+      if (!hasMovedRef.current && Math.abs(dx) > 8) hasMovedRef.current = true
+      if (hasMovedRef.current && Math.abs(step) > 0) e.preventDefault()
+      setTranslateX(clamp(dx))
+    }
+
+    function finish() {
+      const shouldDelete = Math.abs(translateX) >= threshold
+      setDragging(false)
+      if (shouldDelete) {
+        setTranslateX(0)
+        onDelete()
+      } else {
+        setTranslateX(0)
+      }
+    }
+
+    function onPointerUp() {
+      finish()
+    }
+
+    function onPointerCancel() {
+      setDragging(false)
+      setTranslateX(0)
+    }
+
+    return (
+      <Box
+        sx={{
+          position: 'relative',
+          borderRadius: 2,
+          overflow: 'hidden',
+        }}
+      >
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            bgcolor: 'error.main',
+            opacity: translateX === 0 ? 0 : 1,
+            transition: 'opacity 180ms ease',
+          }}
+        />
+        <Box
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerCancel}
+          sx={{
+            transform: `translateX(${translateX}px)`,
+            transition: dragging ? 'none' : 'transform 180ms ease',
+            touchAction: 'pan-y',
+            bgcolor: 'background.paper',
+          }}
+        >
+          {children}
+        </Box>
+      </Box>
+    )
+  }
+
   async function placeOrder(status: 'Pending' | 'Completed') {
     if (cartLines.length === 0 || isPlacingOrder) return
 
@@ -168,6 +309,38 @@ export default function PosPage() {
     setCreateOpen(false)
   }
 
+  function openCreateCategory() {
+    setNewCategoryName('')
+    setCreateCategoryOpen(true)
+  }
+
+  function closeCreateCategory() {
+    setCreateCategoryOpen(false)
+  }
+
+  function createCategory() {
+    const label = newCategoryName.trim()
+    if (!label) return
+
+    const baseId = label
+      .toLowerCase()
+      .replaceAll('&', 'and')
+      .replaceAll(/[^a-z0-9]+/g, '_')
+      .replaceAll(/^_+|_+$/g, '')
+
+    const idExists = (id: string) => menuCategories.some((c) => c.id === id)
+    let id = baseId || `cat_${Date.now()}`
+    if (idExists(id)) id = `${id}_${Date.now()}`
+
+    const next = { id, label }
+    const updated = [...menuCategories, next]
+    setMenuCategories(updated)
+    saveJson('pos.categories', updated)
+
+    setNewFood((prev) => ({ ...prev, categoryId: id }))
+    setCreateCategoryOpen(false)
+  }
+
   function onPickImage(file: File | null) {
     setNewFood((prev) => ({ ...prev, imageFile: file }))
     if (newFoodPreviewUrl) URL.revokeObjectURL(newFoodPreviewUrl)
@@ -189,13 +362,20 @@ export default function PosPage() {
     const created = (await res.json()) as ApiProduct
 
     const imageSrc = newFoodPreviewUrl || toImageSrc(created)
-    setMenuProducts((prev) => [{ id: created.id, name: created.name, price: created.price, imageSrc }, ...prev])
+    const nextCategoryMap = { ...productCategoryMap, [String(created.id)]: newFood.categoryId }
+    setProductCategoryMap(nextCategoryMap)
+    saveJson('pos.productCategories', nextCategoryMap)
+
+    setMenuProducts((prev) => [
+      { id: created.id, name: created.name, price: created.price, imageSrc, categoryId: newFood.categoryId },
+      ...prev,
+    ])
     setCreateOpen(false)
   }
 
   useEffect(() => {
     const handler = () => {
-      setNewFood({ name: '', priceDigits: '', imageFile: null })
+      setNewFood({ name: '', priceDigits: '', imageFile: null, categoryId: 'uncategorized' })
       setNewFoodPreviewUrl('')
       setCreateOpen(true)
     }
@@ -211,7 +391,17 @@ export default function PosPage() {
       if (!res.ok) return
       const list = (await res.json()) as ApiProduct[]
       if (cancelled) return
-      setMenuProducts(list.map((p) => ({ id: p.id, name: p.name, price: p.price, imageSrc: toImageSrc(p) })))
+      const map = loadJson<Record<string, string>>('pos.productCategories', {})
+      setProductCategoryMap(map)
+      setMenuProducts(
+        list.map((p) => ({
+          id: p.id,
+          name: p.name,
+          price: p.price,
+          imageSrc: toImageSrc(p),
+          categoryId: map[String(p.id)] ?? 'uncategorized',
+        })),
+      )
     }
 
     loadProducts()
@@ -302,6 +492,20 @@ export default function PosPage() {
           height: { xs: 'calc(100dvh - 56px)', sm: 'calc(100dvh - 64px)' },
         }}
       >
+        <Stack direction="row" gap={1} flexWrap="wrap" sx={{ mb: 2 }}>
+          {menuCategories.map((c) => (
+            <Chip
+              key={c.id}
+              label={c.label}
+              clickable
+              color={c.id === selectedCategoryId ? 'primary' : 'default'}
+              variant={c.id === selectedCategoryId ? 'filled' : 'outlined'}
+              onClick={() => setSelectedCategoryId(c.id)}
+              sx={{ fontWeight: 700 }}
+            />
+          ))}
+        </Stack>
+
         <Box
           sx={{
             display: 'grid',
@@ -426,64 +630,57 @@ export default function PosPage() {
                 </Box>
               ) : (
                 cartLines.map((line) => (
-                  <ListItem
-                    key={line.product.id}
-                    disableGutters
-                    secondaryAction={
-                      <Stack direction="row" alignItems="center" gap={0.5}>
-                        <IconButton
-                          size="small"
-                          aria-label="Decrease quantity"
-                          onClick={() => setQty(line.product.id, line.qty - 1)}
-                        >
-                          <RemoveIcon fontSize="small" />
-                        </IconButton>
-                        <Typography sx={{ width: 22, textAlign: 'center', fontWeight: 800 }}>
-                          {line.qty}
-                        </Typography>
-                        <IconButton
-                          size="small"
-                          aria-label="Increase quantity"
-                          onClick={() => setQty(line.product.id, line.qty + 1)}
-                        >
-                          <AddIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          color="error"
-                          aria-label="Remove item"
-                          onClick={() => setQty(line.product.id, 0)}
-                        >
-                          <DeleteOutlineIcon fontSize="small" />
-                        </IconButton>
-                      </Stack>
-                    }
-                  >
-                    <ListItemAvatar>
-                      <Box
-                        component="img"
-                        src={line.product.imageSrc}
-                        alt={line.product.name}
-                        sx={{
-                          width: 44,
-                          height: 44,
-                          borderRadius: 2,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          bgcolor: 'background.paper',
-                          objectFit: 'cover',
-                        }}
-                      />
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={
-                        <Typography sx={{ fontWeight: 800 }} noWrap>
-                          {line.product.name}
-                        </Typography>
+                  <SwipeToDeleteRow key={line.product.id} onDelete={() => setQty(line.product.id, 0)}>
+                    <ListItem
+                      disableGutters
+                      secondaryAction={
+                        <Stack direction="row" alignItems="center" gap={0.5}>
+                          <IconButton
+                            size="small"
+                            aria-label="Decrease quantity"
+                            onClick={() => setQty(line.product.id, line.qty - 1)}
+                          >
+                            <RemoveIcon fontSize="small" />
+                          </IconButton>
+                          <Typography sx={{ width: 22, textAlign: 'center', fontWeight: 800 }}>
+                            {line.qty}
+                          </Typography>
+                          <IconButton
+                            size="small"
+                            aria-label="Increase quantity"
+                            onClick={() => setQty(line.product.id, line.qty + 1)}
+                          >
+                            <AddIcon fontSize="small" />
+                          </IconButton>
+                        </Stack>
                       }
-                      secondary={formatMoney(line.product.price * line.qty)}
-                    />
-                  </ListItem>
+                    >
+                      <ListItemAvatar>
+                        <Box
+                          component="img"
+                          src={line.product.imageSrc}
+                          alt={line.product.name}
+                          sx={{
+                            width: 44,
+                            height: 44,
+                            borderRadius: 2,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            bgcolor: 'background.paper',
+                            objectFit: 'cover',
+                          }}
+                        />
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={
+                          <Typography sx={{ fontWeight: 800 }} noWrap>
+                            {line.product.name}
+                          </Typography>
+                        }
+                        secondary={formatMoney(line.product.price * line.qty)}
+                      />
+                    </ListItem>
+                  </SwipeToDeleteRow>
                 ))
               )}
             </List>
@@ -541,13 +738,56 @@ export default function PosPage() {
               fullWidth
             />
 
-            <TextField
-              label="Price"
-              value={formatIntegerForInput(newFood.priceDigits)}
-              onChange={(e) => setNewFood((prev) => ({ ...prev, priceDigits: e.target.value.replaceAll(/[^\d]/g, '').slice(0, 18) }))}
-              inputMode="numeric"
-              fullWidth
-            />
+            <Stack direction={{ xs: 'column', sm: 'row' }} gap={2}>
+              <TextField
+                label="Price"
+                value={formatIntegerForInput(newFood.priceDigits)}
+                onChange={(e) =>
+                  setNewFood((prev) => ({
+                    ...prev,
+                    priceDigits: e.target.value.replaceAll(/[^\d]/g, '').slice(0, 18),
+                  }))
+                }
+                inputMode="numeric"
+                sx={{ flex: 1 }}
+              />
+
+              <Stack direction="row" gap={1} sx={{ flex: 1 }}>
+                <FormControl fullWidth>
+                  <InputLabel id="new-food-category-label">Category</InputLabel>
+                  <Select
+                    labelId="new-food-category-label"
+                    label="Category"
+                    value={newFood.categoryId}
+                    onChange={(e) => setNewFood((prev) => ({ ...prev, categoryId: String(e.target.value) }))}
+                  >
+                    {menuCategories
+                      .filter((c) => c.id !== 'all')
+                      .map((c) => (
+                        <MenuItem key={c.id} value={c.id}>
+                          {c.label}
+                        </MenuItem>
+                      ))}
+                  </Select>
+                </FormControl>
+                <Tooltip title="Add category" placement="top">
+                  <IconButton
+                    aria-label="Add category"
+                    onClick={openCreateCategory}
+                    sx={{
+                      width: 52,
+                      height: 52,
+                      borderRadius: 2,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      flex: '0 0 auto',
+                    }}
+                  >
+                    <AddIcon />
+                  </IconButton>
+                </Tooltip>
+              </Stack>
+            </Stack>
 
             <Paper variant="outlined" sx={{ borderRadius: 2, p: 2, display: 'grid', gap: 1 }}>
               <Typography sx={{ fontWeight: 900 }}>Image upload</Typography>
@@ -600,6 +840,28 @@ export default function PosPage() {
             Cancel
           </Button>
           <Button color="success" variant="contained" onClick={createFood}>
+            Create
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={createCategoryOpen} onClose={closeCreateCategory} fullWidth maxWidth="xs">
+        <DialogTitle sx={{ fontWeight: 1000 }}>Create category</DialogTitle>
+        <DialogContent sx={{ pt: 1 }}>
+          <TextField
+            autoFocus
+            label="Category name"
+            value={newCategoryName}
+            onChange={(e) => setNewCategoryName(e.target.value)}
+            fullWidth
+            sx={{ mt: 1 }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button color="error" variant="contained" onClick={closeCreateCategory}>
+            Cancel
+          </Button>
+          <Button color="success" variant="contained" onClick={createCategory}>
             Create
           </Button>
         </DialogActions>
