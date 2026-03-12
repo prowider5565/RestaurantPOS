@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
+from products.types import ProductMeasure
 from config.database import Base
 
 
@@ -17,6 +18,7 @@ class Product(Base):
         nullable=True,
         index=True,
     )
+    measure = Column(ProductMeasure, index=True, nullable=True)
     category = relationship("ProductCategory", back_populates="products")
 
 

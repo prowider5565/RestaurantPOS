@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react'
 
 import BottomDock, { type DockItemId } from '../shared/components/layout/BottomDock'
 import OrderHistoryPage from '../modules/orderHistory/pages/OrderHistoryPage'
-import OrdersPage from '../modules/orders/pages/OrdersPage'
 import PosPage from '../modules/pos/pages/PosPage'
 
 export default function App() {
@@ -14,7 +13,6 @@ export default function App() {
       const detail = (e as CustomEvent).detail as unknown
       if (detail === 'settings') setActive('settings')
       if (detail === 'menu') setActive('menu')
-      if (detail === 'orders') setActive('orders')
       if (detail === 'order_history') setActive('order_history')
     }
     window.addEventListener('app:navigate', onNavigate as EventListener)
@@ -24,7 +22,6 @@ export default function App() {
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       {active === 'menu' && <PosPage />}
-      {active === 'orders' && <OrdersPage />}
       {active === 'order_history' && <OrderHistoryPage />}
       {active === 'settings' && <Box sx={{ p: 3, pb: 12 }}>Settings (coming soon)</Box>}
 

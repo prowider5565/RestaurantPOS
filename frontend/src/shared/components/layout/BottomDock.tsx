@@ -1,10 +1,9 @@
 import HistoryIcon from '@mui/icons-material/History'
 import AddIcon from '@mui/icons-material/Add'
-import ReceiptLongIcon from '@mui/icons-material/ReceiptLong'
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu'
 import { Button, Paper, Tooltip } from '@mui/material'
 
-export type DockItemId = 'menu' | 'orders' | 'order_history'
+export type DockItemId = 'menu' | 'order_history'
 
 export default function BottomDock({
   active,
@@ -43,15 +42,6 @@ export default function BottomDock({
         sx={{ fontWeight: 900, borderRadius: 999, px: 2, py: 1.25, fontSize: 18 }}
       >
         Menu
-      </Button>
-      <Button
-        color={active === 'orders' ? 'primary' : 'inherit'}
-        size="large"
-        startIcon={<ReceiptLongIcon fontSize="large" />}
-        onClick={() => onChange('orders')}
-        sx={{ fontWeight: 900, borderRadius: 999, px: 2, py: 1.25, fontSize: 18 }}
-      >
-        Orders
       </Button>
       <Button
         color={active === 'order_history' ? 'primary' : 'inherit'}
