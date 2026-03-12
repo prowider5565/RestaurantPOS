@@ -28,6 +28,7 @@ def create_product(
         name=payload.name,
         price=payload.price,
         image_path=image_path,
+        category_id=payload.category_id,
     )
     db.add(product)
     db.commit()
@@ -39,8 +40,13 @@ def get_product(db: Session, product_id: int) -> Product:
     return get_product_or_404(db, product_id)
 
 
-def get_products_list(db: Session) -> list[Product]:
-    return db.query(Product).all()
+def get_products_list(db: Session, category_id: int | None = None) -> list[Product]:
+    q = db.query(Product)
+    if category_id is None:
+        return q.all()
+    if category_id == 0:
+        return q.filter(Product.category_id.is_(None)).all()
+    return q.filter(Product.category_id == category_id).all()
 
 
 def update_product(

@@ -1,4 +1,6 @@
-from sqlalchemy import Column, String, Float, Integer
+from sqlalchemy import Column, Float, ForeignKey, Integer, String
+from sqlalchemy.orm import relationship
+
 from config.database import Base
 
 
@@ -9,6 +11,13 @@ class Product(Base):
     name = Column(String, index=True)
     image_path = Column(String, index=True)
     price = Column(Float, index=True)
+    category_id = Column(
+        Integer,
+        ForeignKey("product_categories.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    category = relationship("ProductCategory", back_populates="products")
 
 
 class ProductCategory(Base):
@@ -16,3 +25,4 @@ class ProductCategory(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
+    products = relationship("Product", back_populates="category")

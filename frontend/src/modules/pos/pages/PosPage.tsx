@@ -45,6 +45,12 @@ type ApiProduct = {
   name: string
   price: number
   image_path?: string | null
+  category_id?: number | null
+}
+
+type ApiCategory = {
+  id: number
+  name: string
 }
 
 type UiProduct = {
@@ -98,23 +104,30 @@ function toImageSrc(apiProduct: ApiProduct) {
   const raw = apiProduct.image_path
   if (!raw) return '/mock-images/photo_1_2026-03-11_22-51-02.jpg'
 
-  const normalized = raw.replaceAll('\\', '/')
-  const marker = '/products/'
-  const idx = normalized.lastIndexOf(marker)
-  if (idx === -1) return '/mock-images/photo_1_2026-03-11_22-51-02.jpg'
-  const filename = normalized.slice(idx + marker.length)
-  return `${API_URL}/media/products/${filename}`
-}
+  const trimmed = raw.trim()
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed
 
-const DEFAULT_CATEGORIES: Category[] = [
-  { id: 'all', label: 'All', imageSrc: '/mock-images/photo_1_2026-03-11_22-51-02.jpg' },
-  { id: 'uncategorized', label: 'Uncategorized', imageSrc: '/mock-images/photo_2_2026-03-11_22-51-02.jpg' },
-  { id: 'pizza', label: 'Pizza', imageSrc: '/mock-images/photo_3_2026-03-11_22-51-02.jpg' },
-  { id: 'burger', label: 'Burgers', imageSrc: '/mock-images/photo_4_2026-03-11_22-51-02.jpg' },
-  { id: 'salad', label: 'Salads', imageSrc: '/mock-images/photo_5_2026-03-11_22-51-02.jpg' },
-  { id: 'drink', label: 'Drinks', imageSrc: '/mock-images/photo_6_2026-03-11_22-51-02.jpg' },
-  { id: 'dessert', label: 'Desserts', imageSrc: '/mock-images/photo_7_2026-03-11_22-51-02.jpg' },
-]
+  const normalized = trimmed.replaceAll('\\', '/')
+
+  const mediaMarker = '/media/'
+  const mediaIdx = normalized.lastIndexOf(mediaMarker)
+  if (mediaIdx !== -1) {
+    const tail = normalized.slice(mediaIdx)
+    return `${API_URL}${tail}`
+  }
+
+  const productsMarker = '/products/'
+  const productsIdx = normalized.lastIndexOf(productsMarker)
+  if (productsIdx !== -1) {
+    const filename = normalized.slice(productsIdx + productsMarker.length)
+    return `${API_URL}/media/products/${filename}`
+  }
+
+  const filename = normalized.split('/').filter(Boolean).at(-1)
+  if (filename) return `${API_URL}/media/products/${filename}`
+
+  return '/mock-images/photo_1_2026-03-11_22-51-02.jpg'
+}
 
 const MOCK_IMAGE_PATHS = [
   '/mock-images/photo_1_2026-03-11_22-51-02.jpg',
@@ -130,31 +143,6 @@ const MOCK_IMAGE_PATHS = [
   '/mock-images/photo_11_2026-03-11_22-51-02.jpg',
 ]
 
-function ensureCategoryImages(list: Category[]) {
-  return list.map((c, idx) => ({
-    ...c,
-    imageSrc: c.imageSrc || MOCK_IMAGE_PATHS[idx % MOCK_IMAGE_PATHS.length],
-  }))
-}
-
-function loadJson<T>(key: string, fallback: T): T {
-  try {
-    const raw = localStorage.getItem(key)
-    if (!raw) return fallback
-    return JSON.parse(raw) as T
-  } catch {
-    return fallback
-  }
-}
-
-function saveJson(key: string, value: unknown) {
-  try {
-    localStorage.setItem(key, JSON.stringify(value))
-  } catch {
-    // ignore
-  }
-}
-
 export default function PosPage() {
   const [search, setSearch] = useState('')
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all')
@@ -162,12 +150,7 @@ export default function PosPage() {
   const [menuProducts, setMenuProducts] = useState<UiProduct[]>([])
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
   const [qtyEditor, setQtyEditor] = useState<QtyEditorState>({ open: false, product: null, value: '' })
-  const [menuCategories, setMenuCategories] = useState<Category[]>(() =>
-    ensureCategoryImages(loadJson<Category[]>('pos.categories', DEFAULT_CATEGORIES)),
-  )
-  const [productCategoryMap, setProductCategoryMap] = useState<Record<string, string>>(() =>
-    loadJson<Record<string, string>>('pos.productCategories', {}),
-  )
+  const [apiCategories, setApiCategories] = useState<ApiCategory[]>([])
 
   const [createOpen, setCreateOpen] = useState(false)
   const [newFood, setNewFood] = useState<NewFoodForm>({
@@ -183,14 +166,25 @@ export default function PosPage() {
   const cartLines = useMemo(() => Object.values(cart), [cart])
   const cartCount = useMemo(() => cartLines.reduce((sum, line) => sum + line.qty, 0), [cartLines])
 
+  const menuCategories: Category[] = useMemo(() => {
+    const base: Category[] = [
+      { id: 'all', label: 'All', imageSrc: MOCK_IMAGE_PATHS[0] },
+      { id: 'uncategorized', label: 'Uncategorized', imageSrc: MOCK_IMAGE_PATHS[1] },
+    ]
+
+    const next = apiCategories.map((c, idx) => ({
+      id: String(c.id),
+      label: c.name,
+      imageSrc: MOCK_IMAGE_PATHS[(idx + 2) % MOCK_IMAGE_PATHS.length],
+    }))
+
+    return [...base, ...next]
+  }, [apiCategories])
+
   const visibleProducts = useMemo(() => {
     const q = search.trim().toLowerCase()
-    return menuProducts.filter((p) => {
-      const matchesCategory = selectedCategoryId === 'all' || p.categoryId === selectedCategoryId
-      const matchesSearch = !q || p.name.toLowerCase().includes(q)
-      return matchesCategory && matchesSearch
-    })
-  }, [menuProducts, search, selectedCategoryId])
+    return menuProducts.filter((p) => (!q ? true : p.name.toLowerCase().includes(q)))
+  }, [menuProducts, search])
 
   const total = useMemo(
     () => cartLines.reduce((sum, line) => sum + line.qty * line.product.price, 0),
@@ -427,30 +421,20 @@ export default function PosPage() {
     setCreateCategoryOpen(false)
   }
 
-  function createCategory() {
+  async function createCategory() {
     const label = newCategoryName.trim()
     if (!label) return
 
-    const baseId = label
-      .toLowerCase()
-      .replaceAll('&', 'and')
-      .replaceAll(/[^a-z0-9]+/g, '_')
-      .replaceAll(/^_+|_+$/g, '')
+    const res = await fetch(`${API_URL}/product-categories`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: label }),
+    })
+    if (!res.ok) return
+    const created = (await res.json()) as ApiCategory
 
-    const idExists = (id: string) => menuCategories.some((c) => c.id === id)
-    let id = baseId || `cat_${Date.now()}`
-    if (idExists(id)) id = `${id}_${Date.now()}`
-
-    const next: Category = {
-      id,
-      label,
-      imageSrc: MOCK_IMAGE_PATHS[menuCategories.length % MOCK_IMAGE_PATHS.length],
-    }
-    const updated = ensureCategoryImages([...menuCategories, next])
-    setMenuCategories(updated)
-    saveJson('pos.categories', updated)
-
-    setNewFood((prev) => ({ ...prev, categoryId: id }))
+    setApiCategories((prev) => [...prev, created].sort((a, b) => a.id - b.id))
+    setNewFood((prev) => ({ ...prev, categoryId: String(created.id) }))
     setCreateCategoryOpen(false)
   }
 
@@ -465,9 +449,13 @@ export default function PosPage() {
     const price = Number(newFood.priceDigits)
     if (!name || !Number.isFinite(price) || price <= 0) return
 
+    const categoryId = newFood.categoryId === 'uncategorized' ? 0 : Number(newFood.categoryId)
+    if (newFood.categoryId !== 'uncategorized' && !Number.isFinite(categoryId)) return
+
     const form = new FormData()
     form.append('name', name)
     form.append('price', newFood.priceDigits)
+    form.append('category_id', String(categoryId))
     if (newFood.imageFile) form.append('image', newFood.imageFile)
 
     const res = await fetch(`${API_URL}/products`, { method: 'POST', body: form })
@@ -475,14 +463,12 @@ export default function PosPage() {
     const created = (await res.json()) as ApiProduct
 
     const imageSrc = newFoodPreviewUrl || toImageSrc(created)
-    const nextCategoryMap = { ...productCategoryMap, [String(created.id)]: newFood.categoryId }
-    setProductCategoryMap(nextCategoryMap)
-    saveJson('pos.productCategories', nextCategoryMap)
-
-    setMenuProducts((prev) => [
-      { id: created.id, name: created.name, price: created.price, imageSrc, categoryId: newFood.categoryId },
-      ...prev,
-    ])
+    const createdCategoryId = created.category_id ? String(created.category_id) : 'uncategorized'
+    setMenuProducts((prev) => {
+      const next: UiProduct = { id: created.id, name: created.name, price: created.price, imageSrc, categoryId: createdCategoryId }
+      if (selectedCategoryId !== 'all' && createdCategoryId !== selectedCategoryId) return prev
+      return [next, ...prev]
+    })
     setCreateOpen(false)
   }
 
@@ -499,20 +485,40 @@ export default function PosPage() {
   useEffect(() => {
     let cancelled = false
 
+    async function loadCategories() {
+      const res = await fetch(`${API_URL}/product-categories`)
+      if (!res.ok) return
+      const list = (await res.json()) as ApiCategory[]
+      if (cancelled) return
+      setApiCategories(list)
+    }
+
+    loadCategories()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
     async function loadProducts() {
-      const res = await fetch(`${API_URL}/products`)
+      const params = new URLSearchParams()
+      if (selectedCategoryId === 'uncategorized') params.set('category_id', '0')
+      else if (selectedCategoryId !== 'all') params.set('category_id', selectedCategoryId)
+
+      const url = params.size ? `${API_URL}/products?${params.toString()}` : `${API_URL}/products`
+      const res = await fetch(url)
       if (!res.ok) return
       const list = (await res.json()) as ApiProduct[]
       if (cancelled) return
-      const map = loadJson<Record<string, string>>('pos.productCategories', {})
-      setProductCategoryMap(map)
       setMenuProducts(
         list.map((p) => ({
           id: p.id,
           name: p.name,
           price: p.price,
           imageSrc: toImageSrc(p),
-          categoryId: map[String(p.id)] ?? 'uncategorized',
+          categoryId: p.category_id ? String(p.category_id) : 'uncategorized',
         })),
       )
     }
@@ -521,7 +527,7 @@ export default function PosPage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [selectedCategoryId])
 
   useEffect(() => {
     return () => {
