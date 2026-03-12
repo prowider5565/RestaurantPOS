@@ -22,6 +22,7 @@ import {
   ListItemText,
   Paper,
   Stack,
+  Pagination,
   Table,
   TableBody,
   TableCell,
@@ -35,9 +36,9 @@ import {
   Toolbar,
   Typography,
 } from '@mui/material'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
-import { orderHistory, type OrderHistoryRow, type OrderItem } from '../mock'
+import { API_URL } from '../../../config/env'
 
 function formatMoney(value: number) {
   return `${new Intl.NumberFormat('uz-UZ').format(Math.round(value))} so'm`
@@ -50,50 +51,119 @@ function toYmd(d: Date) {
   return `${yyyy}-${mm}-${dd}`
 }
 
-function parseCreatedDate(createdAt: string) {
-  const ymd = createdAt.slice(0, 10)
-  const time = createdAt.slice(11, 16)
-  const [y, m, d] = ymd.split('-').map(Number)
-  const [hh, mm] = time.split(':').map(Number)
-  if (!y || !m || !d) return null
-  return new Date(y, m - 1, d, hh || 0, mm || 0, 0, 0)
+type ApiOrderItemRef = { product_id: number; quantity: number }
+type ApiProductSummary = {
+  id: number
+  name: string
+  price: number
+  image_path?: string | null
+}
+type ApiOrderItemDetail = { product: ApiProductSummary; quantity: number }
+type ApiOrderRow = {
+  id: number
+  code: string | null
+  total_price: number
+  status: 'Pending' | 'Completed'
+  created_at: string
+  items: ApiOrderItemRef[]
+}
+type ApiOrderDetail = Omit<ApiOrderRow, 'items'> & { items: ApiOrderItemDetail[] }
+type ApiPage<T> = { items: T[]; total: number; page: number; size: number; pages: number }
+type ApiHistoryOverview = { total_orders: number; total_sum: number }
+type ApiOrderHistoryResponse = { overview: ApiHistoryOverview; page: ApiPage<ApiOrderRow> }
+
+function formatCreated(createdAtIso: string) {
+  const d = new Date(createdAtIso)
+  if (Number.isNaN(d.getTime())) return createdAtIso
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  const hh = String(d.getHours()).padStart(2, '0')
+  const min = String(d.getMinutes()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd} ${hh}:${min}`
 }
 
-function calcTotal(items: OrderItem[]) {
-  return items.reduce((sum, i) => sum + i.qty * i.unitPrice, 0)
+function countFoodTypes(items: ApiOrderItemRef[]) {
+  return new Set(items.map((i) => i.product_id)).size
 }
 
-function countTypes(items: OrderItem[], kind: 'food' | 'drink') {
-  const names = new Set(items.filter((i) => i.kind === kind).map((i) => i.name))
-  return names.size
-}
-
-function PayTypeChip({ payType }: { payType: OrderHistoryRow['payType'] }) {
-  if (payType === 'hold') return <Chip label="On hold" color="warning" size="small" />
+function PayTypeChip({ status }: { status: ApiOrderRow['status'] }) {
+  if (status === 'Pending') return <Chip label="On hold" color="warning" size="small" />
   return <Chip label="Pay now" color="success" size="small" />
+}
+
+function toImageSrc(raw?: string | null) {
+  if (!raw) return '/mock-images/photo_1_2026-03-11_22-51-02.jpg'
+
+  const trimmed = raw.trim()
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed
+
+  const normalized = trimmed.replaceAll('\\', '/')
+
+  const mediaMarker = '/media/'
+  const mediaIdx = normalized.lastIndexOf(mediaMarker)
+  if (mediaIdx !== -1) {
+    const tail = normalized.slice(mediaIdx)
+    return `${API_URL}${tail}`
+  }
+
+  const productsMarker = '/products/'
+  const productsIdx = normalized.lastIndexOf(productsMarker)
+  if (productsIdx !== -1) {
+    const filename = normalized.slice(productsIdx + productsMarker.length)
+    return `${API_URL}/media/products/${filename}`
+  }
+
+  const filename = normalized.split('/').filter(Boolean).at(-1)
+  if (filename) return `${API_URL}/media/products/${filename}`
+
+  return '/mock-images/photo_1_2026-03-11_22-51-02.jpg'
 }
 
 function DetailsDialog({
   open,
   onClose,
-  order,
+  orderId,
 }: {
   open: boolean
   onClose: () => void
-  order: OrderHistoryRow | null
+  orderId: number | null
 }) {
-  if (!order) return null
+  const [order, setOrder] = useState<ApiOrderDetail | null>(null)
 
-  const total = calcTotal(order.items)
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      if (!open || !orderId) return
+      setOrder(null)
+      const res = await fetch(`${API_URL}/orders/${orderId}`)
+      if (!res.ok) return
+      const data = (await res.json()) as ApiOrderDetail
+      if (cancelled) return
+      setOrder(data)
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [open, orderId])
+
+  if (!open) return null
+
+  const total = order?.total_price ?? 0
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 2, py: 1.5 }}>
         <Box>
-          <Typography sx={{ fontWeight: 1000 }}>Order #{order.orderNo}</Typography>
-          <Typography variant="body2" color="text.secondary">
-            ID {order.id} • {order.createdAt}
+          <Typography sx={{ fontWeight: 1000 }}>
+            {order ? `Order #${order.code || order.id}` : 'Order'}
           </Typography>
+          {order && (
+            <Typography variant="body2" color="text.secondary">
+              ID {order.id} • {formatCreated(order.created_at)}
+            </Typography>
+          )}
         </Box>
         <IconButton onClick={onClose} aria-label="Close">
           <CloseIcon />
@@ -104,21 +174,40 @@ function DetailsDialog({
 
       <DialogContent sx={{ pt: 2 }}>
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-          <PayTypeChip payType={order.payType} />
+          {order && <PayTypeChip status={order.status} />}
           <Typography sx={{ fontWeight: 1000 }}>Total: {formatMoney(total)}</Typography>
         </Stack>
 
         <Paper variant="outlined" sx={{ borderRadius: 2 }}>
           <List dense disablePadding>
-            {order.items.map((i) => (
-              <ListItem key={i.id} divider>
-                <ListItemText
-                  primary={<Typography sx={{ fontWeight: 900 }}>{i.name}</Typography>}
-                  secondary={`${i.kind.toUpperCase()} • ${i.qty} × ${formatMoney(i.unitPrice)}`}
-                />
-                <Typography sx={{ fontWeight: 1000 }}>{formatMoney(i.qty * i.unitPrice)}</Typography>
-              </ListItem>
-            ))}
+            {(order?.items ?? []).map((i) => {
+              const lineTotal = i.product.price * i.quantity
+              return (
+                <ListItem key={`${order?.id ?? 'o'}-${i.product.id}`} divider sx={{ py: 1.25 }}>
+                  <Box
+                    component="img"
+                    src={toImageSrc(i.product.image_path ?? null)}
+                    alt={i.product.name}
+                    sx={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 999,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      objectFit: 'cover',
+                      bgcolor: 'background.paper',
+                      mr: 1.5,
+                      flex: '0 0 auto',
+                    }}
+                  />
+                  <ListItemText
+                    primary={<Typography sx={{ fontWeight: 900 }}>{i.product.name}</Typography>}
+                    secondary={`× ${i.quantity} • ${formatMoney(i.product.price)}`}
+                  />
+                  <Typography sx={{ fontWeight: 1000 }}>{formatMoney(lineTotal)}</Typography>
+                </ListItem>
+              )
+            })}
           </List>
         </Paper>
       </DialogContent>
@@ -128,29 +217,49 @@ function DetailsDialog({
 
 export default function OrderHistoryPage() {
   const [search, setSearch] = useState('')
-  const [selected, setSelected] = useState<OrderHistoryRow | null>(null)
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null)
   const [preset, setPreset] = useState<'daily' | 'weekly' | 'monthly' | null>(null)
   const [fromDate, setFromDate] = useState<string>('')
   const [toDate, setToDate] = useState<string>('')
+  const [page, setPage] = useState(1)
+  const [size] = useState(12)
+  const [history, setHistory] = useState<ApiOrderHistoryResponse | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadHistory() {
+      setLoading(true)
+      try {
+        const params = new URLSearchParams()
+        params.set('page', String(page))
+        params.set('size', String(size))
+        if (fromDate) params.set('from_date', fromDate)
+        if (toDate) params.set('to_date', toDate)
+
+        const res = await fetch(`${API_URL}/orders/history?${params.toString()}`)
+        if (!res.ok) return
+        const data = (await res.json()) as ApiOrderHistoryResponse
+        if (cancelled) return
+        setHistory(data)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    loadHistory()
+    return () => {
+      cancelled = true
+    }
+  }, [fromDate, page, size, toDate])
 
   const rows = useMemo(() => {
+    const items = history?.page.items ?? []
     const q = search.trim().toLowerCase()
-    return orderHistory.filter((o) => {
-      const created = parseCreatedDate(o.createdAt)
-      if (fromDate) {
-        const start = new Date(fromDate + 'T00:00:00')
-        if (!created || created < start) return false
-      }
-      if (toDate) {
-        const end = new Date(toDate + 'T23:59:59')
-        if (!created || created > end) return false
-      }
-      if (!q) return true
-      const orderNoMatch = String(o.orderNo).includes(q)
-      const idMatch = String(o.id).includes(q)
-      return idMatch || orderNoMatch
-    })
-  }, [fromDate, search, toDate])
+    if (!q) return items
+    return items.filter((o) => String(o.id).includes(q) || String(o.code || '').toLowerCase().includes(q))
+  }, [history?.page.items, search])
 
   function applyPreset(next: 'daily' | 'weekly' | 'monthly' | null) {
     setPreset(next)
@@ -162,23 +271,24 @@ export default function OrderHistoryPage() {
     if (next === 'monthly') start.setDate(end.getDate() - 29)
     setFromDate(toYmd(start))
     setToDate(toYmd(end))
+    setPage(1)
   }
 
   function exportToExcelCsv() {
     const header = ['ID', 'Order Number', 'Food Types', 'Drink Types', 'Pay Type', 'Total Price', 'Date Created']
     const lines = rows.map((o) => {
-      const foodTypes = countTypes(o.items, 'food')
-      const drinkTypes = countTypes(o.items, 'drink')
-      const payTypeLabel = o.payType === 'hold' ? 'On hold' : 'Pay now'
-      const total = calcTotal(o.items)
+      const foodTypes = countFoodTypes(o.items)
+      const drinkTypes = 0
+      const payTypeLabel = o.status === 'Pending' ? 'On hold' : 'Pay now'
+      const total = o.total_price
       return [
         o.id,
-        o.orderNo,
+        o.code || o.id,
         foodTypes,
         drinkTypes,
         payTypeLabel,
         total.toFixed(2),
-        o.createdAt,
+        formatCreated(o.created_at),
       ]
         .map((cell) => `"${String(cell).replaceAll('"', '""')}"`)
         .join(',')
@@ -271,9 +381,21 @@ export default function OrderHistoryPage() {
         }}
       >
         <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2} flexWrap="wrap">
-          <Button variant="outlined" startIcon={<UploadFileIcon />} onClick={exportToExcelCsv}>
-            Export to Excel
-          </Button>
+          <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap">
+            <Button variant="outlined" startIcon={<UploadFileIcon />} onClick={exportToExcelCsv} disabled={rows.length === 0}>
+              Export to Excel
+            </Button>
+            <Chip
+              label={`Orders: ${history?.overview.total_orders ?? 0}`}
+              variant="outlined"
+              sx={{ fontWeight: 900 }}
+            />
+            <Chip
+              label={`Sum: ${formatMoney(history?.overview.total_sum ?? 0)}`}
+              variant="outlined"
+              sx={{ fontWeight: 900 }}
+            />
+          </Stack>
 
           <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap" justifyContent="flex-end">
             <ToggleButtonGroup
@@ -296,6 +418,7 @@ export default function OrderHistoryPage() {
               onChange={(e) => {
                 setPreset(null)
                 setFromDate(e.target.value)
+                setPage(1)
               }}
               InputLabelProps={{ shrink: true }}
             />
@@ -307,13 +430,14 @@ export default function OrderHistoryPage() {
               onChange={(e) => {
                 setPreset(null)
                 setToDate(e.target.value)
+                setPage(1)
               }}
               InputLabelProps={{ shrink: true }}
             />
           </Stack>
         </Stack>
 
-        {rows.length === 0 ? (
+        {!loading && rows.length === 0 ? (
           <Paper
             variant="outlined"
             sx={{
@@ -357,15 +481,15 @@ export default function OrderHistoryPage() {
               </TableHead>
               <TableBody>
                 {rows.map((o) => {
-                  const total = calcTotal(o.items)
-                  const foodTypes = countTypes(o.items, 'food')
-                  const drinkTypes = countTypes(o.items, 'drink')
+                  const total = o.total_price
+                  const foodTypes = countFoodTypes(o.items)
+                  const drinkTypes = 0
                   return (
                     <TableRow key={o.id} hover>
                       <TableCell align="right" sx={{ fontWeight: 900 }}>
                         {o.id}
                       </TableCell>
-                      <TableCell sx={{ fontWeight: 900 }}>#{o.orderNo}</TableCell>
+                      <TableCell sx={{ fontWeight: 900 }}>#{o.code || o.id}</TableCell>
                       <TableCell>
                         <Stack direction="row" alignItems="center" gap={1.5}>
                           <Stack direction="row" alignItems="center" gap={0.5}>
@@ -379,14 +503,14 @@ export default function OrderHistoryPage() {
                         </Stack>
                       </TableCell>
                       <TableCell>
-                        <PayTypeChip payType={o.payType} />
+                        <PayTypeChip status={o.status} />
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 1000 }}>
                         {formatMoney(total)}
                       </TableCell>
-                      <TableCell>{o.createdAt}</TableCell>
+                      <TableCell>{formatCreated(o.created_at)}</TableCell>
                       <TableCell align="right">
-                        <Button variant="outlined" onClick={() => setSelected(o)}>
+                        <Button variant="outlined" onClick={() => setSelectedOrderId(o.id)}>
                           Details
                         </Button>
                       </TableCell>
@@ -397,9 +521,22 @@ export default function OrderHistoryPage() {
             </Table>
           </TableContainer>
         )}
+
+        {history?.page.pages && history.page.pages > 1 && (
+          <Stack direction="row" justifyContent="flex-end">
+            <Pagination
+              color="primary"
+              page={page}
+              count={history.page.pages}
+              onChange={(_, next) => setPage(next)}
+              showFirstButton
+              showLastButton
+            />
+          </Stack>
+        )}
       </Box>
 
-      <DetailsDialog open={Boolean(selected)} onClose={() => setSelected(null)} order={selected} />
+      <DetailsDialog open={Boolean(selectedOrderId)} onClose={() => setSelectedOrderId(null)} orderId={selectedOrderId} />
     </Box>
   )
 }

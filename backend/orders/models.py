@@ -37,3 +37,4 @@ class OrderItem(Base):
     quantity = Column(Integer, default=1)
 
     order = relationship("Order", back_populates="items")
+    product = relationship("Product")

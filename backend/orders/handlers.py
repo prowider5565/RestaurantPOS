@@ -2,12 +2,14 @@ from __future__ import annotations
 import datetime
 from datetime import date, datetime, time
 
+from fastapi import HTTPException
 from fastapi_pagination import Page, Params
 from fastapi_pagination.ext.sqlalchemy import paginate
+from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
 
 from .models import Order, OrderItem
-from .schemas import OrderCreate
+from .schemas import OrderCreate, OrderHistoryOverviewOut, OrderHistoryResponseOut
 
 
 def create_order(db: Session, payload: OrderCreate) -> tuple[Order, list[OrderItem]]:
@@ -43,11 +45,36 @@ def create_order(db: Session, payload: OrderCreate) -> tuple[Order, list[OrderIt
 def get_order_history(
     db: Session, from_date: date | None, to_date: date | None, params: Params
 ):
-    query = db.query(Order).options(selectinload(Order.items))
-    if from_date is not None:
-        query = query.filter(Order.created_at >= datetime.combine(from_date, time.min))
-    if to_date is not None:
-        query = query.filter(Order.created_at <= datetime.combine(to_date, time.max))
+    def apply_filters(q):
+        if from_date is not None:
+            q = q.filter(Order.created_at >= datetime.combine(from_date, time.min))
+        if to_date is not None:
+            q = q.filter(Order.created_at <= datetime.combine(to_date, time.max))
+        return q
 
-    query = query.order_by(Order.created_at.desc())
-    return paginate(db, query, params)
+    sum_query = apply_filters(
+        db.query(func.coalesce(func.sum(Order.total_price), 0.0)).select_from(Order)
+    )
+    total_sum = float(sum_query.scalar() or 0.0)
+
+    query = apply_filters(db.query(Order).options(selectinload(Order.items))).order_by(
+        Order.created_at.desc()
+    )
+    page = paginate(db, query, params)
+
+    overview = OrderHistoryOverviewOut(
+        total_orders=int(page.total), total_sum=total_sum
+    )
+    return OrderHistoryResponseOut(overview=overview, page=page)
+
+
+def get_order_or_404(db: Session, order_id: int) -> Order:
+    order = (
+        db.query(Order)
+        .options(selectinload(Order.items).selectinload(OrderItem.product))
+        .filter(Order.id == order_id)
+        .first()
+    )
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return order
