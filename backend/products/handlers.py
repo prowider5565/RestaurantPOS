@@ -29,6 +29,7 @@ def create_product(
         price=payload.price,
         image_path=image_path,
         category_id=payload.category_id,
+        measure=payload.measure,
     )
     db.add(product)
     db.commit()

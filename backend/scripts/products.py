@@ -1,9 +1,18 @@
 import os
 import random
 import requests
+from enum import Enum
+
 
 BACKEND_URL = "http://localhost:8000/products"
 IMAGE_DIR = "../frontend/public/mock-images"
+
+
+class ProductMeasure(Enum):
+    UNIT = "unit"
+    GRAM = "gram"
+    PORTION = "portion"
+
 
 CATEGORY_NAMES = [
     "Pizza",
@@ -42,6 +51,10 @@ def random_price():
     return round(random.uniform(5, 25), 2)
 
 
+def random_measure():
+    return random.choice(list(ProductMeasure)).value
+
+
 def seed_products():
     images = [
         f
@@ -55,14 +68,18 @@ def seed_products():
         product_name = random_name()
         category_name = random.choice(CATEGORY_NAMES)
         price = random_price()
+        measure = random_measure()
 
         with open(image_path, "rb") as f:
-            files = {"image": (img, f, "image/jpeg")}
+            files = {
+                "image": (img, f, "image/jpeg")
+            }
 
             data = {
                 "name": product_name,
                 "price": price,
                 "category_name": category_name,
+                "measure": measure,
             }
 
             response = requests.post(
@@ -71,7 +88,7 @@ def seed_products():
                 files=files,
             )
 
-            print(product_name, response.status_code)
+            print(product_name, measure, response.status_code)
 
 
 if __name__ == "__main__":

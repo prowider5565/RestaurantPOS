@@ -5,6 +5,7 @@ from config.database import get_db
 
 from .handlers import create_product, get_product, get_products_list, update_product
 from .schemas import ProductCreate, ProductOut, ProductUpdate
+from .types import ProductMeasure
 
 
 router = APIRouter(prefix="/products", tags=["products"])
@@ -15,10 +16,17 @@ def create_product_api(
     name: str = Form(...),
     price: float = Form(...),
     category_id: int | None = Form(None),
+    measure: ProductMeasure | None = Form(None),
     image: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ) -> ProductOut:
-    payload = ProductCreate(name=name, price=price, image_path=None, category_id=None if category_id == 0 else category_id)
+    payload = ProductCreate(
+        name=name,
+        price=price,
+        image_path=None,
+        category_id=None if category_id == 0 else category_id,
+        measure=measure,
+    )
     return create_product(db, payload, image=image)
 
 
@@ -38,6 +46,7 @@ def update_product_api(
     name: str | None = Form(None),
     price: float | None = Form(None),
     category_id: int | None = Form(None),
+    measure: ProductMeasure | None = Form(None),
     image: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ) -> ProductOut:
@@ -48,5 +57,7 @@ def update_product_api(
         data["price"] = price
     if category_id is not None:
         data["category_id"] = None if category_id == 0 else category_id
+    if measure is not None:
+        data["measure"] = measure
     payload = ProductUpdate(**data)
     return update_product(db, product_id, payload, image=image)

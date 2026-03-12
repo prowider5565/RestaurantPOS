@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from .types import ProductMeasure
+
 
 class ProductCategoryCreate(BaseModel):
     name: str = Field(min_length=1, max_length=120)
@@ -19,6 +21,7 @@ class ProductCreate(BaseModel):
     price: float = Field(gt=0)
     image_path: str | None = Field(default=None, max_length=500)
     category_id: int | None = None
+    measure: ProductMeasure | None = None
 
 
 class ProductUpdate(BaseModel):
@@ -26,6 +29,7 @@ class ProductUpdate(BaseModel):
     price: float | None = Field(default=None, gt=0)
     image_path: str | None = Field(default=None, max_length=500)
     category_id: int | None = None
+    measure: ProductMeasure | None = None
 
 
 class ProductOut(BaseModel):
@@ -36,3 +40,4 @@ class ProductOut(BaseModel):
     price: float
     image_path: str | None = None
     category_id: int | None = None
+    measure: ProductMeasure | None = None

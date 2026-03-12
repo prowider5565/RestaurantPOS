@@ -80,6 +80,7 @@ type NewFoodForm = {
   priceDigits: string
   imageFile: File | null
   categoryId: string
+  measure: 'unit' | 'gram' | 'portion'
 }
 
 function formatMoney(value: number) {
@@ -155,6 +156,7 @@ export default function PosPage() {
     priceDigits: '',
     imageFile: null,
     categoryId: 'uncategorized',
+    measure: 'unit',
   })
   const [newFoodPreviewUrl, setNewFoodPreviewUrl] = useState<string>('')
   const [createCategoryOpen, setCreateCategoryOpen] = useState(false)
@@ -453,6 +455,7 @@ export default function PosPage() {
     form.append('name', name)
     form.append('price', newFood.priceDigits)
     form.append('category_id', String(categoryId))
+    form.append('measure', newFood.measure)
     if (newFood.imageFile) form.append('image', newFood.imageFile)
 
     const res = await fetch(`${API_URL}/products`, { method: 'POST', body: form })
@@ -471,7 +474,7 @@ export default function PosPage() {
 
   useEffect(() => {
     const handler = () => {
-      setNewFood({ name: '', priceDigits: '', imageFile: null, categoryId: 'uncategorized' })
+      setNewFood({ name: '', priceDigits: '', imageFile: null, categoryId: 'uncategorized', measure: 'unit' })
       setNewFoodPreviewUrl('')
       setCreateOpen(true)
     }
@@ -1005,6 +1008,25 @@ export default function PosPage() {
                 inputMode="numeric"
                 sx={{ flex: 1 }}
               />
+
+              <FormControl sx={{ flex: 1 }}>
+                <InputLabel id="new-food-measure-label">Measure</InputLabel>
+                <Select
+                  labelId="new-food-measure-label"
+                  label="Measure"
+                  value={newFood.measure}
+                  onChange={(e) =>
+                    setNewFood((prev) => ({
+                      ...prev,
+                      measure: e.target.value as NewFoodForm['measure'],
+                    }))
+                  }
+                >
+                  <MenuItem value="unit">Unit</MenuItem>
+                  <MenuItem value="gram">Gram</MenuItem>
+                  <MenuItem value="portion">Portion</MenuItem>
+                </Select>
+              </FormControl>
 
               <Stack direction="row" gap={1} sx={{ flex: 1 }}>
                 <FormControl fullWidth>
