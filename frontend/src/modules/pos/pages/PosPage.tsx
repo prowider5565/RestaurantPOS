@@ -250,7 +250,7 @@ export default function PosPage() {
       <Box
         sx={{
           position: 'relative',
-          borderRadius: 2,
+          borderRadius: 0,
           overflow: 'hidden',
         }}
       >
@@ -273,6 +273,7 @@ export default function PosPage() {
             transition: dragging ? 'none' : 'transform 180ms ease',
             touchAction: 'pan-y',
             bgcolor: 'background.paper',
+            borderRadius: 0,
           }}
         >
           {children}
@@ -633,6 +634,11 @@ export default function PosPage() {
                   <SwipeToDeleteRow key={line.product.id} onDelete={() => setQty(line.product.id, 0)}>
                     <ListItem
                       disableGutters
+                      sx={{
+                        px: 0,
+                        '&.MuiListItem-secondaryAction': { pr: 0 },
+                        '& .MuiListItemSecondaryAction-root': { right: 0 },
+                      }}
                       secondaryAction={
                         <Stack direction="row" alignItems="center" gap={0.5}>
                           <IconButton
@@ -663,7 +669,7 @@ export default function PosPage() {
                           sx={{
                             width: 44,
                             height: 44,
-                            borderRadius: 2,
+                            borderRadius: 0,
                             border: '1px solid',
                             borderColor: 'divider',
                             bgcolor: 'background.paper',
@@ -672,6 +678,7 @@ export default function PosPage() {
                         />
                       </ListItemAvatar>
                       <ListItemText
+                        sx={{ pr: 10 }}
                         primary={
                           <Typography sx={{ fontWeight: 800 }} noWrap>
                             {line.product.name}
