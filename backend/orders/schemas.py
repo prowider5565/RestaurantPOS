@@ -50,7 +50,6 @@ class OrderOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    code: str | None = None
     total_price: float
     status: OrderStatus
     items: list[OrderItemDetailOut]
@@ -60,7 +59,6 @@ class OrderHistoryRowOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    code: str | None = None
     total_price: float
     status: OrderStatus
     created_at: datetime

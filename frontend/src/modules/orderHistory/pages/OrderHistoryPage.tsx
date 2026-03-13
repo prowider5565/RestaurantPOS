@@ -61,7 +61,6 @@ type ApiProductSummary = {
 type ApiOrderItemDetail = { product: ApiProductSummary; quantity: number }
 type ApiOrderRow = {
   id: number
-  code: string | null
   total_price: number
   status: 'Pending' | 'Completed'
   created_at: string
@@ -157,7 +156,7 @@ function DetailsDialog({
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 2, py: 1.5 }}>
         <Box>
           <Typography sx={{ fontWeight: 1000 }}>
-            {order ? `Order #${order.code || order.id}` : 'Order'}
+            {order ? `Order #${order.id}` : 'Order'}
           </Typography>
           {order && (
             <Typography variant="body2" color="text.secondary">
@@ -258,7 +257,7 @@ export default function OrderHistoryPage() {
     const items = history?.page.items ?? []
     const q = search.trim().toLowerCase()
     if (!q) return items
-    return items.filter((o) => String(o.id).includes(q) || String(o.code || '').toLowerCase().includes(q))
+    return items.filter((o) => String(o.id).includes(q))
   }, [history?.page.items, search])
 
   function applyPreset(next: 'daily' | 'weekly' | 'monthly' | null) {
@@ -275,7 +274,7 @@ export default function OrderHistoryPage() {
   }
 
   function exportToExcelCsv() {
-    const header = ['ID', 'Order Number', 'Food Types', 'Drink Types', 'Pay Type', 'Total Price', 'Date Created']
+    const header = ['ID', 'Food Types', 'Drink Types', 'Pay Type', 'Total Price', 'Date Created']
     const lines = rows.map((o) => {
       const foodTypes = countFoodTypes(o.items)
       const drinkTypes = 0
@@ -283,7 +282,6 @@ export default function OrderHistoryPage() {
       const total = o.total_price
       return [
         o.id,
-        o.code || o.id,
         foodTypes,
         drinkTypes,
         payTypeLabel,
@@ -467,7 +465,6 @@ export default function OrderHistoryPage() {
                   <TableCell sx={{ fontWeight: 900 }} align="right">
                     ID
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 900 }}>Order #</TableCell>
                   <TableCell sx={{ fontWeight: 900 }}>Types</TableCell>
                   <TableCell sx={{ fontWeight: 900 }}>Pay type</TableCell>
                   <TableCell sx={{ fontWeight: 900 }} align="right">
@@ -489,7 +486,6 @@ export default function OrderHistoryPage() {
                       <TableCell align="right" sx={{ fontWeight: 900 }}>
                         {o.id}
                       </TableCell>
-                      <TableCell sx={{ fontWeight: 900 }}>#{o.code || o.id}</TableCell>
                       <TableCell>
                         <Stack direction="row" alignItems="center" gap={1.5}>
                           <Stack direction="row" alignItems="center" gap={0.5}>

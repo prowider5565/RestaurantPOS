@@ -2,6 +2,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi import HTTPException
+from fastapi.concurrency import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi_pagination import add_pagination
@@ -14,8 +15,12 @@ from products.models import Product, ProductCategory  # noqa: F401
 from products.categories_router import router as product_categories_router
 from products.router import router as products_router
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    Base.metadata.create_all(bind=engine)
+    yield
 
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 MEDIA_ROOT = Path(settings.media_storage_path).resolve()
 app.add_middleware(
     CORSMiddleware,
@@ -24,11 +29,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-@app.on_event("startup")
-def on_startup() -> None:
-    Base.metadata.create_all(bind=engine)
 
 
 app.include_router(products_router)
@@ -54,3 +54,8 @@ def get_media(path: str):
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=False)

@@ -11,7 +11,6 @@ class Order(Base):
     __tablename__ = "orders"
 
     id = Column(Integer, primary_key=True, index=True)
-    code = Column(String(6), unique=True, index=True)
     total_price = Column(Float, default=0.0)
     status = Column(
         Enum(OrderStatus, name="order_status"),
