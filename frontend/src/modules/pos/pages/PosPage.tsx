@@ -48,6 +48,7 @@ type ApiProduct = {
 type ApiCategory = {
   id: number
   name: string
+  image_path?: string | null
 }
 
 type UiProduct = {
@@ -127,19 +128,20 @@ function toImageSrc(apiProduct: ApiProduct) {
   return '/mock-images/photo_1_2026-03-11_22-51-02.jpg'
 }
 
-const MOCK_IMAGE_PATHS = [
-  '/mock-images/photo_1_2026-03-11_22-51-02.jpg',
-  '/mock-images/photo_2_2026-03-11_22-51-02.jpg',
-  '/mock-images/photo_3_2026-03-11_22-51-02.jpg',
-  '/mock-images/photo_4_2026-03-11_22-51-02.jpg',
-  '/mock-images/photo_5_2026-03-11_22-51-02.jpg',
-  '/mock-images/photo_6_2026-03-11_22-51-02.jpg',
-  '/mock-images/photo_7_2026-03-11_22-51-02.jpg',
-  '/mock-images/photo_8_2026-03-11_22-51-02.jpg',
-  '/mock-images/photo_9_2026-03-11_22-51-02.jpg',
-  '/mock-images/photo_10_2026-03-11_22-51-02.jpg',
-  '/mock-images/photo_11_2026-03-11_22-51-02.jpg',
-]
+const DEFAULT_CATEGORY_IMAGE_SRC = '/category-default.svg'
+
+function toCategoryImageSrc(apiCategory: ApiCategory) {
+  const raw = apiCategory.image_path
+  if (!raw) return DEFAULT_CATEGORY_IMAGE_SRC
+
+  const trimmed = raw.trim()
+  if (!trimmed) return DEFAULT_CATEGORY_IMAGE_SRC
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed
+
+  const normalized = trimmed.replaceAll('\\', '/')
+  if (normalized.startsWith('/')) return `${API_URL}${normalized}`
+  return `${API_URL}/${normalized}`
+}
 
 export default function PosPage() {
   const [search, setSearch] = useState('')
@@ -166,15 +168,12 @@ export default function PosPage() {
   const cartCount = useMemo(() => cartLines.reduce((sum, line) => sum + line.qty, 0), [cartLines])
 
   const menuCategories: Category[] = useMemo(() => {
-    const base: Category[] = [
-      { id: 'all', label: 'All', imageSrc: MOCK_IMAGE_PATHS[0] },
-      { id: 'uncategorized', label: 'Uncategorized', imageSrc: MOCK_IMAGE_PATHS[1] },
-    ]
+    const base: Category[] = [{ id: 'all', label: 'All', imageSrc: DEFAULT_CATEGORY_IMAGE_SRC }]
 
-    const next = apiCategories.map((c, idx) => ({
+    const next = apiCategories.map((c) => ({
       id: String(c.id),
       label: c.name,
-      imageSrc: MOCK_IMAGE_PATHS[(idx + 2) % MOCK_IMAGE_PATHS.length],
+      imageSrc: toCategoryImageSrc(c),
     }))
 
     return [...base, ...next]
@@ -637,14 +636,19 @@ export default function PosPage() {
                 }}
               >
                 <Box
+                  component="img"
+                  alt={c.label}
+                  src={c.imageSrc}
+                  onError={(e) => {
+                    if (e.currentTarget.src.endsWith(DEFAULT_CATEGORY_IMAGE_SRC)) return
+                    e.currentTarget.src = DEFAULT_CATEGORY_IMAGE_SRC
+                  }}
                   sx={{
                     width: 80,
                     height: 80,
                     mx: 'auto',
                     borderRadius: 999,
-                    backgroundImage: `url("${c.imageSrc}")`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
+                    objectFit: 'cover',
                     border: '3px solid',
                     borderColor: selected ? 'primary.main' : 'divider',
                     boxShadow: selected ? 2 : 0,

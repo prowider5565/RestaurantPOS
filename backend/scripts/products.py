@@ -4,7 +4,9 @@ import requests
 from enum import Enum
 
 
-BACKEND_URL = "http://localhost:8000/products"
+PRODUCTS_URL = "http://localhost:8000/products"
+CATEGORIES_URL = "http://localhost:8000/product-categories"
+
 IMAGE_DIR = "../frontend/public/mock-images"
 
 
@@ -21,7 +23,12 @@ CATEGORY_NAMES = [
     "Desserts",
     "Salads",
     "Sandwiches",
+    "Pasta",
+    "Soups",
+    "Grill",
+    "Breakfast",
 ]
+
 
 ADJECTIVES = [
     "Spicy",
@@ -30,7 +37,11 @@ ADJECTIVES = [
     "Fresh",
     "Sweet",
     "Cheesy",
+    "Crispy",
+    "Smoky",
+    "Juicy",
 ]
+
 
 NOUNS = [
     "Pizza",
@@ -40,6 +51,9 @@ NOUNS = [
     "Coffee",
     "Fries",
     "Wrap",
+    "Soup",
+    "Pasta",
+    "Steak",
 ]
 
 
@@ -55,41 +69,94 @@ def random_measure():
     return random.choice(list(ProductMeasure)).value
 
 
-def seed_products():
+def load_images():
     images = [
-        f
+        os.path.join(IMAGE_DIR, f)
         for f in os.listdir(IMAGE_DIR)
         if f.lower().endswith((".png", ".jpg", ".jpeg", ".webp"))
     ]
 
-    for img in images:
-        image_path = os.path.join(IMAGE_DIR, img)
+    if not images:
+        raise Exception("No images found in mock-images folder")
 
-        product_name = random_name()
-        category_name = random.choice(CATEGORY_NAMES)
-        price = random_price()
-        measure = random_measure()
+    return images
 
-        with open(image_path, "rb") as f:
-            files = {
-                "image": (img, f, "image/jpeg")
-            }
 
-            data = {
-                "name": product_name,
-                "price": price,
-                "category_name": category_name,
-                "measure": measure,
-            }
+def create_categories():
+    """
+    Creates categories and returns a mapping:
+    {category_name: category_id}
+    """
+    category_map = {}
 
-            response = requests.post(
-                BACKEND_URL,
-                data=data,
-                files=files,
-            )
+    for category in CATEGORY_NAMES:
 
-            print(product_name, measure, response.status_code)
+        response = requests.post(
+            CATEGORIES_URL,
+            json={"name": category},
+        )
+
+        if response.status_code not in (200, 201):
+            raise Exception(f"Failed to create category {category}: {response.text}")
+
+        data = response.json()
+
+        category_id = data["id"]
+        category_map[category] = category_id
+
+        print(f"Created category {category} -> ID {category_id}")
+
+    return category_map
+
+
+def seed_products(category_map):
+
+    images = load_images()
+    image_index = 0
+
+    for category_name, category_id in category_map.items():
+
+        product_count = random.randint(8, 15)
+
+        print(f"\nCreating {product_count} products in category: {category_name}")
+
+        for _ in range(product_count):
+
+            image_path = images[image_index % len(images)]
+            image_index += 1
+
+            product_name = random_name()
+            price = random_price()
+            measure = random_measure()
+
+            with open(image_path, "rb") as f:
+
+                files = {
+                    "image": (
+                        os.path.basename(image_path),
+                        f,
+                        "image/jpeg",
+                    )
+                }
+
+                data = {
+                    "name": product_name,
+                    "price": price,
+                    "category_id": category_id,
+                    "measure": measure,
+                }
+
+                response = requests.post(
+                    PRODUCTS_URL,
+                    data=data,
+                    files=files,
+                )
+
+                print(
+                    f"{product_name} | category_id={category_id} | {measure} | {response.status_code}"
+                )
 
 
 if __name__ == "__main__":
-    seed_products()
+    category_map = create_categories()
+    seed_products(category_map)

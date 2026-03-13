@@ -233,3 +233,5 @@ docker-compose.override.yml
 
 # Python version
 .python-version
+
+backend/media
