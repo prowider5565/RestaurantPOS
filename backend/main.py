@@ -14,6 +14,8 @@ from orders.router import router as orders_router
 from products.models import Product, ProductCategory  # noqa: F401
 from products.categories_router import router as product_categories_router
 from products.router import router as products_router
+from users.handlers import router as users_router
+from users.models import User  # noqa: F401
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -34,6 +36,7 @@ app.add_middleware(
 app.include_router(products_router)
 app.include_router(product_categories_router)
 app.include_router(orders_router)
+app.include_router(users_router, prefix="/users", tags=["users"])
 add_pagination(app)
 
 
