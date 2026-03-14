@@ -26,7 +26,6 @@ import {
   MenuItem,
   Paper,
   Select,
-  Slide,
   Stack,
   TextField,
   Toolbar,
@@ -62,12 +61,6 @@ type UiProduct = {
 type CartLine = {
   product: UiProduct
   qty: number
-}
-
-type QtyEditorState = {
-  open: boolean
-  product: UiProduct | null
-  value: string
 }
 
 type Category = {
@@ -149,7 +142,6 @@ export default function PosPage() {
   const [cart, setCart] = useState<Record<string, CartLine>>({})
   const [menuProducts, setMenuProducts] = useState<UiProduct[]>([])
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
-  const [qtyEditor, setQtyEditor] = useState<QtyEditorState>({ open: false, product: null, value: '' })
   const [apiCategories, setApiCategories] = useState<ApiCategory[]>([])
 
   const [createOpen, setCreateOpen] = useState(false)
@@ -213,38 +205,6 @@ export default function PosPage() {
 
   function clearCart() {
     setCart({})
-  }
-
-  function openQtyEditor(product: UiProduct, qty: number) {
-    setQtyEditor({ open: true, product, value: String(qty) })
-  }
-
-  function closeQtyEditor() {
-    setQtyEditor({ open: false, product: null, value: '' })
-  }
-
-  function qtyAppend(digit: string) {
-    setQtyEditor((prev) => {
-      const current = prev.value.replaceAll(/[^\d]/g, '')
-      const nextRaw = (current === '0' ? digit : current + digit).slice(0, 4)
-      const next = nextRaw.replaceAll(/^0+(?=\d)/g, '')
-      return { ...prev, value: next }
-    })
-  }
-
-  function qtyBackspace() {
-    setQtyEditor((prev) => ({ ...prev, value: prev.value.slice(0, -1) }))
-  }
-
-  function qtyClear() {
-    setQtyEditor((prev) => ({ ...prev, value: '' }))
-  }
-
-  function qtyApply() {
-    if (!qtyEditor.product) return
-    const nextQty = Number(qtyEditor.value || '0')
-    setQty(qtyEditor.product.id, nextQty)
-    closeQtyEditor()
   }
 
   function SwipeToDeleteRow({
@@ -815,14 +775,10 @@ export default function PosPage() {
                         />
 
                         <Box
-                          onClick={() => openQtyEditor(line.product, line.qty)}
                           sx={{
                             flex: 1,
                             minWidth: 0,
-                            cursor: 'pointer',
-                            userSelect: 'none',
                           }}
-                          aria-label={`Edit quantity for ${line.product.name}`}
                         >
                           <Typography sx={{ fontWeight: 800 }} noWrap>
                             {line.product.name}
@@ -911,79 +867,6 @@ export default function PosPage() {
                 Cancel
               </Button>
             </Box>
-
-            <Slide direction="right" in={qtyEditor.open} mountOnEnter unmountOnExit>
-              <Paper
-                elevation={0}
-                sx={{
-                  position: 'absolute',
-                  inset: 0,
-                  p: 2,
-                  borderRadius: 3,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 1.5,
-                  bgcolor: 'background.paper',
-                  zIndex: 2,
-                }}
-              >
-                <Stack direction="row" alignItems="center" justifyContent="space-between">
-                  <Typography sx={{ fontWeight: 1000 }}>
-                    {qtyEditor.product ? qtyEditor.product.name : 'Quantity'}
-                  </Typography>
-                  <IconButton onClick={closeQtyEditor} aria-label="Close">
-                    <CloseIcon />
-                  </IconButton>
-                </Stack>
-
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
-                  <Typography sx={{ fontWeight: 1200, fontSize: 44 }}>{qtyEditor.value || '0'}</Typography>
-                  <Button
-                    color="success"
-                    variant="contained"
-                    onClick={qtyApply}
-                    sx={{ px: 3, py: 1.4, borderRadius: 2 }}
-                  >
-                    Apply
-                  </Button>
-                </Box>
-
-                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, mt: 'auto' }}>
-                  {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((d) => (
-                    <Button
-                      key={d}
-                      variant="outlined"
-                      onClick={() => qtyAppend(d)}
-                      sx={{ py: 2, borderRadius: 2, fontSize: 20, fontWeight: 1000 }}
-                    >
-                      {d}
-                    </Button>
-                  ))}
-                  <Button
-                    color="error"
-                    variant="outlined"
-                    onClick={qtyClear}
-                    sx={{ py: 2, borderRadius: 2, fontSize: 16, fontWeight: 1000 }}
-                  >
-                    Clear
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    onClick={() => qtyAppend('0')}
-                    sx={{ py: 2, borderRadius: 2, fontSize: 20, fontWeight: 1000 }}
-                  >
-                    0
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    onClick={qtyBackspace}
-                    sx={{ py: 2, borderRadius: 2, fontSize: 16, fontWeight: 1000 }}
-                  >
-                    ←
-                  </Button>
-                </Box>
-              </Paper>
-            </Slide>
           </Paper>
         </Box>
       </Box>
