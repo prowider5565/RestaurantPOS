@@ -32,10 +32,11 @@ export default function LoginPage({ onSuccess }: { onSuccess: () => void }) {
     setLoading(true)
     setError(null)
     try {
-      const params = new URLSearchParams({ username, password })
-      const res = await fetch(`${API_URL}/users/login?${params.toString()}`, {
+      const res = await fetch(`${API_URL}/users/login`, {
         method: 'POST',
         credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
       })
       if (!res.ok) {
         const msg = (await res.json().catch(() => null)) as { detail?: string } | null

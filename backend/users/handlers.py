@@ -7,15 +7,20 @@ from config.database import get_db
 from users.dependencies import get_current_user
 from users.helpers import authenticate_user, create_access_token, hash_password
 from users.models import User
-from users.schemas import AdminCredentialsUpdateIn, PasswordUpdateIn, UsernameUpdateIn
+from users.schemas import (
+    AdminCredentialsUpdateIn,
+    LoginSchema,
+    PasswordUpdateIn,
+    UsernameUpdateIn,
+)
 
 
 router = APIRouter()
 
 
 @router.post("/login")
-def login(response: Response, username: str, password: str):
-    user = authenticate_user(username, password)
+def login(response: Response, login_payload: LoginSchema):
+    user = authenticate_user(login_payload.username, login_payload.password)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
@@ -24,7 +29,7 @@ def login(response: Response, username: str, password: str):
         key="access_token",
         value=token,
         httponly=True,
-        secure=True,
+        secure=False,
         samesite="lax",
         max_age=3600,
     )
@@ -72,7 +77,11 @@ def update_username(
     if not username:
         raise HTTPException(status_code=400, detail="Username is required")
 
-    exists = db.query(User).filter(User.username == username, User.id != current_user.id).first()
+    exists = (
+        db.query(User)
+        .filter(User.username == username, User.id != current_user.id)
+        .first()
+    )
     if exists:
         raise HTTPException(status_code=400, detail="Username already taken")
 
@@ -104,7 +113,6 @@ def admin_update_password(
     return {"message": "Password updated"}
 
 
-
 @router.get("/admin/get-user-list")
 async def admin_list_users(
     db: Session = Depends(get_db),
@@ -115,7 +123,7 @@ async def admin_list_users(
 
     users = db.query(User).all()
     return [
-        {       
+        {
             "id": u.id,
             "username": u.username,
             "position": u.position,

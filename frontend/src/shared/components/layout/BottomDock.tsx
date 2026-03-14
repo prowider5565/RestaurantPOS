@@ -2,7 +2,9 @@ import HistoryIcon from '@mui/icons-material/History'
 import AddIcon from '@mui/icons-material/Add'
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu'
 import PeopleIcon from '@mui/icons-material/People'
+import ReceiptIcon from '@mui/icons-material/Receipt'
 import { Button, Paper, Tooltip } from '@mui/material'
+import { invoke } from '@tauri-apps/api/core'
 
 export type DockItemId = 'menu' | 'order_history' | 'users'
 
@@ -66,6 +68,31 @@ export default function BottomDock({
       >
         Order history
       </Button>
+
+      <Tooltip title="Print cheque" placement="top">
+        <Button
+          aria-label="Print cheque"
+          onClick={() => invoke('print_receipt', { content: 'Hello World\nThermal printer test\n\n' }).catch(err => console.error('Failed to print cheque:', err))}
+          sx={{
+            position: 'absolute',
+            right: 75,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            minWidth: 0,
+            width: 56,
+            height: 56,
+            borderRadius: 999,
+            bgcolor: '#F57C00',
+            color: 'common.white',
+            border: '1px solid',
+            borderColor: '#EF6C00',
+            boxShadow: 3,
+            '&:hover': { bgcolor: '#EF6C00', boxShadow: 6 },
+          }}
+        >
+          <ReceiptIcon sx={{ fontSize: 28 }} />
+        </Button>
+      </Tooltip>
 
       <Tooltip title="Add new food & Drinks" placement="top">
         <Button
