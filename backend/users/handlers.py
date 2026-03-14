@@ -7,7 +7,7 @@ from config.database import get_db
 from users.dependencies import get_current_user
 from users.helpers import authenticate_user, create_access_token, hash_password
 from users.models import User
-from users.schemas import PasswordUpdateIn
+from users.schemas import PasswordUpdateIn, UsernameUpdateIn
 
 
 router = APIRouter()
@@ -62,6 +62,29 @@ def update_password(
     return {"message": "Password updated"}
 
 
+@router.put("/update-username")
+def update_username(
+    payload: UsernameUpdateIn,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    username = payload.username.strip()
+    if not username:
+        raise HTTPException(status_code=400, detail="Username is required")
+
+    exists = db.query(User).filter(User.username == username, User.id != current_user.id).first()
+    if exists:
+        raise HTTPException(status_code=400, detail="Username already taken")
+
+    user = db.query(User).filter(User.id == current_user.id).first()
+    if not user:
+        raise HTTPException(status_code=401)
+
+    user.username = username
+    db.commit()
+    return {"message": "Username updated"}
+
+
 @router.put("/update-password/{user_id}")
 def admin_update_password(
     user_id: int,
@@ -80,3 +103,23 @@ def admin_update_password(
     db.commit()
     return {"message": "Password updated"}
 
+
+
+@router.get("/admin/get-user-list")
+async def admin_list_users(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin privilege required")
+
+    users = db.query(User).all()
+    return [
+        {
+            "id": u.id,
+            "username": u.username,
+            "position": u.position,
+            "is_admin": u.is_admin,
+        }
+        for u in users
+    ]

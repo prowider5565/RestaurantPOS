@@ -5,6 +5,7 @@ import AuthGate from './AuthGate'
 import BottomDock, { type DockItemId } from '../shared/components/layout/BottomDock'
 import OrderHistoryPage from '../modules/orderHistory/pages/OrderHistoryPage'
 import PosPage from '../modules/pos/pages/PosPage'
+import SettingsPage from '../modules/settings/pages/SettingsPage'
 
 export default function App() {
   const [active, setActive] = useState<DockItemId | 'settings'>('menu')
@@ -25,7 +26,7 @@ export default function App() {
       <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
         {active === 'menu' && <PosPage />}
         {active === 'order_history' && <OrderHistoryPage />}
-        {active === 'settings' && <Box sx={{ p: 3, pb: 12 }}>Settings (coming soon)</Box>}
+        {active === 'settings' && <SettingsPage />}
 
         {active !== 'settings' ? (
           <BottomDock active={active} onChange={setActive} />
