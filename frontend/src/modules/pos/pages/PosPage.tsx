@@ -35,6 +35,7 @@ import {
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
+import { logout } from '../../../shared/auth'
 
 type ApiProduct = {
   id: number
@@ -540,6 +541,7 @@ export default function PosPage() {
             <Tooltip title="Logout" placement="bottom">
               <IconButton
                 aria-label="Logout"
+                onClick={() => logout()}
                 sx={{
                   width: 52,
                   height: 52,
@@ -998,11 +1000,25 @@ export default function PosPage() {
             </Paper>
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button color="error" variant="contained" onClick={closeCreateFood}>
+        <DialogActions sx={{ px: 3, pb: 2, display: 'flex', gap: 1, flexDirection: { xs: 'column', sm: 'row' } }}>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={closeCreateFood}
+            fullWidth
+            size="large"
+            sx={{ py: 1.6, fontSize: 16, fontWeight: 900 }}
+          >
             Cancel
           </Button>
-          <Button color="success" variant="contained" onClick={createFood}>
+          <Button
+            color="success"
+            variant="contained"
+            onClick={createFood}
+            fullWidth
+            size="large"
+            sx={{ py: 1.6, fontSize: 16, fontWeight: 900 }}
+          >
             Create
           </Button>
         </DialogActions>

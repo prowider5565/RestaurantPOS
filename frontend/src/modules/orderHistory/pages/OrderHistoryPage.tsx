@@ -39,6 +39,7 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
+import { logout } from '../../../shared/auth'
 
 function formatMoney(value: number) {
   return `${new Intl.NumberFormat('uz-UZ').format(Math.round(value))} so'm`
@@ -348,6 +349,7 @@ export default function OrderHistoryPage() {
             <Tooltip title="Logout" placement="bottom">
               <IconButton
                 aria-label="Logout"
+                onClick={() => logout()}
                 sx={{
                   width: 52,
                   height: 52,

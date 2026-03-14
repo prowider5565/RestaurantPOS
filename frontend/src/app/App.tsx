@@ -1,6 +1,7 @@
 import { Box } from '@mui/material'
 import { useEffect, useState } from 'react'
 
+import AuthGate from './AuthGate'
 import BottomDock, { type DockItemId } from '../shared/components/layout/BottomDock'
 import OrderHistoryPage from '../modules/orderHistory/pages/OrderHistoryPage'
 import PosPage from '../modules/pos/pages/PosPage'
@@ -20,16 +21,18 @@ export default function App() {
   }, [])
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-      {active === 'menu' && <PosPage />}
-      {active === 'order_history' && <OrderHistoryPage />}
-      {active === 'settings' && <Box sx={{ p: 3, pb: 12 }}>Settings (coming soon)</Box>}
+    <AuthGate>
+      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+        {active === 'menu' && <PosPage />}
+        {active === 'order_history' && <OrderHistoryPage />}
+        {active === 'settings' && <Box sx={{ p: 3, pb: 12 }}>Settings (coming soon)</Box>}
 
-      {active !== 'settings' ? (
-        <BottomDock active={active} onChange={setActive} />
-      ) : (
-        <BottomDock active="menu" onChange={setActive} />
-      )}
-    </Box>
+        {active !== 'settings' ? (
+          <BottomDock active={active} onChange={setActive} />
+        ) : (
+          <BottomDock active="menu" onChange={setActive} />
+        )}
+      </Box>
+    </AuthGate>
   )
 }
