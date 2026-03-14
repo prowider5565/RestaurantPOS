@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Response, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 
-from users.helpers import create_access_token
+from users.helpers import authenticate_user, create_access_token
 
 router = APIRouter()
 
