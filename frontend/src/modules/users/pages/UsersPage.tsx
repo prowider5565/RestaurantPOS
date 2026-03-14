@@ -50,6 +50,11 @@ export default function UsersPage() {
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<{ kind: 'ok' | 'err'; msg: string } | null>(null)
+  const [deactivateOpen, setDeactivateOpen] = useState(false)
+  const [deactivateUser, setDeactivateUser] = useState<ApiUser | null>(null)
+  const [deactivateNextActive, setDeactivateNextActive] = useState<boolean>(false)
+  const [deactivating, setDeactivating] = useState(false)
+  const [deactivateStatus, setDeactivateStatus] = useState<{ kind: 'ok' | 'err'; msg: string } | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -85,6 +90,45 @@ export default function UsersPage() {
   function closeEdit() {
     if (saving) return
     setEditOpen(false)
+  }
+
+  function openDeactivate(u: ApiUser) {
+    setDeactivateUser(u)
+    setDeactivateNextActive(u.is_active === false)
+    setDeactivateStatus(null)
+    setDeactivateOpen(true)
+  }
+
+  function closeDeactivate() {
+    if (deactivating) return
+    setDeactivateOpen(false)
+  }
+
+  async function confirmDeactivate() {
+    if (!deactivateUser || deactivating) return
+    setDeactivating(true)
+    setDeactivateStatus(null)
+    try {
+      const path = deactivateNextActive
+        ? `${API_URL}/users/admin/activate-user/${deactivateUser.id}`
+        : `${API_URL}/users/admin/deactivate-user/${deactivateUser.id}`
+
+      const res = await fetch(path, {
+        method: 'PUT',
+        credentials: 'include',
+      })
+      if (!res.ok) {
+        const msg = (await res.json().catch(() => null)) as { detail?: string } | null
+        throw new Error(msg?.detail || 'Failed to update user')
+      }
+      setDeactivateStatus({ kind: 'ok', msg: deactivateNextActive ? 'User activated' : 'User deactivated' })
+      setDeactivateOpen(false)
+      await load()
+    } catch (e) {
+      setDeactivateStatus({ kind: 'err', msg: e instanceof Error ? e.message : 'Failed to update user' })
+    } finally {
+      setDeactivating(false)
+    }
   }
 
   const saveDisabled =
@@ -214,8 +258,14 @@ export default function UsersPage() {
                     <Button variant="outlined" size="large" sx={{ minWidth: 120 }} onClick={() => openEdit(u)}>
                       Edit
                     </Button>
-                    <Button variant="contained" color="error" size="large" sx={{ minWidth: 140 }}>
-                      Deactivate
+                    <Button
+                      variant="contained"
+                      color={u.is_active === false ? 'success' : 'error'}
+                      size="large"
+                      sx={{ minWidth: 140 }}
+                      onClick={() => openDeactivate(u)}
+                    >
+                      {u.is_active === false ? 'Activate' : 'Deactivate'}
                     </Button>
                   </Stack>
                 </Stack>
@@ -309,6 +359,50 @@ export default function UsersPage() {
             disabled={saveDisabled}
           >
             {saving ? 'Saving…' : 'Save'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={deactivateOpen} onClose={closeDeactivate} fullWidth maxWidth="xs">
+        <DialogTitle sx={{ fontWeight: 1000 }}>
+          {deactivateNextActive ? 'Activate user' : 'Deactivate user'}
+        </DialogTitle>
+        <DialogContent sx={{ pt: 1 }}>
+          <Stack gap={2} sx={{ mt: 1 }}>
+            {deactivateStatus ? (
+              <Alert severity={deactivateStatus.kind === 'ok' ? 'success' : 'error'}>
+                {deactivateStatus.msg}
+              </Alert>
+            ) : null}
+            <Typography variant="body2" color="text.secondary">
+              {deactivateUser
+                ? `${deactivateNextActive ? 'Activate' : 'Deactivate'} "${deactivateUser.username}"?`
+                : 'Update this user?'}
+            </Typography>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, display: 'flex', gap: 1, flexDirection: { xs: 'column', sm: 'row' } }}>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={closeDeactivate}
+            fullWidth
+            size="large"
+            sx={{ py: 1.6, fontSize: 16, fontWeight: 900 }}
+            disabled={deactivating}
+          >
+            Cancel
+          </Button>
+          <Button
+            color={deactivateNextActive ? 'success' : 'error'}
+            variant="contained"
+            onClick={confirmDeactivate}
+            fullWidth
+            size="large"
+            sx={{ py: 1.6, fontSize: 16, fontWeight: 900 }}
+            disabled={!deactivateUser || deactivating}
+          >
+            {deactivating ? 'Saving…' : deactivateNextActive ? 'Activate' : 'Deactivate'}
           </Button>
         </DialogActions>
       </Dialog>
