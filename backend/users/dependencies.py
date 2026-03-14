@@ -15,4 +15,7 @@ def get_current_user(request: Request):
     if not user:
         raise HTTPException(status_code=401)
 
+    if hasattr(user, "is_active") and not user.is_active:
+        raise HTTPException(status_code=401)
+
     return user

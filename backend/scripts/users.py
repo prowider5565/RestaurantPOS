@@ -23,10 +23,10 @@ def seed_users() -> None:
         password_hash = hash_password("123123123")
 
         users: list[User] = [
-            User(username="admin", is_admin=True, password=password_hash)
+            User(username="admin", is_admin=True, is_active=True, password=password_hash)
         ]
         users.extend(
-            User(username=f"user{i}", is_admin=False, password=password_hash)
+            User(username=f"user{i}", is_admin=False, is_active=True, password=password_hash)
             for i in range(1, 16)
         )
 

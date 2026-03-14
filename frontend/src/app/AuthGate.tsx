@@ -3,17 +3,27 @@ import { useCallback, useEffect, useState } from 'react'
 
 import { API_URL } from '../config/env'
 import LoginPage from '../modules/auth/pages/LoginPage'
+import { AuthProvider, type Me } from '../shared/authContext'
 
 type Status = 'checking' | 'authed' | 'guest'
 
 export default function AuthGate({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<Status>('checking')
+  const [me, setMe] = useState<Me | null>(null)
 
-  const checkMe = useCallback(async () => {
+  const checkMe = useCallback(async (): Promise<void> => {
     try {
       const res = await fetch(`${API_URL}/users/me`, { credentials: 'include' })
-      setStatus(res.ok ? 'authed' : 'guest')
+      if (!res.ok) {
+        setMe(null)
+        setStatus('guest')
+        return
+      }
+      const data = (await res.json()) as Me
+      setMe(data)
+      setStatus('authed')
     } catch {
+      setMe(null)
       setStatus('guest')
     }
   }, [])
@@ -47,5 +57,9 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     return <LoginPage onSuccess={checkMe} />
   }
 
-  return <>{children}</>
+  return (
+    <AuthProvider value={{ me, refreshMe: checkMe }}>
+      {children}
+    </AuthProvider>
+  )
 }

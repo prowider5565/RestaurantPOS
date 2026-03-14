@@ -1,16 +1,19 @@
 import HistoryIcon from '@mui/icons-material/History'
 import AddIcon from '@mui/icons-material/Add'
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu'
+import PeopleIcon from '@mui/icons-material/People'
 import { Button, Paper, Tooltip } from '@mui/material'
 
-export type DockItemId = 'menu' | 'order_history'
+export type DockItemId = 'menu' | 'order_history' | 'users'
 
 export default function BottomDock({
   active,
   onChange,
+  showUsers,
 }: {
   active: DockItemId
   onChange: (next: DockItemId) => void
+  showUsers?: boolean
 }) {
   return (
     <Paper
@@ -43,6 +46,17 @@ export default function BottomDock({
       >
         Menu
       </Button>
+      {showUsers ? (
+        <Button
+          color={active === 'users' ? 'primary' : 'inherit'}
+          size="large"
+          startIcon={<PeopleIcon fontSize="large" />}
+          onClick={() => onChange('users')}
+          sx={{ fontWeight: 900, borderRadius: 999, px: 2, py: 1.25, fontSize: 18 }}
+        >
+          Users
+        </Button>
+      ) : null}
       <Button
         color={active === 'order_history' ? 'primary' : 'inherit'}
         size="large"
