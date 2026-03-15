@@ -19,7 +19,8 @@
     "@mui/material": "^7.3.9",
     "@tauri-apps/api": "^2.10.1",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "react-thermal-printer": "^0.22.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

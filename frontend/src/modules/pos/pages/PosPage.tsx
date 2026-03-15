@@ -387,10 +387,42 @@ export default function PosPage() {
 
     const lines: string[] = []
 
+    // Get today's date
+    const today = new Date().toLocaleDateString('uz-UZ', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    })
+
+    // Get user info from localStorage or auth
+    const userStr = localStorage.getItem('auth_user')
+    let username = '-'
+    let position = '-'
+    
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr)
+        if (user.name || user.username) {
+          username = user.name || user.username
+        }
+        if (user.position || user.role) {
+          position = user.position || user.role
+        }
+      } catch (error) {
+        console.error('Error parsing user info:', error)
+      }
+    }
+
+    // User info above table - right aligned
+    lines.push('Sana: '.padEnd(tableWidth - today.length) + today)
+    lines.push('Ism: '.padEnd(tableWidth - username.length) + username)
+    lines.push('Lavozimi: '.padEnd(tableWidth - position.length) + position)
+    lines.push('')
+
     // Header
-    lines.push('+' + '-'.repeat(tableWidth - 2) + '+')
+    lines.push('-'.repeat(tableWidth))
     lines.push('|' + centerText('Restoran Cheki', tableWidth - 2) + '|')
-    lines.push('+' + '-'.repeat(tableWidth - 2) + '+')
+    lines.push('-'.repeat(tableWidth))
 
     // Date and time
     let dateStr = ''
@@ -411,7 +443,7 @@ export default function PosPage() {
 
     if (dateStr) {
       lines.push('|' + centerText(dateStr, tableWidth - 2) + '|')
-      lines.push('+' + '-'.repeat(tableWidth - 2) + '+')
+      lines.push('-'.repeat(tableWidth))
     }
 
     // Table header
@@ -425,9 +457,10 @@ export default function PosPage() {
       '|' +
       'Narx'.padEnd(priceWidth + 1) +
       '|' +
-      'Jami|'
+      'Jami '.padEnd(subtotalWidth + 1) +
+      '|'
     lines.push(headerRow)
-    lines.push('+' + '-'.repeat(idWidth + 1) + '+' + '-'.repeat(nameWidth + 1) + '+' + '-'.repeat(qtyWidth + 1) + '+' + '-'.repeat(priceWidth + 1) + '+' + '-'.repeat(subtotalWidth + 1) + '+')
+    lines.push('-'.repeat(tableWidth))
 
     // Items
     let totalAmount = 0
@@ -451,7 +484,7 @@ export default function PosPage() {
           price.padEnd(priceWidth + 1) +
           '|' +
           subtotal.padEnd(subtotalWidth) +
-          '|'
+          ' |'
       )
 
       // Additional lines for wrapped name
@@ -467,21 +500,22 @@ export default function PosPage() {
             ' '.repeat(priceWidth + 1) +
             '|' +
             ' '.repeat(subtotalWidth) +
-            '|'
+            ' |'
         )
       }
     }
 
-    lines.push('+' + '-'.repeat(idWidth + 1) + '+' + '-'.repeat(nameWidth + 1) + '+' + '-'.repeat(qtyWidth + 1) + '+' + '-'.repeat(priceWidth + 1) + '+' + '-'.repeat(subtotalWidth + 1) + '+')
+    lines.push('-'.repeat(tableWidth))
 
-    // Total
+    // Total - left aligned
     const totalStr = totalAmount.toLocaleString('uz-UZ') + " so'm"
-    const totalContent = 'Umumiy Jami: ' + totalStr
+    const totalLabel = 'Umumiy Jami: '
+    const totalContent = totalLabel + totalStr
     lines.push('|' + totalContent.padEnd(tableWidth - 2) + '|')
 
-    lines.push('+' + '-'.repeat(tableWidth - 2) + '+')
-    lines.push('|' + centerText('Rahmat!', tableWidth - 2) + '|')
-    lines.push('+' + '-'.repeat(tableWidth - 2) + '+')
+    lines.push('-'.repeat(tableWidth))
+    lines.push('|' + centerText('Tashrifingizdan mamnunmiz!', tableWidth - 2) + '|')
+    lines.push('-'.repeat(tableWidth))
 
     return lines.join('\n')
   }
