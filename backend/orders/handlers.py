@@ -71,6 +71,26 @@ def get_order_history(
     return OrderHistoryResponseOut(overview=overview, page=page)
 
 
+def get_my_order_history(db: Session, user_id: int, params: Params) -> OrderHistoryResponseOut:
+    sum_query = (
+        db.query(func.coalesce(func.sum(Order.total_price), 0.0))
+        .select_from(Order)
+        .filter(Order.user_id == user_id)
+    )
+    total_sum = float(sum_query.scalar() or 0.0)
+
+    query = (
+        db.query(Order)
+        .options(selectinload(Order.items), selectinload(Order.user))
+        .filter(Order.user_id == user_id)
+        .order_by(Order.created_at.desc())
+    )
+    page = paginate(db, query, params)
+
+    overview = OrderHistoryOverviewOut(total_orders=int(page.total), total_sum=total_sum)
+    return OrderHistoryResponseOut(overview=overview, page=page)
+
+
 def get_order_or_404(db: Session, order_id: int) -> Order:
     order = (
         db.query(Order)

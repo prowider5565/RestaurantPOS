@@ -4,8 +4,10 @@ from datetime import date
 from fastapi_pagination import Params
 
 from config.database import get_db
+from users.dependencies import get_current_user
+from users.models import User
 
-from .handlers import create_order, get_order_history, get_order_or_404
+from .handlers import create_order, get_my_order_history, get_order_history, get_order_or_404
 from .schemas import (
     OrderCreate,
     OrderHistoryResponseOut,
@@ -29,6 +31,15 @@ def get_order_history_api(
     db: Session = Depends(get_db),
 ) -> OrderHistoryResponseOut:
     return get_order_history(db, from_date=from_date, to_date=to_date, params=params)
+
+
+@router.get("/my-history", response_model=OrderHistoryResponseOut)
+def get_my_order_history_api(
+    params: Params = Depends(),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> OrderHistoryResponseOut:
+    return get_my_order_history(db, user_id=current_user.id, params=params)
 
 
 @router.get("/{order_id}", response_model=OrderOut)

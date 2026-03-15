@@ -3,9 +3,10 @@ import AddIcon from '@mui/icons-material/Add'
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney'
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu'
 import PeopleIcon from '@mui/icons-material/People'
+import BarChartIcon from '@mui/icons-material/BarChart'
 import { Button, Paper, Tooltip } from '@mui/material'
 
-export type DockItemId = 'menu' | 'order_history' | 'users' | 'cash_desk'
+export type DockItemId = 'menu' | 'order_history' | 'users' | 'cash_desk' | 'statistics'
 
 export default function BottomDock({
   active,
@@ -76,6 +77,16 @@ export default function BottomDock({
         sx={{ fontWeight: 900, borderRadius: 999, px: 2, py: 1.25, fontSize: 18 }}
       >
         Cash desk
+      </Button>
+
+      <Button
+        color={active === 'statistics' ? 'primary' : 'inherit'}
+        size="large"
+        startIcon={<BarChartIcon fontSize="large" />}
+        onClick={() => onChange('statistics')}
+        sx={{ fontWeight: 900, borderRadius: 999, px: 2, py: 1.25, fontSize: 18 }}
+      >
+        Statistics
       </Button>
 
       {active === 'menu' || active === 'users' ? (

@@ -9,6 +9,7 @@ import PosPage from '../modules/pos/pages/PosPage'
 import SettingsPage from '../modules/settings/pages/SettingsPage'
 import UsersPage from '../modules/users/pages/UsersPage'
 import CashDeskPage from '../modules/cashDesk/pages/CashDeskPage'
+import StatisticsPage from '../modules/statistics/pages/StatisticsPage'
 
 function AppShell() {
   const { me } = useAuth()
@@ -24,6 +25,7 @@ function AppShell() {
       if (detail === 'order_history') setActive('order_history')
       if (detail === 'users') setActive('users')
       if (detail === 'cash_desk') setActive('cash_desk')
+      if (detail === 'statistics') setActive('statistics')
     }
     window.addEventListener('app:navigate', onNavigate as EventListener)
     return () => window.removeEventListener('app:navigate', onNavigate as EventListener)
@@ -38,6 +40,7 @@ function AppShell() {
       {active === 'menu' && <PosPage />}
       {active === 'order_history' && <OrderHistoryPage />}
       {active === 'cash_desk' && <CashDeskPage />}
+      {active === 'statistics' && <StatisticsPage />}
       {active === 'users' && isAdmin && <UsersPage />}
       {active === 'settings' && <SettingsPage />}
 
