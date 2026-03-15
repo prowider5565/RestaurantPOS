@@ -36,7 +36,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
-import { logout } from '../../../shared/auth'
+import { getCurrentUser, logout } from '../../../shared/auth'
 
 type ApiProduct = {
   id: number
@@ -460,7 +460,7 @@ export default function PosPage() {
       'Jami '.padEnd(subtotalWidth + 1) +
       '|'
     lines.push(headerRow)
-    lines.push('-'.repeat(tableWidth))
+    lines.push('|' + '-'.repeat(tableWidth - 2) + '|')
 
     // Items
     let totalAmount = 0
@@ -505,7 +505,7 @@ export default function PosPage() {
       }
     }
 
-    lines.push('-'.repeat(tableWidth))
+    lines.push('|' + '-'.repeat(tableWidth - 2) + '|')
 
     // Total - left aligned
     const totalStr = totalAmount.toLocaleString('uz-UZ') + " so'm"
@@ -513,7 +513,7 @@ export default function PosPage() {
     const totalContent = totalLabel + totalStr
     lines.push('|' + totalContent.padEnd(tableWidth - 2) + ' |')
 
-    lines.push('-'.repeat(tableWidth))
+    lines.push('|' + '-'.repeat(tableWidth - 2) + '|')
     lines.push('|' + centerText('Tashrifingizdan mamnunmiz!', tableWidth - 2) + ' |')
     lines.push('-'.repeat(tableWidth))
 
@@ -528,14 +528,17 @@ export default function PosPage() {
     }
   }
 
-  async function placeOrder(status: 'Pending' | 'Completed') {
+  async function placeOrder() {
     if (cartLines.length === 0 || isPlacingOrder) return
 
     setIsPlacingOrder(true)
     try {
+      const currentUser = await getCurrentUser()
+      if (!currentUser) return
+
       const payload = {
         total,
-        status,
+        user_id: currentUser.id,
         items: cartLines.map((line) => ({ product: line.product.id, quantity: line.qty })),
       }
 
@@ -546,12 +549,9 @@ export default function PosPage() {
       })
       if (!res.ok) return
 
-      // If order was completed successfully, print the receipt
-      if (status === 'Completed') {
-        const orderData = await res.json()
-        const receiptContent = await generateReceipt(orderData)
-        await printReceipt(receiptContent)
-      }
+      const orderData = await res.json()
+      const receiptContent = await generateReceipt(orderData)
+      await printReceipt(receiptContent)
 
       clearCart()
     } finally {
@@ -1042,7 +1042,7 @@ export default function PosPage() {
                 color="success"
                 variant="contained"
                 disabled={cartCount === 0 || isPlacingOrder}
-                onClick={() => placeOrder('Completed')}
+                onClick={() => placeOrder()}
                 startIcon={<CheckCircleOutlineIcon />}
                 sx={{ py: 2.2, borderRadius: 2, fontSize: 18 }}
                 fullWidth

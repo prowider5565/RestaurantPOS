@@ -23,6 +23,7 @@ def create_order(db: Session, payload: OrderCreate) -> tuple[Order, list[OrderIt
 
     order = Order(
         total_price=payload.total,
+        user_id=payload.user_id
         # status=payload.status,
     )
     db.add(order)

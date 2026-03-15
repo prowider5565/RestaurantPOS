@@ -66,6 +66,7 @@ type ApiOrderRow = {
   status: 'Pending' | 'Completed'
   created_at: string
   items: ApiOrderItemRef[]
+  user?: { id: number; username: string; position?: string | null }
 }
 type ApiOrderDetail = Omit<ApiOrderRow, 'items'> & { items: ApiOrderItemDetail[] }
 type ApiPage<T> = { items: T[]; total: number; page: number; size: number; pages: number }
@@ -275,14 +276,18 @@ export default function OrderHistoryPage() {
   }
 
   function exportToExcelCsv() {
-    const header = ['ID', 'Food Types', 'Drink Types', 'Pay Type', 'Total Price', 'Date Created']
+    const header = ['ID', 'Username', 'Position', 'Food Types', 'Drink Types', 'Pay Type', 'Total Price', 'Date Created']
     const lines = rows.map((o) => {
       const foodTypes = countFoodTypes(o.items)
       const drinkTypes = 0
       const payTypeLabel = o.status === 'Pending' ? 'On hold' : 'Pay now'
       const total = o.total_price
+      const username = o.user?.username ?? '-'
+      const position = o.user?.position ?? '-'
       return [
         o.id,
+        username,
+        position,
         foodTypes,
         drinkTypes,
         payTypeLabel,
@@ -467,6 +472,8 @@ export default function OrderHistoryPage() {
                   <TableCell sx={{ fontWeight: 900 }} align="right">
                     ID
                   </TableCell>
+                  <TableCell sx={{ fontWeight: 900 }}>Username</TableCell>
+                  <TableCell sx={{ fontWeight: 900 }}>Position</TableCell>
                   <TableCell sx={{ fontWeight: 900 }}>Types</TableCell>
                   <TableCell sx={{ fontWeight: 900 }}>Pay type</TableCell>
                   <TableCell sx={{ fontWeight: 900 }} align="right">
@@ -483,11 +490,15 @@ export default function OrderHistoryPage() {
                   const total = o.total_price
                   const foodTypes = countFoodTypes(o.items)
                   const drinkTypes = 0
+                  const username = o.user?.username ?? '-'
+                  const position = o.user?.position ?? '-'
                   return (
                     <TableRow key={o.id} hover>
                       <TableCell align="right" sx={{ fontWeight: 900 }}>
                         {o.id}
                       </TableCell>
+                      <TableCell>{username}</TableCell>
+                      <TableCell>{position}</TableCell>
                       <TableCell>
                         <Stack direction="row" alignItems="center" gap={1.5}>
                           <Stack direction="row" alignItems="center" gap={0.5}>

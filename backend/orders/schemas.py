@@ -17,13 +17,13 @@ class OrderItemCreate(BaseModel):
 
 class OrderCreate(BaseModel):
     total: float = Field(gt=0)
+    user_id: int
     # status: OrderStatus = OrderStatus.PENDING
     items: list[OrderItemCreate] = Field(min_length=1)
 
 
 class OrderItemOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-
     product_id: int
     quantity: int
 
