@@ -36,7 +36,9 @@ def get_product_api(product_id: int, db: Session = Depends(get_db)) -> ProductOu
 
 
 @router.get("", response_model=list[ProductOut])
-def get_products_api(category_id: int | None = None, db: Session = Depends(get_db)) -> list[ProductOut]:
+def get_products_api(
+    category_id: int | None = None, db: Session = Depends(get_db)
+) -> list[ProductOut]:
     return get_products_list(db, category_id=category_id)
 
 

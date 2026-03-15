@@ -68,7 +68,11 @@ export default function UsersPage() {
     setError(null)
     try {
       const res = await fetch(`${API_URL}/users/admin/get-user-list`, { credentials: 'include' })
-      if (!res.ok) throw new Error('Failed to load users')
+      if (!res.ok) {
+        const msg = (await res.json().catch(() => null)) as { detail?: string } | null
+        const detail = msg?.detail ? `: ${msg.detail}` : ''
+        throw new Error(`Failed to load users (${res.status})${detail}`)
+      }
       const data = (await res.json()) as ApiUser[]
       setRows(Array.isArray(data) ? data : [])
     } catch (e) {
