@@ -32,6 +32,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
+import { invoke } from '@tauri-apps/api/core'
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
@@ -343,6 +344,67 @@ export default function PosPage() {
     )
   }
 
+  async function generateReceipt(orderData: {
+    id: number
+    total_price: number
+    created_at: string
+    items: Array<{
+      product: { name: string; price: number }
+      quantity: number
+    }>
+  }): Promise<string> {
+    const lines: string[] = []
+
+    // Header
+    lines.push('='.repeat(32))
+    lines.push('RESTAURANT POS RECEIPT'.padStart(24).padEnd(32))
+    lines.push('='.repeat(32))
+
+    // Order info
+    lines.push(`Order ID: ${orderData.id}`)
+
+    // Date and time
+    const dt = new Date(orderData.created_at)
+    lines.push(`Date: ${dt.toLocaleString()}`)
+
+    lines.push('-'.repeat(32))
+
+    // Items section
+    lines.push('ITEMS:')
+
+    for (const item of orderData.items) {
+      const qty = item.quantity
+      const price = item.product.price
+      const name = item.product.name
+      const itemTotal = qty * price
+
+      const nameShort = name.length > 20 ? name.substring(0, 20) : name
+      lines.push(nameShort)
+      lines.push(`  ${qty}x ${price.toLocaleString('uz-UZ')} = ${itemTotal.toLocaleString('uz-UZ')}`)
+    }
+
+    lines.push('-'.repeat(32))
+
+    // Total
+    const total = orderData.total_price
+    const totalLine = 'TOTAL'.padEnd(20) + total.toLocaleString('uz-UZ') + " so'm"
+    lines.push(totalLine)
+
+    lines.push('='.repeat(32))
+    lines.push('Thank you for your order!'.padStart(24).padEnd(32))
+    lines.push('='.repeat(32))
+
+    return lines.join('\n')
+  }
+
+  async function printReceipt(receiptContent: string) {
+    try {
+      await invoke('print_receipt', { content: receiptContent })
+    } catch (error) {
+      console.error('Error printing receipt:', error)
+    }
+  }
+
   async function placeOrder(status: 'Pending' | 'Completed') {
     if (cartLines.length === 0 || isPlacingOrder) return
 
@@ -360,6 +422,13 @@ export default function PosPage() {
         body: JSON.stringify(payload),
       })
       if (!res.ok) return
+
+      // If order was completed successfully, print the receipt
+      if (status === 'Completed') {
+        const orderData = await res.json()
+        const receiptContent = await generateReceipt(orderData)
+        await printReceipt(receiptContent)
+      }
 
       clearCart()
     } finally {
