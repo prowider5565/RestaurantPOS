@@ -421,7 +421,7 @@ export default function PosPage() {
 
     // Header
     lines.push('-'.repeat(tableWidth))
-    lines.push('|' + centerText('Restoran Cheki', tableWidth - 2) + '|')
+    lines.push('|' + centerText('Restoran Cheki', tableWidth - 2) + ' |')
     lines.push('-'.repeat(tableWidth))
 
     // Date and time
@@ -511,10 +511,10 @@ export default function PosPage() {
     const totalStr = totalAmount.toLocaleString('uz-UZ') + " so'm"
     const totalLabel = 'Umumiy Jami: '
     const totalContent = totalLabel + totalStr
-    lines.push('|' + totalContent.padEnd(tableWidth - 2) + '|')
+    lines.push('|' + totalContent.padEnd(tableWidth - 2) + ' |')
 
     lines.push('-'.repeat(tableWidth))
-    lines.push('|' + centerText('Tashrifingizdan mamnunmiz!', tableWidth - 2) + '|')
+    lines.push('|' + centerText('Tashrifingizdan mamnunmiz!', tableWidth - 2) + ' |')
     lines.push('-'.repeat(tableWidth))
 
     return lines.join('\n')
