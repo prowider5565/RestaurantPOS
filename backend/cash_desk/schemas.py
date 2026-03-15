@@ -12,6 +12,13 @@ class CashDeskTransactionCreateIn(BaseModel):
     transaction_type: TransactionType
 
 
+class CashDeskSummaryOut(BaseModel):
+    current_amount: float
+    total_order_income: float
+    total_misc_income: float
+    total_expense: float
+
+
 class CashDeskUserOut(BaseModel):
     id: int
     username: str

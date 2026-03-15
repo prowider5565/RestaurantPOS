@@ -34,6 +34,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
 import { logout } from '../../../shared/auth'
+import { useAuth } from '../../../shared/authContext'
 
 type ApiUser = {
     id: number
@@ -58,18 +59,9 @@ type ApiPage<T> = { items: T[]; total: number; page: number; size: number; pages
 
 type CashDeskSummary = {
     current_amount: number
-    total_income: number
     total_order_income: number
     total_misc_income: number
-    total_expenses: number
-}
-
-const mockSummary: CashDeskSummary = {
-    current_amount: 800000,
-    total_income: 900000,
-    total_order_income: 650000,
-    total_misc_income: 250000,
-    total_expenses: 100000,
+    total_expense: number
 }
 
 function toYmd(d: Date) {
@@ -80,10 +72,14 @@ function toYmd(d: Date) {
 }
 
 export default function CashDeskPage() {
-    const summary = mockSummary
+    const { me } = useAuth()
+    const isAdmin = me?.is_admin === true || me?.is_admin === 1
+
+    const [summary, setSummary] = useState<CashDeskSummary | null>(null)
+    const [summaryLoading, setSummaryLoading] = useState(false)
+    const [summaryError, setSummaryError] = useState<string | null>(null)
+
     const [txPage, setTxPage] = useState<ApiPage<ApiCashDeskTransaction> | null>(null)
-    const [txLoading, setTxLoading] = useState(false)
-    const [txError, setTxError] = useState<string | null>(null)
 
     const [preset, setPreset] = useState<'daily' | 'weekly' | 'monthly' | null>(null)
     const [fromDate, setFromDate] = useState<string>('')
@@ -123,9 +119,37 @@ export default function CashDeskPage() {
     useEffect(() => {
         let cancelled = false
 
+        async function loadSummary() {
+            setSummaryLoading(true)
+            setSummaryError(null)
+            try {
+                const res = await fetch(`${API_URL}/cash-desk/summary`, { credentials: 'include' })
+                if (!res.ok) {
+                    const msg = (await res.json().catch(() => null)) as { detail?: string } | null
+                    throw new Error(msg?.detail || `Failed to load summary (${res.status})`)
+                }
+                const data = (await res.json()) as CashDeskSummary
+                if (cancelled) return
+                setSummary(data)
+            } catch (e) {
+                if (cancelled) return
+                setSummary(null)
+                setSummaryError(e instanceof Error ? e.message : 'Failed to load summary')
+            } finally {
+                if (!cancelled) setSummaryLoading(false)
+            }
+        }
+
+        loadSummary()
+        return () => {
+            cancelled = true
+        }
+    }, [reloadKey])
+
+    useEffect(() => {
+        let cancelled = false
+
         async function loadTransactions() {
-            setTxLoading(true)
-            setTxError(null)
             try {
                 const params = new URLSearchParams()
                 params.set('page', String(page))
@@ -144,9 +168,6 @@ export default function CashDeskPage() {
             } catch (e) {
                 if (cancelled) return
                 setTxPage(null)
-                setTxError(e instanceof Error ? e.message : 'Failed to load transactions')
-            } finally {
-                if (!cancelled) setTxLoading(false)
             }
         }
 
@@ -192,6 +213,7 @@ export default function CashDeskPage() {
     }
 
     function requestDeleteTransactionRow(tx: ApiCashDeskTransaction) {
+        if (!isAdmin) return
         setDeleteError(null)
         setDeleteTarget(tx)
         setDeleteOpen(true)
@@ -242,6 +264,12 @@ export default function CashDeskPage() {
 
     const pages = txPage?.pages ?? 1
     const pagedTransactions = txPage?.items ?? []
+    const safeSummary: CashDeskSummary = summary ?? {
+        current_amount: 0,
+        total_order_income: 0,
+        total_misc_income: 0,
+        total_expense: 0,
+    }
 
     return (
         <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
@@ -393,19 +421,21 @@ export default function CashDeskPage() {
                                     },
                                 }}
                             >
-                                <TableHead>
-                                    <TableRow sx={{ bgcolor: 'background.default' }}>
-                                        <TableCell sx={{ fontWeight: 900 }}>Username</TableCell>
-                                        <TableCell align="right" sx={{ fontWeight: 900 }}>
-                                            Amount
-                                        </TableCell>
-                                        <TableCell sx={{ fontWeight: 900 }}>Type</TableCell>
-                                        <TableCell sx={{ fontWeight: 900 }}>Date</TableCell>
-                                        <TableCell align="right" sx={{ fontWeight: 900 }}>
-                                            Actions
-                                        </TableCell>
-                                    </TableRow>
-                                </TableHead>
+	                                <TableHead>
+	                                    <TableRow sx={{ bgcolor: 'background.default' }}>
+	                                        <TableCell sx={{ fontWeight: 900 }}>Username</TableCell>
+	                                        <TableCell align="right" sx={{ fontWeight: 900 }}>
+	                                            Amount
+	                                        </TableCell>
+	                                        <TableCell sx={{ fontWeight: 900 }}>Type</TableCell>
+	                                        <TableCell sx={{ fontWeight: 900 }}>Date</TableCell>
+	                                        {isAdmin ? (
+	                                            <TableCell align="right" sx={{ fontWeight: 900 }}>
+	                                                Actions
+	                                            </TableCell>
+	                                        ) : null}
+	                                    </TableRow>
+	                                </TableHead>
                                 <TableBody>
                                     {pagedTransactions.map((transaction) => (
                                         <TableRow key={transaction.id} hover>
@@ -451,27 +481,29 @@ export default function CashDeskPage() {
                                                     })
                                                 })()}
                                             </TableCell>
-                                            <TableCell align="right">
-                                                <Tooltip title="Delete" placement="top">
-                                                    <IconButton
-                                                        aria-label="Delete"
-                                                        onClick={() => requestDeleteTransactionRow(transaction)}
-                                                        sx={{
-                                                            color: 'error.main',
-                                                            border: '1px solid',
-                                                            borderColor: 'divider',
-                                                            borderRadius: 2,
-                                                            width: 52,
-                                                            height: 52,
-                                                            '& .MuiSvgIcon-root': { fontSize: 32 },
-                                                        }}
-                                                    >
-                                                        <DeleteOutlineIcon />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
+	                                            {isAdmin ? (
+	                                                <TableCell align="right">
+	                                                    <Tooltip title="Delete" placement="top">
+	                                                        <IconButton
+	                                                            aria-label="Delete"
+	                                                            onClick={() => requestDeleteTransactionRow(transaction)}
+	                                                            sx={{
+	                                                                color: 'error.main',
+	                                                                border: '1px solid',
+	                                                                borderColor: 'divider',
+	                                                                borderRadius: 2,
+	                                                                width: 52,
+	                                                                height: 52,
+	                                                                '& .MuiSvgIcon-root': { fontSize: 32 },
+	                                                            }}
+	                                                        >
+	                                                            <DeleteOutlineIcon />
+	                                                        </IconButton>
+	                                                    </Tooltip>
+	                                                </TableCell>
+	                                            ) : null}
+	                                        </TableRow>
+	                                    ))}
                                 </TableBody>
                             </Table>
                         </TableContainer>
@@ -517,9 +549,14 @@ export default function CashDeskPage() {
                             <Box sx={{ textAlign: 'center', pb: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
                                 <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 1 }}>Current Amount</Typography>
                                 <Typography sx={{ fontWeight: 1000, fontSize: 48, color: 'primary.main' }}>
-                                    {new Intl.NumberFormat('uz-UZ').format(Math.round(summary.current_amount))}
+                                    {new Intl.NumberFormat('uz-UZ').format(Math.round(safeSummary.current_amount))}
                                 </Typography>
                                 <Typography sx={{ fontWeight: 700, color: 'text.secondary', mt: 1, fontSize: 14 }}>so'm</Typography>
+                                {summaryError ? (
+                                    <Typography sx={{ mt: 1, fontSize: 12, color: 'error.main' }}>{summaryError}</Typography>
+                                ) : summaryLoading ? (
+                                    <Typography sx={{ mt: 1, fontSize: 12, color: 'text.secondary' }}>Loading...</Typography>
+                                ) : null}
                             </Box>
 
                             {/* Income and Expenses */}
@@ -543,7 +580,7 @@ export default function CashDeskPage() {
                                             Total Order Income
                                         </Typography>
                                         <Typography sx={{ fontWeight: 900, fontSize: 18, color: 'success.main' }}>
-                                            +{formatMoney(summary.total_order_income)}
+                                            +{formatMoney(safeSummary.total_order_income)}
                                         </Typography>
                                     </Box>
                                     <Box sx={{ flex: 1, pl: 2, textAlign: 'center' }}>
@@ -551,7 +588,7 @@ export default function CashDeskPage() {
                                             Total Misc Income
                                         </Typography>
                                         <Typography sx={{ fontWeight: 900, fontSize: 18, color: 'success.main' }}>
-                                            +{formatMoney(summary.total_misc_income)}
+                                            +{formatMoney(safeSummary.total_misc_income)}
                                         </Typography>
                                     </Box>
                                 </Stack>
@@ -563,7 +600,7 @@ export default function CashDeskPage() {
                                         Total Expenses
                                     </Typography>
                                     <Typography sx={{ fontWeight: 900, fontSize: 20, color: 'error.main' }}>
-                                        -{formatMoney(summary.total_expenses)}
+                                        -{formatMoney(safeSummary.total_expense)}
                                     </Typography>
                                 </Box>
                             </Box>
@@ -670,35 +707,40 @@ export default function CashDeskPage() {
                 </Box>
             </Box>
 
-            <Dialog open={deleteOpen} onClose={closeDelete} fullWidth maxWidth="xs">
-                <DialogTitle sx={{ fontWeight: 1000 }}>Delete transaction</DialogTitle>
-                <DialogContent sx={{ pt: 1 }}>
-                    <Stack gap={1.5} sx={{ mt: 1 }}>
-                        <Typography variant="body2" color="text.secondary">
-                            {deleteTarget ? `Delete transaction #${deleteTarget.id}?` : 'Delete this transaction?'}
-                        </Typography>
-                        {deleteTarget ? (
-                            <Paper variant="outlined" sx={{ borderRadius: 2, p: 1.5 }}>
-                                <Stack direction="row" justifyContent="space-between" gap={2}>
-                                    <Typography sx={{ fontWeight: 900 }}>Amount</Typography>
-                                    <Typography sx={{ fontWeight: 1000 }}>
-                                        {(deleteTarget.transaction_type === 'in' ? '+' : '-') + new Intl.NumberFormat('uz-UZ').format(deleteTarget.amount)}
-                                    </Typography>
-                                </Stack>
-                            </Paper>
-                        ) : null}
-                        {deleteError ? <Typography sx={{ fontWeight: 900, color: 'error.main', fontSize: 13 }}>{deleteError}</Typography> : null}
-                    </Stack>
-                </DialogContent>
-                <DialogActions sx={{ px: 3, pb: 2, display: 'flex', gap: 1 }}>
-                    <Button variant="outlined" onClick={closeDelete} disabled={deleting}>
-                        Cancel
-                    </Button>
-                    <Button color="error" variant="contained" onClick={confirmDelete} disabled={!deleteTarget || deleting}>
-                        {deleting ? 'Deleting…' : 'Delete'}
-                    </Button>
-                </DialogActions>
-            </Dialog>
+            {isAdmin ? (
+                <Dialog open={deleteOpen} onClose={closeDelete} fullWidth maxWidth="xs">
+                    <DialogTitle sx={{ fontWeight: 1000 }}>Delete transaction</DialogTitle>
+                    <DialogContent sx={{ pt: 1 }}>
+                        <Stack gap={1.5} sx={{ mt: 1 }}>
+                            <Typography variant="body2" color="text.secondary">
+                                {deleteTarget ? `Delete transaction #${deleteTarget.id}?` : 'Delete this transaction?'}
+                            </Typography>
+                            {deleteTarget ? (
+                                <Paper variant="outlined" sx={{ borderRadius: 2, p: 1.5 }}>
+                                    <Stack direction="row" justifyContent="space-between" gap={2}>
+                                        <Typography sx={{ fontWeight: 900 }}>Amount</Typography>
+                                        <Typography sx={{ fontWeight: 1000 }}>
+                                            {(deleteTarget.transaction_type === 'in' ? '+' : '-') +
+                                                new Intl.NumberFormat('uz-UZ').format(deleteTarget.amount)}
+                                        </Typography>
+                                    </Stack>
+                                </Paper>
+                            ) : null}
+                            {deleteError ? (
+                                <Typography sx={{ fontWeight: 900, color: 'error.main', fontSize: 13 }}>{deleteError}</Typography>
+                            ) : null}
+                        </Stack>
+                    </DialogContent>
+                    <DialogActions sx={{ px: 3, pb: 2, display: 'flex', gap: 1 }}>
+                        <Button variant="outlined" onClick={closeDelete} disabled={deleting}>
+                            Cancel
+                        </Button>
+                        <Button color="error" variant="contained" onClick={confirmDelete} disabled={!deleteTarget || deleting}>
+                            {deleting ? 'Deleting…' : 'Delete'}
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+            ) : null}
         </Box>
     )
 }
