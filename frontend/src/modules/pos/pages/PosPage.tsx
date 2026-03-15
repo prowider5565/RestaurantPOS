@@ -378,19 +378,19 @@ export default function PosPage() {
       quantity: number
     }>
   }): Promise<string> {
-    const tableWidth = 50
-    const idWidth = 3
-    const nameWidth = 18
+    const tableWidth = 42
+    const idWidth = 2
+    const nameWidth = 12
     const qtyWidth = 3
-    const priceWidth = 8
-    const subtotalWidth = 10
+    const priceWidth = 7
+    const subtotalWidth = 8
 
     const lines: string[] = []
 
     // Header
-    lines.push('┌' + '─'.repeat(tableWidth - 2) + '┐')
-    lines.push('│' + centerText('RESTAURANT POS RECEIPT', tableWidth - 2) + '│')
-    lines.push('├' + '─'.repeat(tableWidth - 2) + '┤')
+    lines.push('+' + '-'.repeat(tableWidth - 2) + '+')
+    lines.push('|' + centerText('RESTAURANT RECEIPT', tableWidth - 2) + '|')
+    lines.push('+' + '-'.repeat(tableWidth - 2) + '+')
 
     // Date and time
     let dateStr = ''
@@ -410,23 +410,24 @@ export default function PosPage() {
     }
 
     if (dateStr) {
-      lines.push('│' + centerText(dateStr, tableWidth - 2) + '│')
-      lines.push('├' + '─'.repeat(tableWidth - 2) + '┤')
+      lines.push('|' + centerText(dateStr, tableWidth - 2) + '|')
+      lines.push('+' + '-'.repeat(tableWidth - 2) + '+')
     }
 
     // Table header
     const headerRow =
-      '│ ' +
-      'ID'.padEnd(idWidth) +
-      '│ ' +
-      'Name'.padEnd(nameWidth) +
-      '│ ' +
-      'Qty'.padEnd(qtyWidth) +
-      '│ ' +
-      'Price'.padEnd(priceWidth) +
-      '│ Subtotal │'
+      '|' +
+      'ID'.padEnd(idWidth + 1) +
+      '|' +
+      'Name'.padEnd(nameWidth + 1) +
+      '|' +
+      'Qty'.padEnd(qtyWidth + 1) +
+      '|' +
+      'Price'.padEnd(priceWidth + 1) +
+      '|' +
+      'Subtotal|'
     lines.push(headerRow)
-    lines.push('├' + '─'.repeat(idWidth + 2) + '┼' + '─'.repeat(nameWidth + 2) + '┼' + '─'.repeat(qtyWidth + 2) + '┼' + '─'.repeat(priceWidth + 2) + '┼' + '─'.repeat(subtotalWidth + 2) + '┤')
+    lines.push('+' + '-'.repeat(idWidth + 1) + '+' + '-'.repeat(nameWidth + 1) + '+' + '-'.repeat(qtyWidth + 1) + '+' + '-'.repeat(priceWidth + 1) + '+' + '-'.repeat(subtotalWidth + 1) + '+')
 
     // Items
     let totalAmount = 0
@@ -440,50 +441,47 @@ export default function PosPage() {
 
       // First line with ID
       lines.push(
-        '│ ' +
-          id.padEnd(idWidth) +
-          '│ ' +
-          nameLines[0].padEnd(nameWidth) +
-          '│ ' +
-          qty.padEnd(qtyWidth) +
-          '│ ' +
-          price.padEnd(priceWidth) +
-          '│ ' +
+        '|' +
+          id.padEnd(idWidth + 1) +
+          '|' +
+          nameLines[0].padEnd(nameWidth + 1) +
+          '|' +
+          qty.padEnd(qtyWidth + 1) +
+          '|' +
+          price.padEnd(priceWidth + 1) +
+          '|' +
           subtotal.padEnd(subtotalWidth) +
-          '│'
+          '|'
       )
 
       // Additional lines for wrapped name
       for (let i = 1; i < nameLines.length; i++) {
         lines.push(
-          '│ ' +
-            ' '.repeat(idWidth) +
-            '│ ' +
-            nameLines[i].padEnd(nameWidth) +
-            '│ ' +
-            ' '.repeat(qtyWidth) +
-            '│ ' +
-            ' '.repeat(priceWidth) +
-            '│ ' +
+          '|' +
+            ' '.repeat(idWidth + 1) +
+            '|' +
+            nameLines[i].padEnd(nameWidth + 1) +
+            '|' +
+            ' '.repeat(qtyWidth + 1) +
+            '|' +
+            ' '.repeat(priceWidth + 1) +
+            '|' +
             ' '.repeat(subtotalWidth) +
-            '│'
+            '|'
         )
       }
     }
 
-    lines.push('├' + '─'.repeat(idWidth + 2) + '┼' + '─'.repeat(nameWidth + 2) + '┼' + '─'.repeat(qtyWidth + 2) + '┼' + '─'.repeat(priceWidth + 2) + '┼' + '─'.repeat(subtotalWidth + 2) + '┤')
+    lines.push('+' + '-'.repeat(idWidth + 1) + '+' + '-'.repeat(nameWidth + 1) + '+' + '-'.repeat(qtyWidth + 1) + '+' + '-'.repeat(priceWidth + 1) + '+' + '-'.repeat(subtotalWidth + 1) + '+')
 
     // Total
     const totalStr = totalAmount.toLocaleString('uz-UZ') + " so'm"
-    const totalContent =
-      ' '.repeat(idWidth + 2 + nameWidth + 2 + qtyWidth + 2 + priceWidth + 2) + 'Total: ' + totalStr
-    lines.push('│' + totalContent.padEnd(tableWidth - 2) + '│')
+    const totalContent = 'Total: ' + totalStr
+    lines.push('|' + totalContent.padEnd(tableWidth - 2) + '|')
 
-    lines.push('└' + '─'.repeat(tableWidth - 2) + '┘')
-
-    // Thank you
-    lines.push('')
-    lines.push(centerText('Thank you for your order!', tableWidth))
+    lines.push('+' + '-'.repeat(tableWidth - 2) + '+')
+    lines.push('|' + centerText('Thank you!', tableWidth - 2) + '|')
+    lines.push('+' + '-'.repeat(tableWidth - 2) + '+')
 
     return lines.join('\n')
   }
