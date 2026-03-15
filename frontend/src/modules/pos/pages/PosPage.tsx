@@ -389,7 +389,7 @@ export default function PosPage() {
 
     // Header
     lines.push('+' + '-'.repeat(tableWidth - 2) + '+')
-    lines.push('|' + centerText('RESTORAN ROSHNOMASI', tableWidth - 2) + '|')
+    lines.push('|' + centerText('Restoran Cheki', tableWidth - 2) + '|')
     lines.push('+' + '-'.repeat(tableWidth - 2) + '+')
 
     // Date and time

@@ -145,8 +145,8 @@ fn build_print_data(content: &str) -> Vec<u8> {
     let content_bytes = convert_to_cp437(content);
     print_data.extend_from_slice(&content_bytes);
 
-    // 3 line feeds before cut
-    print_data.extend_from_slice(&[0x0A, 0x0A, 0x0A]);
+    // 6 line feeds before cut (approximately 1 cm after content)
+    print_data.extend_from_slice(&[0x0A, 0x0A, 0x0A, 0x0A, 0x0A, 0x0A]);
 
     // GS V 1 - Partial cut
     print_data.extend_from_slice(&[0x1D, 0x56, 0x01]);
