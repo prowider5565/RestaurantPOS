@@ -5,6 +5,7 @@ from sqlalchemy.orm import relationship
 
 from config.database import Base
 from orders.types import OrderStatus
+from products.models import Product  # noqa: F401
 
 
 class Order(Base):
