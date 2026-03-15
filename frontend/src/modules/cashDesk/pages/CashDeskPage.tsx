@@ -4,575 +4,701 @@ import SettingsIcon from '@mui/icons-material/Settings'
 import UploadFileIcon from '@mui/icons-material/UploadFile'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import {
-  AppBar,
-  Box,
-  Button,
-  Card,
-  Divider,
-  IconButton,
-  Pagination,
-  Paper,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
-  Toolbar,
-  ToggleButton,
-  ToggleButtonGroup,
-  Tooltip,
-  Typography,
+    AppBar,
+    Box,
+    Button,
+    Card,
+    Divider,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    IconButton,
+    Pagination,
+    Paper,
+    Stack,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    TextField,
+    Toolbar,
+    ToggleButton,
+    ToggleButtonGroup,
+    Tooltip,
+    Typography,
 } from '@mui/material'
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
+import { API_URL } from '../../../config/env'
 import { logout } from '../../../shared/auth'
 
-type CashTransaction = {
-  id: number
-  username: string
-  amount: number
-  type: 'in' | 'out'
-  date: string
-  note: string
+type ApiUser = {
+    id: number
+    username: string
+    position?: string | null
 }
+
+type ApiCashDeskTransaction = {
+    id: number
+    amount: number
+    transaction_type: 'in' | 'out'
+    user_id: number
+    user: ApiUser
+    created_at: string
+}
+
+type ApiDeleteOut = {
+    message: string
+}
+
+type ApiPage<T> = { items: T[]; total: number; page: number; size: number; pages: number }
 
 type CashDeskSummary = {
-  current_amount: number
-  total_income: number
-  total_order_income: number
-  total_misc_income: number
-  total_expenses: number
+    current_amount: number
+    total_income: number
+    total_order_income: number
+    total_misc_income: number
+    total_expenses: number
 }
 
-type CashDeskResponse = {
-  summary: CashDeskSummary
-  transactions: CashTransaction[]
-}
-
-// Placeholder shape that matches backend response. Replace with API data wiring when ready.
-const mockCashDesk: CashDeskResponse = {
-  summary: {
+const mockSummary: CashDeskSummary = {
     current_amount: 800000,
     total_income: 900000,
     total_order_income: 650000,
     total_misc_income: 250000,
     total_expenses: 100000,
-  },
-  transactions: [
-    {
-      id: 1,
-      username: 'Admin',
-      amount: 500000,
-      type: 'in',
-      date: '2026-03-15 10:30',
-      note: 'Initial cash',
-    },
-    {
-      id: 2,
-      username: 'Checkout',
-      amount: 250000,
-      type: 'in',
-      date: '2026-03-15 11:45',
-      note: 'Order #1001',
-    },
-    {
-      id: 3,
-      username: 'Manager',
-      amount: 100000,
-      type: 'out',
-      date: '2026-03-15 12:00',
-      note: 'Supplies expense',
-    },
-    {
-      id: 4,
-      username: 'Checkout',
-      amount: 150000,
-      type: 'in',
-      date: '2026-03-15 13:20',
-      note: 'Order #1002',
-    },
-  ],
 }
 
 function toYmd(d: Date) {
-  const yyyy = d.getFullYear()
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  return `${yyyy}-${mm}-${dd}`
+    const yyyy = d.getFullYear()
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    const dd = String(d.getDate()).padStart(2, '0')
+    return `${yyyy}-${mm}-${dd}`
 }
 
 export default function CashDeskPage() {
-  const { summary, transactions } = mockCashDesk
+    const summary = mockSummary
+    const [txPage, setTxPage] = useState<ApiPage<ApiCashDeskTransaction> | null>(null)
+    const [txLoading, setTxLoading] = useState(false)
+    const [txError, setTxError] = useState<string | null>(null)
 
-  const [preset, setPreset] = useState<'daily' | 'weekly' | 'monthly' | null>(null)
-  const [fromDate, setFromDate] = useState<string>('')
-  const [toDate, setToDate] = useState<string>('')
-  const [createAmount, setCreateAmount] = useState<string>('')
-  const [page, setPage] = useState(1)
-  const [size] = useState(10)
+    const [preset, setPreset] = useState<'daily' | 'weekly' | 'monthly' | null>(null)
+    const [fromDate, setFromDate] = useState<string>('')
+    const [toDate, setToDate] = useState<string>('')
+    const [createAmount, setCreateAmount] = useState<string>('')
+    const [creating, setCreating] = useState(false)
+    const [createError, setCreateError] = useState<string | null>(null)
+    const [page, setPage] = useState(1)
+    const [size] = useState(10)
+    const [reloadKey, setReloadKey] = useState(0)
+    const [deleteOpen, setDeleteOpen] = useState(false)
+    const [deleteTarget, setDeleteTarget] = useState<ApiCashDeskTransaction | null>(null)
+    const [deleting, setDeleting] = useState(false)
+    const [deleteError, setDeleteError] = useState<string | null>(null)
 
-  function formatMoney(value: number) {
-    return `${new Intl.NumberFormat('uz-UZ').format(Math.round(value))} so'm`
-  }
+    function formatMoney(value: number) {
+        return `${new Intl.NumberFormat('uz-UZ').format(Math.round(value))} so'm`
+    }
 
-  function applyPreset(next: 'daily' | 'weekly' | 'monthly' | null) {
-    setPreset(next)
-    if (!next) return
-    const end = new Date()
-    const start = new Date()
-    if (next === 'daily') start.setDate(end.getDate())
-    if (next === 'weekly') start.setDate(end.getDate() - 6)
-    if (next === 'monthly') start.setDate(end.getDate() - 29)
-    setFromDate(toYmd(start))
-    setToDate(toYmd(end))
-  }
+    function applyPreset(next: 'daily' | 'weekly' | 'monthly' | null) {
+        setPreset(next)
+        if (!next) return
+        const end = new Date()
+        const start = new Date()
+        if (next === 'daily') start.setDate(end.getDate())
+        if (next === 'weekly') start.setDate(end.getDate() - 6)
+        if (next === 'monthly') start.setDate(end.getDate() - 29)
+        setFromDate(toYmd(start))
+        setToDate(toYmd(end))
+        setPage(1)
+    }
 
-  function exportSnapshot() {
-    // Backend-driven export will be wired here.
-  }
+    function exportSnapshot() {
+        // Backend-driven export will be wired here.
+    }
 
-  function addIncome() {
-    // Backend-driven create will be wired here.
-    console.log('add income', createAmount)
-    setCreateAmount('')
-  }
+    useEffect(() => {
+        let cancelled = false
 
-  function addExpense() {
-    // Backend-driven create will be wired here.
-    console.log('add expense', createAmount)
-    setCreateAmount('')
-  }
+        async function loadTransactions() {
+            setTxLoading(true)
+            setTxError(null)
+            try {
+                const params = new URLSearchParams()
+                params.set('page', String(page))
+                params.set('size', String(size))
+                if (fromDate) params.set('from_date', fromDate)
+                if (toDate) params.set('to_date', toDate)
+                const res = await fetch(`${API_URL}/cash-desk/transactions?${params.toString()}`, { credentials: 'include' })
+                if (!res.ok) {
+                    const msg = (await res.json().catch(() => null)) as { detail?: string } | null
+                    throw new Error(msg?.detail || `Failed to load transactions (${res.status})`)
+                }
+                const data = (await res.json()) as ApiPage<ApiCashDeskTransaction>
+                if (cancelled) return
+                setTxPage(data)
+                if (data.pages && page > data.pages) setPage(data.pages)
+            } catch (e) {
+                if (cancelled) return
+                setTxPage(null)
+                setTxError(e instanceof Error ? e.message : 'Failed to load transactions')
+            } finally {
+                if (!cancelled) setTxLoading(false)
+            }
+        }
 
-  function deleteTransactionRow(id: number) {
-    // Backend-driven delete will be wired here.
-    console.log('delete cash transaction', id)
-  }
+        loadTransactions()
+        return () => {
+            cancelled = true
+        }
+    }, [fromDate, page, reloadKey, size, toDate])
 
-  function addNumpadDigit(digit: string) {
-    setCreateAmount((prev) => {
-      const next = (prev + digit).replace(/^0+(?=\d)/, '')
-      return next
-    })
-  }
+    const createAmountInt = useMemo(() => {
+        const n = Number(createAmount)
+        if (!Number.isFinite(n)) return null
+        const i = Math.floor(n)
+        if (i <= 0) return null
+        return i
+    }, [createAmount])
 
-  function numpadBackspace() {
-    setCreateAmount((prev) => prev.slice(0, -1))
-  }
+    async function createTransaction(transaction_type: 'in' | 'out') {
+        if (creating) return
+        if (!createAmountInt) return
+        setCreating(true)
+        setCreateError(null)
+        try {
+            const res = await fetch(`${API_URL}/cash-desk/transactions`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount: createAmountInt, transaction_type }),
+            })
+            if (!res.ok) {
+                const msg = (await res.json().catch(() => null)) as { detail?: string } | null
+                throw new Error(msg?.detail || `Failed to create transaction (${res.status})`)
+            }
+            await res.json().catch(() => null)
+            setCreateAmount('')
+            setPage(1)
+            setReloadKey((v) => v + 1)
+        } catch (e) {
+            setCreateError(e instanceof Error ? e.message : 'Failed to create transaction')
+        } finally {
+            setCreating(false)
+        }
+    }
 
-  function numpadClear() {
-    setCreateAmount('')
-  }
+    function requestDeleteTransactionRow(tx: ApiCashDeskTransaction) {
+        setDeleteError(null)
+        setDeleteTarget(tx)
+        setDeleteOpen(true)
+    }
 
-  const pages = Math.max(1, Math.ceil(transactions.length / size))
-  const pagedTransactions = transactions.slice((page - 1) * size, (page - 1) * size + size)
+    function closeDelete() {
+        if (deleting) return
+        setDeleteOpen(false)
+    }
 
-  return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
-      <AppBar position="sticky" color="inherit" elevation={0} sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
-        <Toolbar sx={{ gap: 2 }}>
-          <Stack direction="row" alignItems="center" gap={1} sx={{ minWidth: 220 }}>
-            <RestaurantMenuIcon color="primary" />
-            <Typography variant="h6" sx={{ fontWeight: 900 }}>
-              Restaurant POS
-            </Typography>
-          </Stack>
+    async function confirmDelete() {
+        if (!deleteTarget || deleting) return
+        setDeleting(true)
+        setDeleteError(null)
+        try {
+            const res = await fetch(`${API_URL}/cash-desk/transactions/${deleteTarget.id}`, {
+                method: 'DELETE',
+                credentials: 'include',
+            })
+            if (!res.ok) {
+                const msg = (await res.json().catch(() => null)) as { detail?: string } | null
+                throw new Error(msg?.detail || `Failed to delete transaction (${res.status})`)
+            }
+            await res.json().catch(() => null as ApiDeleteOut | null)
+            setDeleteOpen(false)
+            setReloadKey((v) => v + 1)
+        } catch (e) {
+            setDeleteError(e instanceof Error ? e.message : 'Failed to delete transaction')
+        } finally {
+            setDeleting(false)
+        }
+    }
 
-          <Box sx={{ flex: 1 }} />
+    function addNumpadDigit(digit: string) {
+        setCreateAmount((prev) => {
+            const next = (prev + digit).replace(/^0+(?=\d)/, '')
+            return next
+        })
+    }
 
-          <Stack direction="row" alignItems="center" gap={1}>
-            <Tooltip title="Settings" placement="bottom">
-              <IconButton
-                aria-label="Settings"
-                onClick={() => window.dispatchEvent(new CustomEvent('app:navigate', { detail: 'settings' }))}
-                sx={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 999,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                }}
-              >
-                <SettingsIcon />
-              </IconButton>
-            </Tooltip>
+    function numpadBackspace() {
+        setCreateAmount((prev) => prev.slice(0, -1))
+    }
 
-            <Tooltip title="Logout" placement="bottom">
-              <IconButton
-                aria-label="Logout"
-                onClick={() => logout()}
-                sx={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 999,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  '&:hover': {
-                    borderColor: 'error.main',
-                    color: 'error.main',
-                    bgcolor: 'rgba(211, 47, 47, 0.06)',
-                  },
-                }}
-              >
-                <LogoutIcon />
-              </IconButton>
-            </Tooltip>
-          </Stack>
-        </Toolbar>
-      </AppBar>
+    function numpadClear() {
+        setCreateAmount('')
+    }
 
-      <Box
-        sx={{
-          p: 2,
-          pb: 12,
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 0,
-          flex: 1,
-          height: { xs: 'calc(100dvh - 56px)', sm: 'calc(100dvh - 64px)' },
-          overflow: 'hidden',
-        }}
-      >
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', lg: '1fr 570px' },
-            gap: 2,
-            alignItems: { xs: 'start', lg: 'stretch' },
-            flex: 1,
-            minHeight: 0,
-            overflow: { xs: 'visible', lg: 'hidden' },
-          }}
-        >
-          {/* Table on the left */}
-          <Box
-            sx={{
-              minHeight: 0,
-              height: { lg: '100%' },
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-            }}
-          >
-            <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2} flexWrap="wrap">
-              <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap">
-                <Button variant="outlined" startIcon={<UploadFileIcon />} onClick={exportSnapshot}>
-                  Export snapshot
-                </Button>
-              </Stack>
+    const pages = txPage?.pages ?? 1
+    const pagedTransactions = txPage?.items ?? []
 
-              <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap" justifyContent="flex-end">
-                <ToggleButtonGroup
-                  exclusive
-                  value={preset}
-                  onChange={(_, next) => applyPreset(next)}
-                  size="small"
-                  aria-label="Date presets"
-                >
-                  <ToggleButton value="daily">Daily</ToggleButton>
-                  <ToggleButton value="weekly">Weekly</ToggleButton>
-                  <ToggleButton value="monthly">Monthly</ToggleButton>
-                </ToggleButtonGroup>
+    return (
+        <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
+            <AppBar position="sticky" color="inherit" elevation={0} sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
+                <Toolbar sx={{ gap: 2 }}>
+                    <Stack direction="row" alignItems="center" gap={1} sx={{ minWidth: 220 }}>
+                        <RestaurantMenuIcon color="primary" />
+                        <Typography variant="h6" sx={{ fontWeight: 900 }}>
+                            Restaurant POS
+                        </Typography>
+                    </Stack>
 
-                <TextField
-                  size="small"
-                  type="date"
-                  label="From"
-                  value={fromDate}
-                  onChange={(e) => {
-                    setPreset(null)
-                    setFromDate(e.target.value)
-                  }}
-                  InputLabelProps={{ shrink: true }}
-                />
-                <TextField
-                  size="small"
-                  type="date"
-                  label="To"
-                  value={toDate}
-                  onChange={(e) => {
-                    setPreset(null)
-                    setToDate(e.target.value)
-                  }}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Stack>
-            </Stack>
+                    <Box sx={{ flex: 1 }} />
 
-            <TableContainer
-              component={Paper}
-              variant="outlined"
-              sx={{ borderRadius: 3, flex: 1, minHeight: 0, overflow: 'auto' }}
-            >
-              <Table
-                size="small"
-                stickyHeader
-                sx={{
-                  '& .MuiTableCell-root': {
-                    fontSize: '1.3em',
-                    py: 1.1,
-                  },
-                }}
-              >
-                <TableHead>
-                  <TableRow sx={{ bgcolor: 'background.default' }}>
-                    <TableCell sx={{ fontWeight: 900 }}>Username</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 900 }}>
-                      Amount
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 900 }}>Type</TableCell>
-                    <TableCell sx={{ fontWeight: 900 }}>Date</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 900 }}>
-                      Actions
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {pagedTransactions.map((transaction) => (
-                    <TableRow key={transaction.id} hover>
-                      <TableCell>{transaction.username}</TableCell>
-                      <TableCell
-                        align="right"
-                        sx={{
-                          color: transaction.type === 'in' ? 'success.main' : 'error.main',
-                          fontWeight: 700,
-                        }}
-                      >
-                        {(transaction.type === 'in' ? '+' : '-') +
-                          new Intl.NumberFormat('uz-UZ').format(transaction.amount)}
-                      </TableCell>
-                      <TableCell>
-                        <Box
-                          sx={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            px: 1.5,
-                            py: 0.5,
-                            borderRadius: 1,
-                            bgcolor: transaction.type === 'in' ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)',
-                            color: transaction.type === 'in' ? 'success.main' : 'error.main',
-                            fontWeight: 700,
-                            fontSize: 12,
-                          }}
-                        >
-                          {transaction.type === 'in' ? 'IN' : 'OUT'}
-                        </Box>
-                      </TableCell>
-                      <TableCell>{transaction.date}</TableCell>
-                      <TableCell align="right">
-                        <Tooltip title="Delete" placement="top">
-                          <IconButton
-                            aria-label="Delete"
-                            onClick={() => deleteTransactionRow(transaction.id)}
-                            sx={{
-                              color: 'error.main',
-                              border: '1px solid',
-                              borderColor: 'divider',
-                              borderRadius: 2,
-                              width: 52,
-                              height: 52,
-                              '& .MuiSvgIcon-root': { fontSize: 32 },
-                            }}
-                          >
-                            <DeleteOutlineIcon />
-                          </IconButton>
+                    <Stack direction="row" alignItems="center" gap={1}>
+                        <Tooltip title="Settings" placement="bottom">
+                            <IconButton
+                                aria-label="Settings"
+                                onClick={() => window.dispatchEvent(new CustomEvent('app:navigate', { detail: 'settings' }))}
+                                sx={{
+                                    width: 52,
+                                    height: 52,
+                                    borderRadius: 999,
+                                    border: '1px solid',
+                                    borderColor: 'divider',
+                                }}
+                            >
+                                <SettingsIcon />
+                            </IconButton>
                         </Tooltip>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
 
-            {pages > 1 ? (
-              <Stack direction="row" justifyContent="flex-end">
-                <Pagination
-                  color="primary"
-                  size="large"
-                  page={page}
-                  count={pages}
-                  onChange={(_, next) => setPage(next)}
-                  showFirstButton
-                  showLastButton
-                  sx={{
-                    '& .MuiPaginationItem-root': {
-                      fontSize: '1.4em',
-                      minWidth: 45,
-                      height: 45,
-                    },
-                  }}
-                />
-              </Stack>
-            ) : null}
-          </Box>
+                        <Tooltip title="Logout" placement="bottom">
+                            <IconButton
+                                aria-label="Logout"
+                                onClick={() => logout()}
+                                sx={{
+                                    width: 52,
+                                    height: 52,
+                                    borderRadius: 999,
+                                    border: '1px solid',
+                                    borderColor: 'divider',
+                                    '&:hover': {
+                                        borderColor: 'error.main',
+                                        color: 'error.main',
+                                        bgcolor: 'rgba(211, 47, 47, 0.06)',
+                                    },
+                                }}
+                            >
+                                <LogoutIcon />
+                            </IconButton>
+                        </Tooltip>
+                    </Stack>
+                </Toolbar>
+            </AppBar>
 
-          {/* Summary card on the right */}
-          <Card
-            variant="outlined"
-            sx={{
-              borderRadius: 3,
-              p: 3,
-              width: '100%',
-              height: { xs: 'fit-content', lg: '100%' },
-              minHeight: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              overflow: 'hidden',
-            }}
-          >
-            <Stack spacing={2}>
-              {/* Current Amount */}
-              <Box sx={{ textAlign: 'center', pb: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
-                <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 1 }}>Current Amount</Typography>
-                <Typography sx={{ fontWeight: 1000, fontSize: 48, color: 'primary.main' }}>
-                  {new Intl.NumberFormat('uz-UZ').format(Math.round(summary.current_amount))}
-                </Typography>
-                <Typography sx={{ fontWeight: 700, color: 'text.secondary', mt: 1, fontSize: 14 }}>so'm</Typography>
-              </Box>
-
-              {/* Income and Expenses */}
-              <Box
+            <Box
                 sx={{
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  borderRadius: 2,
-                  p: 1.5,
-                  bgcolor: 'background.paper',
+                    p: 2,
+                    pb: 12,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    minHeight: 0,
+                    flex: 1,
+                    height: { xs: 'calc(100dvh - 56px)', sm: 'calc(100dvh - 64px)' },
+                    overflow: 'hidden',
                 }}
-              >
-                <Stack
-                  direction="row"
-                  alignItems="stretch"
-                  divider={<Divider orientation="vertical" flexItem />}
-                  sx={{ mb: 1.5 }}
+            >
+                <Box
+                    sx={{
+                        display: 'grid',
+                        gridTemplateColumns: { xs: '1fr', lg: '1fr 570px' },
+                        gap: 2,
+                        alignItems: { xs: 'start', lg: 'stretch' },
+                        flex: 1,
+                        minHeight: 0,
+                        overflow: { xs: 'visible', lg: 'hidden' },
+                    }}
                 >
-                  <Box sx={{ flex: 1, pr: 2, textAlign: 'center' }}>
-                    <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 14 }}>
-                      Total Order Income
-                    </Typography>
-                    <Typography sx={{ fontWeight: 900, fontSize: 18, color: 'success.main' }}>
-                      +{formatMoney(summary.total_order_income)}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ flex: 1, pl: 2, textAlign: 'center' }}>
-                    <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 14 }}>
-                      Total Misc Income
-                    </Typography>
-                    <Typography sx={{ fontWeight: 900, fontSize: 18, color: 'success.main' }}>
-                      +{formatMoney(summary.total_misc_income)}
-                    </Typography>
-                  </Box>
-                </Stack>
+                    {/* Table on the left */}
+                    <Box
+                        sx={{
+                            minHeight: 0,
+                            height: { lg: '100%' },
+                            overflow: 'hidden',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 2,
+                        }}
+                    >
+                        <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2} flexWrap="wrap">
+                            <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap">
+                                <Button variant="outlined" startIcon={<UploadFileIcon />} onClick={exportSnapshot}>
+                                    Export snapshot
+                                </Button>
+                            </Stack>
 
-                <Divider sx={{ my: 1.5 }} />
+                            <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap" justifyContent="flex-end">
+                                <ToggleButtonGroup
+                                    exclusive
+                                    value={preset}
+                                    onChange={(_, next) => applyPreset(next)}
+                                    size="small"
+                                    aria-label="Date presets"
+                                >
+                                    <ToggleButton value="daily">Daily</ToggleButton>
+                                    <ToggleButton value="weekly">Weekly</ToggleButton>
+                                    <ToggleButton value="monthly">Monthly</ToggleButton>
+                                </ToggleButtonGroup>
 
-                <Box sx={{ textAlign: 'center' }}>
-                  <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 14 }}>
-                    Total Expenses
-                  </Typography>
-                  <Typography sx={{ fontWeight: 900, fontSize: 20, color: 'error.main' }}>
-                    -{formatMoney(summary.total_expenses)}
-                  </Typography>
+                                <TextField
+                                    size="small"
+                                    type="date"
+                                    label="From"
+                                    value={fromDate}
+                                    onChange={(e) => {
+                                        setPreset(null)
+                                        setFromDate(e.target.value)
+                                        setPage(1)
+                                    }}
+                                    InputLabelProps={{ shrink: true }}
+                                />
+                                <TextField
+                                    size="small"
+                                    type="date"
+                                    label="To"
+                                    value={toDate}
+                                    onChange={(e) => {
+                                        setPreset(null)
+                                        setToDate(e.target.value)
+                                        setPage(1)
+                                    }}
+                                    InputLabelProps={{ shrink: true }}
+                                />
+                            </Stack>
+                        </Stack>
+
+                        <TableContainer
+                            component={Paper}
+                            variant="outlined"
+                            sx={{ borderRadius: 3, flex: 1, minHeight: 0, overflow: 'auto' }}
+                        >
+                            <Table
+                                size="small"
+                                stickyHeader
+                                sx={{
+                                    '& .MuiTableCell-root': {
+                                        fontSize: '1.3em',
+                                        py: 1.1,
+                                    },
+                                }}
+                            >
+                                <TableHead>
+                                    <TableRow sx={{ bgcolor: 'background.default' }}>
+                                        <TableCell sx={{ fontWeight: 900 }}>Username</TableCell>
+                                        <TableCell align="right" sx={{ fontWeight: 900 }}>
+                                            Amount
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 900 }}>Type</TableCell>
+                                        <TableCell sx={{ fontWeight: 900 }}>Date</TableCell>
+                                        <TableCell align="right" sx={{ fontWeight: 900 }}>
+                                            Actions
+                                        </TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {pagedTransactions.map((transaction) => (
+                                        <TableRow key={transaction.id} hover>
+                                            <TableCell>{transaction.user?.username ?? '-'}</TableCell>
+                                            <TableCell
+                                                align="right"
+                                                sx={{
+                                                    color: transaction.transaction_type === 'in' ? 'success.main' : 'error.main',
+                                                    fontWeight: 700,
+                                                }}
+                                            >
+                                                {(transaction.transaction_type === 'in' ? '+' : '-') +
+                                                    new Intl.NumberFormat('uz-UZ').format(transaction.amount)}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Box
+                                                    sx={{
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        px: 1.5,
+                                                        py: 0.5,
+                                                        borderRadius: 1,
+                                                        bgcolor: transaction.transaction_type === 'in' ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)',
+                                                        color: transaction.transaction_type === 'in' ? 'success.main' : 'error.main',
+                                                        fontWeight: 700,
+                                                        fontSize: 12,
+                                                    }}
+                                                >
+                                                    {transaction.transaction_type === 'in' ? 'IN' : 'OUT'}
+                                                </Box>
+                                            </TableCell>
+                                            <TableCell>
+                                                {(() => {
+                                                    const dt = new Date(transaction.created_at)
+                                                    if (Number.isNaN(dt.getTime())) return transaction.created_at
+                                                    return dt.toLocaleString('uz-UZ', {
+                                                        year: 'numeric',
+                                                        month: '2-digit',
+                                                        day: '2-digit',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit',
+                                                    })
+                                                })()}
+                                            </TableCell>
+                                            <TableCell align="right">
+                                                <Tooltip title="Delete" placement="top">
+                                                    <IconButton
+                                                        aria-label="Delete"
+                                                        onClick={() => requestDeleteTransactionRow(transaction)}
+                                                        sx={{
+                                                            color: 'error.main',
+                                                            border: '1px solid',
+                                                            borderColor: 'divider',
+                                                            borderRadius: 2,
+                                                            width: 52,
+                                                            height: 52,
+                                                            '& .MuiSvgIcon-root': { fontSize: 32 },
+                                                        }}
+                                                    >
+                                                        <DeleteOutlineIcon />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+
+                        {pages > 1 ? (
+                            <Stack direction="row" justifyContent="flex-end">
+                                <Pagination
+                                    color="primary"
+                                    size="large"
+                                    page={page}
+                                    count={pages}
+                                    onChange={(_, next) => setPage(next)}
+                                    showFirstButton
+                                    showLastButton
+                                    sx={{
+                                        '& .MuiPaginationItem-root': {
+                                            fontSize: '1.4em',
+                                            minWidth: 45,
+                                            height: 45,
+                                        },
+                                    }}
+                                />
+                            </Stack>
+                        ) : null}
+                    </Box>
+
+                    {/* Summary card on the right */}
+                    <Card
+                        variant="outlined"
+                        sx={{
+                            borderRadius: 3,
+                            p: 3,
+                            width: '100%',
+                            height: { xs: 'fit-content', lg: '100%' },
+                            minHeight: 0,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            overflow: 'hidden',
+                        }}
+                    >
+                        <Stack spacing={2}>
+                            {/* Current Amount */}
+                            <Box sx={{ textAlign: 'center', pb: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
+                                <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 1 }}>Current Amount</Typography>
+                                <Typography sx={{ fontWeight: 1000, fontSize: 48, color: 'primary.main' }}>
+                                    {new Intl.NumberFormat('uz-UZ').format(Math.round(summary.current_amount))}
+                                </Typography>
+                                <Typography sx={{ fontWeight: 700, color: 'text.secondary', mt: 1, fontSize: 14 }}>so'm</Typography>
+                            </Box>
+
+                            {/* Income and Expenses */}
+                            <Box
+                                sx={{
+                                    border: '1px solid',
+                                    borderColor: 'divider',
+                                    borderRadius: 2,
+                                    p: 1.5,
+                                    bgcolor: 'background.paper',
+                                }}
+                            >
+                                <Stack
+                                    direction="row"
+                                    alignItems="stretch"
+                                    divider={<Divider orientation="vertical" flexItem />}
+                                    sx={{ mb: 1.5 }}
+                                >
+                                    <Box sx={{ flex: 1, pr: 2, textAlign: 'center' }}>
+                                        <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 14 }}>
+                                            Total Order Income
+                                        </Typography>
+                                        <Typography sx={{ fontWeight: 900, fontSize: 18, color: 'success.main' }}>
+                                            +{formatMoney(summary.total_order_income)}
+                                        </Typography>
+                                    </Box>
+                                    <Box sx={{ flex: 1, pl: 2, textAlign: 'center' }}>
+                                        <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 14 }}>
+                                            Total Misc Income
+                                        </Typography>
+                                        <Typography sx={{ fontWeight: 900, fontSize: 18, color: 'success.main' }}>
+                                            +{formatMoney(summary.total_misc_income)}
+                                        </Typography>
+                                    </Box>
+                                </Stack>
+
+                                <Divider sx={{ my: 1.5 }} />
+
+                                <Box sx={{ textAlign: 'center' }}>
+                                    <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 14 }}>
+                                        Total Expenses
+                                    </Typography>
+                                    <Typography sx={{ fontWeight: 900, fontSize: 20, color: 'error.main' }}>
+                                        -{formatMoney(summary.total_expenses)}
+                                    </Typography>
+                                </Box>
+                            </Box>
+                        </Stack>
+
+                        <Paper
+                            variant="outlined"
+                            sx={{
+                                mt: 2,
+                                borderRadius: 2,
+                                p: 1.5,
+                                textAlign: 'center',
+                            }}
+                        >
+                            <Typography sx={{ fontWeight: 1000, fontSize: 24, lineHeight: 1.1 }}>
+                                {createAmount ? new Intl.NumberFormat('uz-UZ').format(Number(createAmount)) : '0'}
+                            </Typography>
+                            <Typography sx={{ fontWeight: 700, color: 'text.secondary', fontSize: 12, mt: 0.5 }}>Amount</Typography>
+                        </Paper>
+
+                        <Box
+                            sx={{
+                                pt: 2,
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(3, 1fr)',
+                                gap: 1,
+                            }}
+                        >
+                            <Button variant="outlined" onClick={() => addNumpadDigit('1')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
+                                1
+                            </Button>
+                            <Button variant="outlined" onClick={() => addNumpadDigit('2')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
+                                2
+                            </Button>
+                            <Button variant="outlined" onClick={() => addNumpadDigit('3')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
+                                3
+                            </Button>
+                            <Button variant="outlined" onClick={() => addNumpadDigit('4')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
+                                4
+                            </Button>
+                            <Button variant="outlined" onClick={() => addNumpadDigit('5')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
+                                5
+                            </Button>
+                            <Button variant="outlined" onClick={() => addNumpadDigit('6')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
+                                6
+                            </Button>
+                            <Button variant="outlined" onClick={() => addNumpadDigit('7')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
+                                7
+                            </Button>
+                            <Button variant="outlined" onClick={() => addNumpadDigit('8')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
+                                8
+                            </Button>
+                            <Button variant="outlined" onClick={() => addNumpadDigit('9')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
+                                9
+                            </Button>
+                            <Button variant="outlined" onClick={numpadClear} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
+                                C
+                            </Button>
+                            <Button variant="outlined" onClick={() => addNumpadDigit('0')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
+                                0
+                            </Button>
+                            <Button variant="outlined" onClick={numpadBackspace} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
+                                Del
+                            </Button>
+                        </Box>
+
+                        <Box
+                            sx={{
+                                mt: 'auto',
+                                pt: 2,
+                                display: 'grid',
+                                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: '1fr 1fr' },
+                                gap: 1,
+                            }}
+                        >
+                            <Button
+                                color="success"
+                                variant="contained"
+                                onClick={() => createTransaction('in')}
+                                sx={{ py: 2.2, borderRadius: 2, fontSize: 18 }}
+                                fullWidth
+                                disabled={creating || !createAmountInt}
+                            >
+                                + Add income
+                            </Button>
+                            <Button
+                                color="error"
+                                variant="contained"
+                                onClick={() => createTransaction('out')}
+                                sx={{ py: 2.2, borderRadius: 2, fontSize: 18 }}
+                                fullWidth
+                                disabled={creating || !createAmountInt}
+                            >
+                                - Add expense
+                            </Button>
+                        </Box>
+
+                        {createError ? (
+                            <Paper variant="outlined" sx={{ borderRadius: 2, mt: 1.5, p: 1.25, borderColor: 'error.main', bgcolor: 'rgba(211, 47, 47, 0.06)' }}>
+                                <Typography sx={{ fontWeight: 900, color: 'error.main', fontSize: 13 }}>{createError}</Typography>
+                            </Paper>
+                        ) : null}
+                    </Card>
                 </Box>
-              </Box>
-            </Stack>
-
-            <Paper
-              variant="outlined"
-              sx={{
-                mt: 2,
-                borderRadius: 2,
-                p: 1.5,
-                textAlign: 'center',
-              }}
-            >
-              <Typography sx={{ fontWeight: 1000, fontSize: 24, lineHeight: 1.1 }}>
-                {createAmount ? new Intl.NumberFormat('uz-UZ').format(Number(createAmount)) : '0'}
-              </Typography>
-              <Typography sx={{ fontWeight: 700, color: 'text.secondary', fontSize: 12, mt: 0.5 }}>Amount</Typography>
-            </Paper>
-
-            <Box
-              sx={{
-                pt: 2,
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: 1,
-              }}
-            >
-              <Button variant="outlined" onClick={() => addNumpadDigit('1')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
-                1
-              </Button>
-              <Button variant="outlined" onClick={() => addNumpadDigit('2')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
-                2
-              </Button>
-              <Button variant="outlined" onClick={() => addNumpadDigit('3')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
-                3
-              </Button>
-              <Button variant="outlined" onClick={() => addNumpadDigit('4')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
-                4
-              </Button>
-              <Button variant="outlined" onClick={() => addNumpadDigit('5')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
-                5
-              </Button>
-              <Button variant="outlined" onClick={() => addNumpadDigit('6')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
-                6
-              </Button>
-              <Button variant="outlined" onClick={() => addNumpadDigit('7')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
-                7
-              </Button>
-              <Button variant="outlined" onClick={() => addNumpadDigit('8')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
-                8
-              </Button>
-              <Button variant="outlined" onClick={() => addNumpadDigit('9')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
-                9
-              </Button>
-              <Button variant="outlined" onClick={numpadClear} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
-                C
-              </Button>
-              <Button variant="outlined" onClick={() => addNumpadDigit('0')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
-                0
-              </Button>
-              <Button variant="outlined" onClick={numpadBackspace} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
-                Del
-              </Button>
             </Box>
 
-            <Box
-              sx={{
-                mt: 'auto',
-                pt: 2,
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: '1fr 1fr' },
-                gap: 1,
-              }}
-            >
-              <Button
-                color="success"
-                variant="contained"
-                onClick={addIncome}
-                sx={{ py: 2.2, borderRadius: 2, fontSize: 18 }}
-                fullWidth
-              >
-                + Add income
-              </Button>
-              <Button
-                color="error"
-                variant="contained"
-                onClick={addExpense}
-                sx={{ py: 2.2, borderRadius: 2, fontSize: 18 }}
-                fullWidth
-              >
-                - Add expense
-              </Button>
-            </Box>
-          </Card>
+            <Dialog open={deleteOpen} onClose={closeDelete} fullWidth maxWidth="xs">
+                <DialogTitle sx={{ fontWeight: 1000 }}>Delete transaction</DialogTitle>
+                <DialogContent sx={{ pt: 1 }}>
+                    <Stack gap={1.5} sx={{ mt: 1 }}>
+                        <Typography variant="body2" color="text.secondary">
+                            {deleteTarget ? `Delete transaction #${deleteTarget.id}?` : 'Delete this transaction?'}
+                        </Typography>
+                        {deleteTarget ? (
+                            <Paper variant="outlined" sx={{ borderRadius: 2, p: 1.5 }}>
+                                <Stack direction="row" justifyContent="space-between" gap={2}>
+                                    <Typography sx={{ fontWeight: 900 }}>Amount</Typography>
+                                    <Typography sx={{ fontWeight: 1000 }}>
+                                        {(deleteTarget.transaction_type === 'in' ? '+' : '-') + new Intl.NumberFormat('uz-UZ').format(deleteTarget.amount)}
+                                    </Typography>
+                                </Stack>
+                            </Paper>
+                        ) : null}
+                        {deleteError ? <Typography sx={{ fontWeight: 900, color: 'error.main', fontSize: 13 }}>{deleteError}</Typography> : null}
+                    </Stack>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2, display: 'flex', gap: 1 }}>
+                    <Button variant="outlined" onClick={closeDelete} disabled={deleting}>
+                        Cancel
+                    </Button>
+                    <Button color="error" variant="contained" onClick={confirmDelete} disabled={!deleteTarget || deleting}>
+                        {deleting ? 'Deleting…' : 'Delete'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
-      </Box>
-    </Box>
-  )
+    )
 }

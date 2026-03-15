@@ -1,10 +1,18 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from datetime import date, datetime, time
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi_pagination import Page, Params
+from fastapi_pagination.ext.sqlalchemy import paginate
+from sqlalchemy.orm import Session, selectinload
 
 from cash_desk.models import CashDesk
-from cash_desk.schemas import CashDeskTransactionCreateIn, CashDeskTransactionOut, DeleteOut
+from cash_desk.schemas import (
+    CashDeskTransactionCreateIn,
+    CashDeskTransactionOut,
+    DeleteOut,
+)
 from config.database import get_db
 from users.dependencies import get_current_user
 from users.models import User
@@ -29,8 +37,15 @@ def create_transaction_api(
     )
     db.add(tx)
     db.commit()
-    db.refresh(tx)
-    return tx
+    row = (
+        db.query(CashDesk)
+        .options(selectinload(CashDesk.user))
+        .filter(CashDesk.id == tx.id)
+        .first()
+    )
+    if not row:
+        raise HTTPException(status_code=500, detail="Failed to create transaction")
+    return row
 
 
 @router.delete("/transactions/{transaction_id}", response_model=DeleteOut)
@@ -49,4 +64,25 @@ def delete_transaction_api(
     db.delete(tx)
     db.commit()
     return DeleteOut(message="Deleted")
+
+
+@router.get("/transactions", response_model=Page[CashDeskTransactionOut])
+def get_transactions_api(
+    from_date: date | None = Query(default=None),
+    to_date: date | None = Query(default=None),
+    params: Params = Depends(),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> Page[CashDeskTransactionOut]:
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin privilege required")
+
+    q = db.query(CashDesk).options(selectinload(CashDesk.user))
+    if from_date is not None:
+        q = q.filter(CashDesk.created_at >= datetime.combine(from_date, time.min))
+    if to_date is not None:
+        q = q.filter(CashDesk.created_at <= datetime.combine(to_date, time.max))
+    q = q.order_by(CashDesk.created_at.desc())
+    return paginate(db, q, params)
+
 

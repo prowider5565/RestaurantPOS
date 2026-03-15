@@ -12,11 +12,21 @@ class CashDeskTransactionCreateIn(BaseModel):
     transaction_type: TransactionType
 
 
+class CashDeskUserOut(BaseModel):
+    id: int
+    username: str
+    position: str | None = None
+
+    class Config:
+        from_attributes = True
+
+
 class CashDeskTransactionOut(BaseModel):
     id: int
     amount: int
     transaction_type: TransactionType
     user_id: int
+    user: CashDeskUserOut
     created_at: datetime
 
     class Config:
@@ -25,4 +35,3 @@ class CashDeskTransactionOut(BaseModel):
 
 class DeleteOut(BaseModel):
     message: str
-
