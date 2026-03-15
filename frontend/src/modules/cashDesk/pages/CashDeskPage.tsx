@@ -2,6 +2,7 @@ import LogoutIcon from '@mui/icons-material/Logout'
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu'
 import SettingsIcon from '@mui/icons-material/Settings'
 import UploadFileIcon from '@mui/icons-material/UploadFile'
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import {
   AppBar,
   Box,
@@ -148,6 +149,11 @@ export default function CashDeskPage() {
   function submitCreate() {
     // Backend-driven create will be wired here.
     closeCreate()
+  }
+
+  function deleteTransactionRow(id: number) {
+    // Backend-driven delete will be wired here.
+    console.log('delete cash transaction', id)
   }
 
   function addNumpadDigit(digit: string) {
@@ -320,6 +326,9 @@ export default function CashDeskPage() {
                     </TableCell>
                     <TableCell sx={{ fontWeight: 900 }}>Type</TableCell>
                     <TableCell sx={{ fontWeight: 900 }}>Date</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 900 }}>
+                      Actions
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -355,6 +364,22 @@ export default function CashDeskPage() {
                         </Box>
                       </TableCell>
                       <TableCell>{transaction.date}</TableCell>
+                      <TableCell align="right">
+                        <Tooltip title="Delete" placement="top">
+                          <IconButton
+                            aria-label="Delete"
+                            onClick={() => deleteTransactionRow(transaction.id)}
+                            sx={{
+                              color: 'error.main',
+                              border: '1px solid',
+                              borderColor: 'divider',
+                              borderRadius: 2,
+                            }}
+                          >
+                            <DeleteOutlineIcon />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -365,13 +390,22 @@ export default function CashDeskPage() {
           {/* Summary card on the right */}
           <Card
             variant="outlined"
-            sx={{ borderRadius: 3, p: 3, height: 'fit-content', width: '100%', display: 'flex', flexDirection: 'column' }}
+            sx={{
+              borderRadius: 3,
+              p: 3,
+              width: '100%',
+              height: { xs: 'fit-content', lg: '100%' },
+              minHeight: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+            }}
           >
-            <Stack spacing={2} sx={{ flex: 1 }}>
+            <Stack spacing={2}>
               {/* Current Amount */}
               <Box sx={{ textAlign: 'center', pb: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
                 <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 1 }}>Current Amount</Typography>
-                <Typography sx={{ fontWeight: 1000, fontSize: 32, color: 'primary.main' }}>
+                <Typography sx={{ fontWeight: 1000, fontSize: 48, color: 'primary.main' }}>
                   {new Intl.NumberFormat('uz-UZ').format(Math.round(summary.current_amount))}
                 </Typography>
                 <Typography sx={{ fontWeight: 700, color: 'text.secondary', mt: 1, fontSize: 14 }}>so'm</Typography>
