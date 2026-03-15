@@ -9,10 +9,6 @@ import {
   Button,
   Card,
   Divider,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   IconButton,
   Paper,
   Stack,
@@ -113,9 +109,7 @@ export default function CashDeskPage() {
   const [preset, setPreset] = useState<'daily' | 'weekly' | 'monthly' | null>(null)
   const [fromDate, setFromDate] = useState<string>('')
   const [toDate, setToDate] = useState<string>('')
-  const [createType, setCreateType] = useState<'income' | 'expense' | null>(null)
   const [createAmount, setCreateAmount] = useState<string>('')
-  const [createNote, setCreateNote] = useState<string>('')
 
   function formatMoney(value: number) {
     return `${new Intl.NumberFormat('uz-UZ').format(Math.round(value))} so'm`
@@ -137,18 +131,16 @@ export default function CashDeskPage() {
     // Backend-driven export will be wired here.
   }
 
-  function openCreate(next: 'income' | 'expense') {
-    setCreateType(next)
-    setCreateNote('')
-  }
-
-  function closeCreate() {
-    setCreateType(null)
-  }
-
-  function submitCreate() {
+  function addIncome() {
     // Backend-driven create will be wired here.
-    closeCreate()
+    console.log('add income', createAmount)
+    setCreateAmount('')
+  }
+
+  function addExpense() {
+    // Backend-driven create will be wired here.
+    console.log('add expense', createAmount)
+    setCreateAmount('')
   }
 
   function deleteTransactionRow(id: number) {
@@ -374,6 +366,9 @@ export default function CashDeskPage() {
                               border: '1px solid',
                               borderColor: 'divider',
                               borderRadius: 2,
+                              width: 52,
+                              height: 52,
+                              '& .MuiSvgIcon-root': { fontSize: 32 },
                             }}
                           >
                             <DeleteOutlineIcon />
@@ -531,7 +526,7 @@ export default function CashDeskPage() {
               <Button
                 color="success"
                 variant="contained"
-                onClick={() => openCreate('income')}
+                onClick={addIncome}
                 sx={{ py: 2.2, borderRadius: 2, fontSize: 18 }}
                 fullWidth
               >
@@ -540,7 +535,7 @@ export default function CashDeskPage() {
               <Button
                 color="error"
                 variant="contained"
-                onClick={() => openCreate('expense')}
+                onClick={addExpense}
                 sx={{ py: 2.2, borderRadius: 2, fontSize: 18 }}
                 fullWidth
               >
@@ -550,44 +545,6 @@ export default function CashDeskPage() {
           </Card>
         </Box>
       </Box>
-
-      <Dialog open={createType !== null} onClose={closeCreate} fullWidth maxWidth="xs">
-        <DialogTitle sx={{ fontWeight: 1000 }}>
-          {createType === 'income' ? 'Add income' : 'Add expense'}
-        </DialogTitle>
-        <DialogContent sx={{ pt: 1 }}>
-          <Stack gap={2} sx={{ mt: 1 }}>
-            <TextField
-              label="Amount"
-              type="number"
-              value={createAmount}
-              onChange={(e) => setCreateAmount(e.target.value)}
-              inputProps={{ min: 0 }}
-              fullWidth
-            />
-            <TextField
-              label="Note"
-              value={createNote}
-              onChange={(e) => setCreateNote(e.target.value)}
-              fullWidth
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button color="error" variant="contained" onClick={closeCreate} sx={{ borderRadius: 2 }}>
-            Cancel
-          </Button>
-          <Button
-            color="success"
-            variant="contained"
-            onClick={submitCreate}
-            sx={{ borderRadius: 2 }}
-            disabled={!createAmount.trim()}
-          >
-            {createType === 'income' ? 'Add income' : 'Add expense'}
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   )
 }

@@ -466,7 +466,16 @@ export default function OrderHistoryPage() {
             variant="outlined"
             sx={{ borderRadius: 3, flex: 1, overflow: 'auto' }}
           >
-            <Table size="small" stickyHeader>
+            <Table
+              size="small"
+              stickyHeader
+              sx={{
+                '& .MuiTableCell-root': {
+                  fontSize: '1.3em',
+                  py: 1.1,
+                },
+              }}
+            >
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 900 }} align="right">
@@ -475,7 +484,6 @@ export default function OrderHistoryPage() {
                   <TableCell sx={{ fontWeight: 900 }}>Username</TableCell>
                   <TableCell sx={{ fontWeight: 900 }}>Position</TableCell>
                   <TableCell sx={{ fontWeight: 900 }}>Types</TableCell>
-                  <TableCell sx={{ fontWeight: 900 }}>Pay type</TableCell>
                   <TableCell sx={{ fontWeight: 900 }} align="right">
                     Total
                   </TableCell>
@@ -510,9 +518,6 @@ export default function OrderHistoryPage() {
                             <Typography sx={{ fontWeight: 1000 }}>{drinkTypes}</Typography>
                           </Stack>
                         </Stack>
-                      </TableCell>
-                      <TableCell>
-                        <PayTypeChip status={o.status} />
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 1000 }}>
                         {formatMoney(total)}

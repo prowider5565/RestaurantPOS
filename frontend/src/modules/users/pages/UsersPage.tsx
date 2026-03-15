@@ -1,5 +1,6 @@
 import LogoutIcon from '@mui/icons-material/Logout'
 import RefreshIcon from '@mui/icons-material/Refresh'
+import SearchIcon from '@mui/icons-material/Search'
 import SettingsIcon from '@mui/icons-material/Settings'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
@@ -16,15 +17,20 @@ import {
   DialogTitle,
   IconButton,
   InputAdornment,
-  List,
   Paper,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   TextField,
   Toolbar,
   Tooltip,
   Typography,
 } from '@mui/material'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
 import { logout } from '../../../shared/auth'
@@ -41,6 +47,7 @@ export default function UsersPage() {
   const [rows, setRows] = useState<ApiUser[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
   const [editOpen, setEditOpen] = useState(false)
   const [editUser, setEditUser] = useState<ApiUser | null>(null)
   const [editUsername, setEditUsername] = useState('')
@@ -168,11 +175,36 @@ export default function UsersPage() {
     }
   }
 
+  const visibleRows = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return rows
+    return rows.filter((u) => {
+      const username = (u.username ?? '').toLowerCase()
+      const position = (u.position ?? '').toLowerCase()
+      return username.includes(q) || position.includes(q)
+    })
+  }, [rows, search])
+
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       <AppBar position="sticky" color="transparent" elevation={0}>
         <Toolbar sx={{ gap: 1 }}>
           <Typography sx={{ fontWeight: 1100, fontSize: 20, flex: 1 }}>Users</Typography>
+
+          <TextField
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            size="small"
+            placeholder="Search users..."
+            sx={{ maxWidth: 520, flex: 1 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: 'text.secondary' }} />
+                </InputAdornment>
+              ),
+            }}
+          />
 
           <Tooltip title="Refresh" placement="bottom">
             <IconButton
@@ -235,43 +267,60 @@ export default function UsersPage() {
             </Stack>
           </Paper>
         ) : (
-          <List sx={{ display: 'grid', gap: 1.5 }}>
-            {rows.map((u) => (
-              <Paper key={u.id} variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-                <Stack direction={{ xs: 'column', sm: 'row' }} gap={2} alignItems={{ sm: 'center' }}>
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
-                      <Typography sx={{ fontWeight: 1000, fontSize: 18 }}>
-                        {u.username}
-                      </Typography>
+          <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 3, overflow: 'auto' }}>
+            <Table
+              size="small"
+              stickyHeader
+              sx={{
+                '& .MuiTableCell-root': {
+                  fontSize: '1.3em',
+                  py: 1.1,
+                },
+              }}
+            >
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 900 }}>Username</TableCell>
+                  <TableCell sx={{ fontWeight: 900 }}>Position</TableCell>
+                  <TableCell sx={{ fontWeight: 900 }}>Role</TableCell>
+                  <TableCell sx={{ fontWeight: 900 }}>Status</TableCell>
+                  <TableCell sx={{ fontWeight: 900 }} align="right">
+                    Actions
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {visibleRows.map((u) => (
+                  <TableRow key={u.id} hover>
+                    <TableCell sx={{ fontWeight: 1000 }}>{u.username}</TableCell>
+                    <TableCell>{u.position ?? '-'}</TableCell>
+                    <TableCell>
                       {u.is_admin ? <Chip label="Admin" color="warning" size="small" /> : <Chip label="User" size="small" />}
-                      {u.is_active === false ? <Chip label="Inactive" color="error" size="small" /> : null}
-                    </Stack>
-                    {u.position ? (
-                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                        {u.position}
-                      </Typography>
-                    ) : null}
-                  </Box>
-
-                  <Stack direction="row" gap={1}>
-                    <Button variant="outlined" size="large" sx={{ minWidth: 120 }} onClick={() => openEdit(u)}>
-                      Edit
-                    </Button>
-                    <Button
-                      variant="contained"
-                      color={u.is_active === false ? 'success' : 'error'}
-                      size="large"
-                      sx={{ minWidth: 140 }}
-                      onClick={() => openDeactivate(u)}
-                    >
-                      {u.is_active === false ? 'Activate' : 'Deactivate'}
-                    </Button>
-                  </Stack>
-                </Stack>
-              </Paper>
-            ))}
-          </List>
+                    </TableCell>
+                    <TableCell>
+                      {u.is_active === false ? <Chip label="Inactive" color="error" size="small" /> : <Chip label="Active" color="success" size="small" />}
+                    </TableCell>
+                    <TableCell align="right">
+                      <Stack direction="row" gap={1} justifyContent="flex-end">
+                        <Button variant="outlined" size="large" sx={{ minWidth: 120 }} onClick={() => openEdit(u)}>
+                          Edit
+                        </Button>
+                        <Button
+                          variant="contained"
+                          color={u.is_active === false ? 'success' : 'error'}
+                          size="large"
+                          sx={{ minWidth: 140 }}
+                          onClick={() => openDeactivate(u)}
+                        >
+                          {u.is_active === false ? 'Activate' : 'Deactivate'}
+                        </Button>
+                      </Stack>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
         )}
       </Box>
 
