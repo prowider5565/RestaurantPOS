@@ -1,12 +1,13 @@
 import HistoryIcon from '@mui/icons-material/History'
 import AddIcon from '@mui/icons-material/Add'
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney'
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu'
 import PeopleIcon from '@mui/icons-material/People'
 import ReceiptIcon from '@mui/icons-material/Receipt'
 import { Button, Paper, Tooltip } from '@mui/material'
 import { invoke } from '@tauri-apps/api/core'
 
-export type DockItemId = 'menu' | 'order_history' | 'users'
+export type DockItemId = 'menu' | 'order_history' | 'users' | 'cash_desk'
 
 export default function BottomDock({
   active,
@@ -67,6 +68,16 @@ export default function BottomDock({
         sx={{ fontWeight: 900, borderRadius: 999, px: 2, py: 1.25, fontSize: 18 }}
       >
         Order history
+      </Button>
+
+      <Button
+        color={active === 'cash_desk' ? 'primary' : 'inherit'}
+        size="large"
+        startIcon={<AttachMoneyIcon fontSize="large" />}
+        onClick={() => onChange('cash_desk')}
+        sx={{ fontWeight: 900, borderRadius: 999, px: 2, py: 1.25, fontSize: 18 }}
+      >
+        Cash desk
       </Button>
 
       <Tooltip title="Print cheque" placement="top">
