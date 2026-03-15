@@ -34,6 +34,8 @@ import {
 } from '@mui/material'
 import { invoke } from '@tauri-apps/api/core'
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
+import Keyboard from 'react-simple-keyboard'
+import 'react-simple-keyboard/build/css/index.css'
 
 import { API_URL } from '../../../config/env'
 import { getCurrentUser, logout } from '../../../shared/auth'
@@ -147,6 +149,8 @@ export default function PosPage() {
   const [apiCategories, setApiCategories] = useState<ApiCategory[]>([])
 
   const [createOpen, setCreateOpen] = useState(false)
+  const [createKeyboardInput, setCreateKeyboardInput] = useState<'name' | 'priceDigits'>('name')
+  const [createKeyboardLayout, setCreateKeyboardLayout] = useState<'default' | 'shift'>('default')
   const [newFood, setNewFood] = useState<NewFoodForm>({
     name: '',
     priceDigits: '',
@@ -1058,6 +1062,7 @@ export default function PosPage() {
             <TextField
               label="Name"
               value={newFood.name}
+              onFocus={() => setCreateKeyboardInput('name')}
               onChange={(e) => setNewFood((prev) => ({ ...prev, name: e.target.value }))}
               fullWidth
             />
@@ -1066,6 +1071,7 @@ export default function PosPage() {
               <TextField
                 label="Price"
                 value={formatIntegerForInput(newFood.priceDigits)}
+                onFocus={() => setCreateKeyboardInput('priceDigits')}
                 onChange={(e) =>
                   setNewFood((prev) => ({
                     ...prev,
@@ -1131,6 +1137,26 @@ export default function PosPage() {
                 </Tooltip>
               </Stack>
             </Stack>
+
+            <Paper variant="outlined" sx={{ borderRadius: 2, p: 1.5 }}>
+              <Keyboard
+                input={{ name: newFood.name, priceDigits: newFood.priceDigits }}
+                inputName={createKeyboardInput}
+                layoutName={createKeyboardLayout}
+                onChange={(value) => {
+                  if (createKeyboardInput === 'name') {
+                    setNewFood((prev) => ({ ...prev, name: value }))
+                    return
+                  }
+                  setNewFood((prev) => ({ ...prev, priceDigits: value.replaceAll(/[^\d]/g, '').slice(0, 18) }))
+                }}
+                onKeyPress={(btn) => {
+                  if (btn === '{shift}' || btn === '{lock}') {
+                    setCreateKeyboardLayout((prev) => (prev === 'default' ? 'shift' : 'default'))
+                  }
+                }}
+              />
+            </Paper>
 
             <Paper variant="outlined" sx={{ borderRadius: 2, p: 2, display: 'grid', gap: 1 }}>
               <Typography sx={{ fontWeight: 900 }}>Image upload</Typography>

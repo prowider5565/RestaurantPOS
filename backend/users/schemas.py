@@ -19,3 +19,9 @@ class UsernameUpdateIn(BaseModel):
 class AdminCredentialsUpdateIn(BaseModel):
     username: str | None = Field(default=None, min_length=1, max_length=120)
     password: str | None = Field(default=None, min_length=1, max_length=255)
+
+
+class AdminCreateUserIn(BaseModel):
+    username: str = Field(min_length=1, max_length=120)
+    password: str = Field(min_length=1, max_length=255)
+    position: str | None = Field(default=None, max_length=120)

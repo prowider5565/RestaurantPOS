@@ -20,7 +20,9 @@
     "@tauri-apps/api": "^2.10.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-thermal-printer": "^0.22.0"
+    "react-simple-keyboard": "^3.8.174",
+    "react-thermal-printer": "^0.22.0",
+    "simple-keyboard": "^3.8.120"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

@@ -78,10 +78,13 @@ export default function BottomDock({
         Cash desk
       </Button>
 
-      <Tooltip title="Add new food & Drinks" placement="top">
+      <Tooltip title={active === 'users' ? 'Add new user' : 'Add new food & Drinks'} placement="top">
         <Button
-          aria-label="Add new food & Drinks"
-          onClick={() => window.dispatchEvent(new CustomEvent('pos:createFood'))}
+          aria-label={active === 'users' ? 'Add new user' : 'Add new food & Drinks'}
+          onClick={() => {
+            if (active === 'menu') window.dispatchEvent(new CustomEvent('pos:createFood'))
+            if (active === 'users') window.dispatchEvent(new CustomEvent('users:createUser'))
+          }}
           sx={{
             position: 'absolute',
             right: 10,

@@ -31,6 +31,8 @@ import {
   Typography,
 } from '@mui/material'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import Keyboard from 'react-simple-keyboard'
+import 'react-simple-keyboard/build/css/index.css'
 
 import { API_URL } from '../../../config/env'
 import { logout } from '../../../shared/auth'
@@ -41,6 +43,13 @@ type ApiUser = {
   position?: string | null
   is_admin?: boolean
   is_active?: boolean
+}
+
+type CreateUserForm = {
+  username: string
+  password: string
+  confirmPassword: string
+  position: string
 }
 
 export default function UsersPage() {
@@ -62,6 +71,18 @@ export default function UsersPage() {
   const [deactivateNextActive, setDeactivateNextActive] = useState<boolean>(false)
   const [deactivating, setDeactivating] = useState(false)
   const [deactivateStatus, setDeactivateStatus] = useState<{ kind: 'ok' | 'err'; msg: string } | null>(null)
+
+  const [createOpen, setCreateOpen] = useState(false)
+  const [createSaving, setCreateSaving] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
+  const [createLayout, setCreateLayout] = useState<'default' | 'shift'>('default')
+  const [createInputName, setCreateInputName] = useState<keyof CreateUserForm>('username')
+  const [createForm, setCreateForm] = useState<CreateUserForm>({
+    username: '',
+    password: '',
+    confirmPassword: '',
+    position: '',
+  })
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -86,6 +107,58 @@ export default function UsersPage() {
   useEffect(() => {
     load()
   }, [load])
+
+  useEffect(() => {
+    const handler = () => {
+      setCreateError(null)
+      setCreateSaving(false)
+      setCreateLayout('default')
+      setCreateInputName('username')
+      setCreateForm({ username: '', password: '', confirmPassword: '', position: '' })
+      setCreateOpen(true)
+    }
+    window.addEventListener('users:createUser', handler)
+    return () => window.removeEventListener('users:createUser', handler)
+  }, [])
+
+  function closeCreate() {
+    if (createSaving) return
+    setCreateOpen(false)
+  }
+
+  async function createUser() {
+    if (createSaving) return
+    const username = createForm.username.trim()
+    const password = createForm.password
+    const confirmPassword = createForm.confirmPassword
+    const position = createForm.position.trim()
+    if (!username || !password || !confirmPassword) return
+    if (password !== confirmPassword) {
+      setCreateError('Passwords do not match')
+      return
+    }
+
+    setCreateSaving(true)
+    setCreateError(null)
+    try {
+      const res = await fetch(`${API_URL}/users/admin/create-user`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, position: position || null }),
+      })
+      if (!res.ok) {
+        const msg = (await res.json().catch(() => null)) as { detail?: string } | null
+        throw new Error(msg?.detail || 'Failed to create user')
+      }
+      setCreateOpen(false)
+      await load()
+    } catch (e) {
+      setCreateError(e instanceof Error ? e.message : 'Failed to create user')
+    } finally {
+      setCreateSaving(false)
+    }
+  }
 
   function openEdit(u: ApiUser) {
     setEditUser(u)
@@ -327,6 +400,94 @@ export default function UsersPage() {
           </TableContainer>
         )}
       </Box>
+
+      <Dialog open={createOpen} onClose={closeCreate} fullWidth maxWidth="sm">
+        <DialogTitle sx={{ fontWeight: 1000 }}>Create user</DialogTitle>
+        <DialogContent sx={{ pt: 1 }}>
+          <Stack gap={2} sx={{ mt: 1 }}>
+            {createError ? <Alert severity="error">{createError}</Alert> : null}
+
+            <TextField
+              label="Username"
+              value={createForm.username}
+              onFocus={() => setCreateInputName('username')}
+              onChange={(e) => setCreateForm((prev) => ({ ...prev, username: e.target.value }))}
+              fullWidth
+            />
+
+            <Stack direction={{ xs: 'column', sm: 'row' }} gap={2}>
+              <TextField
+                label="Password"
+                type="password"
+                value={createForm.password}
+                onFocus={() => setCreateInputName('password')}
+                onChange={(e) => setCreateForm((prev) => ({ ...prev, password: e.target.value }))}
+                fullWidth
+              />
+              <TextField
+                label="Confirm password"
+                type="password"
+                value={createForm.confirmPassword}
+                onFocus={() => setCreateInputName('confirmPassword')}
+                onChange={(e) => setCreateForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+                error={Boolean(createForm.confirmPassword) && createForm.password !== createForm.confirmPassword}
+                helperText={
+                  Boolean(createForm.confirmPassword) && createForm.password !== createForm.confirmPassword
+                    ? 'Passwords do not match'
+                    : ' '
+                }
+                fullWidth
+              />
+            </Stack>
+
+            <TextField
+              label="Position"
+              value={createForm.position}
+              onFocus={() => setCreateInputName('position')}
+              onChange={(e) => setCreateForm((prev) => ({ ...prev, position: e.target.value }))}
+              fullWidth
+            />
+
+            <Paper variant="outlined" sx={{ borderRadius: 2, p: 1.5 }}>
+              <Keyboard
+                input={createForm}
+                inputName={createInputName}
+                layoutName={createLayout}
+                onChangeAll={(inputs) => setCreateForm(inputs as CreateUserForm)}
+                onKeyPress={(btn) => {
+                  if (btn === '{shift}' || btn === '{lock}') {
+                    setCreateLayout((prev) => (prev === 'default' ? 'shift' : 'default'))
+                  }
+                }}
+              />
+            </Paper>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, display: 'flex', gap: 1, flexDirection: { xs: 'column', sm: 'row' } }}>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={closeCreate}
+            fullWidth
+            size="large"
+            sx={{ py: 1.6, fontSize: 16, fontWeight: 900 }}
+            disabled={createSaving}
+          >
+            Cancel
+          </Button>
+          <Button
+            color="success"
+            variant="contained"
+            onClick={createUser}
+            fullWidth
+            size="large"
+            sx={{ py: 1.6, fontSize: 16, fontWeight: 900 }}
+            disabled={createSaving || !createForm.username.trim() || !createForm.password || !createForm.confirmPassword}
+          >
+            {createSaving ? 'Creating…' : 'Create'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog open={editOpen} onClose={closeEdit} fullWidth maxWidth="sm">
         <DialogTitle sx={{ fontWeight: 1000 }}>Edit user</DialogTitle>

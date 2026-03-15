@@ -9,6 +9,7 @@ from users.helpers import authenticate_user, create_access_token, hash_password
 from users.models import User
 from users.schemas import (
     AdminCredentialsUpdateIn,
+    AdminCreateUserIn,
     LoginSchema,
     PasswordUpdateIn,
     UsernameUpdateIn,
@@ -132,6 +133,42 @@ async def admin_list_users(
         }
         for u in users
     ]
+
+
+@router.post("/admin/create-user")
+def admin_create_user(
+    payload: AdminCreateUserIn,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin privilege required")
+
+    username = payload.username.strip()
+    if not username:
+        raise HTTPException(status_code=400, detail="Username is required")
+
+    exists = db.query(User).filter(User.username == username).first()
+    if exists:
+        raise HTTPException(status_code=400, detail="Username already taken")
+
+    user = User(
+        username=username,
+        position=payload.position,
+        password=hash_password(payload.password),
+        is_admin=False,
+        is_active=True,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return {
+        "id": user.id,
+        "username": user.username,
+        "position": user.position,
+        "is_admin": user.is_admin,
+        "is_active": user.is_active,
+    }
 
 
 @router.put("/admin/update-user/{user_id}")
