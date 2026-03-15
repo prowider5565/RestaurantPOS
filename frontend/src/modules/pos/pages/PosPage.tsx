@@ -1055,7 +1055,17 @@ export default function PosPage() {
         </Box>
       </Box>
 
-      <Dialog open={createOpen} onClose={closeCreateFood} fullWidth maxWidth="sm">
+      <Dialog
+        open={createOpen}
+        onClose={closeCreateFood}
+        fullWidth
+        maxWidth={false}
+        PaperProps={{
+          sx: {
+            width: { xs: 'calc(100% - 32px)', sm: '780px' },
+          },
+        }}
+      >
         <DialogTitle sx={{ fontWeight: 1000 }}>Create product</DialogTitle>
         <DialogContent sx={{ pt: 1, display: 'flex', flexDirection: 'column' }}>
           <Stack gap={2} sx={{ mt: 1, flex: 1 }}>

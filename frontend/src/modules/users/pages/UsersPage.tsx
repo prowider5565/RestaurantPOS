@@ -428,17 +428,35 @@ export default function UsersPage() {
           <Stack direction="row" justifyContent="flex-end">
             <Pagination
               color="primary"
+              size="large"
               page={page}
               count={pages}
               onChange={(_, next) => setPage(next)}
               showFirstButton
               showLastButton
+              sx={{
+                '& .MuiPaginationItem-root': {
+                  fontSize: '1.4em',
+                  minWidth: 45,
+                  height: 45,
+                },
+              }}
             />
           </Stack>
         ) : null}
       </Box>
 
-      <Dialog open={createOpen} onClose={closeCreate} fullWidth maxWidth="sm">
+      <Dialog
+        open={createOpen}
+        onClose={closeCreate}
+        fullWidth
+        maxWidth={false}
+        PaperProps={{
+          sx: {
+            width: { xs: 'calc(100% - 32px)', sm: '780px' },
+          },
+        }}
+      >
         <DialogTitle sx={{ fontWeight: 1000 }}>Create user</DialogTitle>
         <DialogContent sx={{ pt: 1, display: 'flex', flexDirection: 'column' }}>
           <Stack gap={2} sx={{ mt: 1, flex: 1 }}>

@@ -540,11 +540,19 @@ export default function OrderHistoryPage() {
           <Stack direction="row" justifyContent="flex-end">
             <Pagination
               color="primary"
+              size="large"
               page={page}
               count={history.page.pages}
               onChange={(_, next) => setPage(next)}
               showFirstButton
               showLastButton
+              sx={{
+                '& .MuiPaginationItem-root': {
+                  fontSize: '1.4em',
+                  minWidth: 45,
+                  height: 45,
+                },
+              }}
             />
           </Stack>
         )}
