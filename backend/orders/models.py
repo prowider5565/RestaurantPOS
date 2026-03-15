@@ -26,7 +26,7 @@ class Order(Base):
         lazy="selectin",
         cascade="all, delete-orphan",
     )
-    user = relationship("User", back_populates="orders")
+    user = relationship("User", back_populates="orders", lazy="selectin")
 
 
 

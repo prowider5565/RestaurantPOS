@@ -39,6 +39,14 @@ class ProductSummaryOut(BaseModel):
     measure: ProductMeasure | None = None
 
 
+class UserSummaryOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    username: str
+    position: str | None = None
+
+
 class OrderItemDetailOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -52,6 +60,8 @@ class OrderOut(BaseModel):
     id: int
     total_price: float
     # status: OrderStatus
+    created_at: datetime
+    user: UserSummaryOut | None = None
     items: list[OrderItemDetailOut]
 
 
@@ -62,6 +72,7 @@ class OrderHistoryRowOut(BaseModel):
     total_price: float
     # status: OrderStatus
     created_at: datetime
+    user: UserSummaryOut | None = None
     items: list[OrderItemOut]
 
 

@@ -36,7 +36,9 @@ def create_order(db: Session, payload: OrderCreate) -> tuple[Order, list[OrderIt
         items.append(item)
 
     db.commit()
-    db.refresh(order)
+    
+    # Refresh and eagerly load relationships
+    db.refresh(order, ["user", "items"])
     for item in items:
         db.refresh(item)
 
@@ -58,7 +60,7 @@ def get_order_history(
     )
     total_sum = float(sum_query.scalar() or 0.0)
 
-    query = apply_filters(db.query(Order).options(selectinload(Order.items))).order_by(
+    query = apply_filters(db.query(Order).options(selectinload(Order.items), selectinload(Order.user))).order_by(
         Order.created_at.desc()
     )
     page = paginate(db, query, params)
@@ -72,7 +74,7 @@ def get_order_history(
 def get_order_or_404(db: Session, order_id: int) -> Order:
     order = (
         db.query(Order)
-        .options(selectinload(Order.items).selectinload(OrderItem.product))
+        .options(selectinload(Order.items).selectinload(OrderItem.product), selectinload(Order.user))
         .filter(Order.id == order_id)
         .first()
     )

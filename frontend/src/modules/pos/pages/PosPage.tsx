@@ -373,6 +373,7 @@ export default function PosPage() {
     id: number
     total_price: number
     created_at: string
+    user: { id: number; username: string; position: string | null }
     items: Array<{
       product: { id: number; name: string; price: number }
       quantity: number
@@ -394,24 +395,9 @@ export default function PosPage() {
       day: '2-digit',
     })
 
-    // Get user info from localStorage or auth
-    const userStr = localStorage.getItem('auth_user')
-    let username = '-'
-    let position = '-'
-    
-    if (userStr) {
-      try {
-        const user = JSON.parse(userStr)
-        if (user.name || user.username) {
-          username = user.name || user.username
-        }
-        if (user.position || user.role) {
-          position = user.position || user.role
-        }
-      } catch (error) {
-        console.error('Error parsing user info:', error)
-      }
-    }
+    // Get user info from order response
+    const username = orderData.user.username
+    const position = orderData.user.position || '-'
 
     // User info above table - right aligned
     lines.push('Sana: '.padEnd(tableWidth - today.length) + today)
