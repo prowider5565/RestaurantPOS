@@ -344,55 +344,146 @@ export default function PosPage() {
     )
   }
 
+  function wrapText(text: string, maxWidth: number): string[] {
+    const words = text.split(' ')
+    const lines: string[] = []
+    let currentLine = ''
+
+    for (const word of words) {
+      if ((currentLine + word).length <= maxWidth) {
+        currentLine += (currentLine ? ' ' : '') + word
+      } else {
+        if (currentLine) lines.push(currentLine)
+        currentLine = word
+      }
+    }
+    if (currentLine) lines.push(currentLine)
+
+    return lines.length === 0 ? [''] : lines
+  }
+
+  function centerText(text: string, width: number): string {
+    const padding = Math.max(0, width - text.length)
+    const leftPad = Math.floor(padding / 2)
+    const rightPad = padding - leftPad
+    return ' '.repeat(leftPad) + text + ' '.repeat(rightPad)
+  }
+
   async function generateReceipt(orderData: {
     id: number
     total_price: number
     created_at: string
     items: Array<{
-      product: { name: string; price: number }
+      product: { id: number; name: string; price: number }
       quantity: number
     }>
   }): Promise<string> {
+    const tableWidth = 50
+    const idWidth = 3
+    const nameWidth = 18
+    const qtyWidth = 3
+    const priceWidth = 8
+    const subtotalWidth = 10
+
     const lines: string[] = []
 
     // Header
-    lines.push('='.repeat(32))
-    lines.push('RESTAURANT POS RECEIPT'.padStart(24).padEnd(32))
-    lines.push('='.repeat(32))
-
-    // Order info
-    lines.push(`Order ID: ${orderData.id}`)
+    lines.push('┌' + '─'.repeat(tableWidth - 2) + '┐')
+    lines.push('│' + centerText('RESTAURANT POS RECEIPT', tableWidth - 2) + '│')
+    lines.push('├' + '─'.repeat(tableWidth - 2) + '┤')
 
     // Date and time
-    const dt = new Date(orderData.created_at)
-    lines.push(`Date: ${dt.toLocaleString()}`)
-
-    lines.push('-'.repeat(32))
-
-    // Items section
-    lines.push('ITEMS:')
-
-    for (const item of orderData.items) {
-      const qty = item.quantity
-      const price = item.product.price
-      const name = item.product.name
-      const itemTotal = qty * price
-
-      const nameShort = name.length > 20 ? name.substring(0, 20) : name
-      lines.push(nameShort)
-      lines.push(`  ${qty}x ${price.toLocaleString('uz-UZ')} = ${itemTotal.toLocaleString('uz-UZ')}`)
+    let dateStr = ''
+    try {
+      const dt = new Date(orderData.created_at)
+      if (!isNaN(dt.getTime())) {
+        dateStr = dt.toLocaleString('uz-UZ', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      }
+    } catch (error) {
+      console.error('Date parsing error:', error)
     }
 
-    lines.push('-'.repeat(32))
+    if (dateStr) {
+      lines.push('│' + centerText(dateStr, tableWidth - 2) + '│')
+      lines.push('├' + '─'.repeat(tableWidth - 2) + '┤')
+    }
+
+    // Table header
+    const headerRow =
+      '│ ' +
+      'ID'.padEnd(idWidth) +
+      '│ ' +
+      'Name'.padEnd(nameWidth) +
+      '│ ' +
+      'Qty'.padEnd(qtyWidth) +
+      '│ ' +
+      'Price'.padEnd(priceWidth) +
+      '│ Subtotal │'
+    lines.push(headerRow)
+    lines.push('├' + '─'.repeat(idWidth + 2) + '┼' + '─'.repeat(nameWidth + 2) + '┼' + '─'.repeat(qtyWidth + 2) + '┼' + '─'.repeat(priceWidth + 2) + '┼' + '─'.repeat(subtotalWidth + 2) + '┤')
+
+    // Items
+    let totalAmount = 0
+    for (const item of orderData.items) {
+      const id = item.product.id.toString()
+      const nameLines = wrapText(item.product.name, nameWidth)
+      const qty = item.quantity.toString()
+      const price = item.product.price.toLocaleString('uz-UZ')
+      const subtotal = (item.quantity * item.product.price).toLocaleString('uz-UZ')
+      totalAmount += item.quantity * item.product.price
+
+      // First line with ID
+      lines.push(
+        '│ ' +
+          id.padEnd(idWidth) +
+          '│ ' +
+          nameLines[0].padEnd(nameWidth) +
+          '│ ' +
+          qty.padEnd(qtyWidth) +
+          '│ ' +
+          price.padEnd(priceWidth) +
+          '│ ' +
+          subtotal.padEnd(subtotalWidth) +
+          '│'
+      )
+
+      // Additional lines for wrapped name
+      for (let i = 1; i < nameLines.length; i++) {
+        lines.push(
+          '│ ' +
+            ' '.repeat(idWidth) +
+            '│ ' +
+            nameLines[i].padEnd(nameWidth) +
+            '│ ' +
+            ' '.repeat(qtyWidth) +
+            '│ ' +
+            ' '.repeat(priceWidth) +
+            '│ ' +
+            ' '.repeat(subtotalWidth) +
+            '│'
+        )
+      }
+    }
+
+    lines.push('├' + '─'.repeat(idWidth + 2) + '┼' + '─'.repeat(nameWidth + 2) + '┼' + '─'.repeat(qtyWidth + 2) + '┼' + '─'.repeat(priceWidth + 2) + '┼' + '─'.repeat(subtotalWidth + 2) + '┤')
 
     // Total
-    const total = orderData.total_price
-    const totalLine = 'TOTAL'.padEnd(20) + total.toLocaleString('uz-UZ') + " so'm"
-    lines.push(totalLine)
+    const totalStr = totalAmount.toLocaleString('uz-UZ') + " so'm"
+    const totalContent =
+      ' '.repeat(idWidth + 2 + nameWidth + 2 + qtyWidth + 2 + priceWidth + 2) + 'Total: ' + totalStr
+    lines.push('│' + totalContent.padEnd(tableWidth - 2) + '│')
 
-    lines.push('='.repeat(32))
-    lines.push('Thank you for your order!'.padStart(24).padEnd(32))
-    lines.push('='.repeat(32))
+    lines.push('└' + '─'.repeat(tableWidth - 2) + '┘')
+
+    // Thank you
+    lines.push('')
+    lines.push(centerText('Thank you for your order!', tableWidth))
 
     return lines.join('\n')
   }
