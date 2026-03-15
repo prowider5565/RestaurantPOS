@@ -1,10 +1,11 @@
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney'
 import LogoutIcon from '@mui/icons-material/Logout'
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu'
 import SettingsIcon from '@mui/icons-material/Settings'
+import UploadFileIcon from '@mui/icons-material/UploadFile'
 import {
   AppBar,
   Box,
+  Button,
   Card,
   IconButton,
   Paper,
@@ -15,10 +16,14 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TextField,
   Toolbar,
+  ToggleButton,
+  ToggleButtonGroup,
   Tooltip,
   Typography,
 } from '@mui/material'
+import { useState } from 'react'
 
 import { logout } from '../../../shared/auth'
 
@@ -89,11 +94,38 @@ const mockCashDesk: CashDeskResponse = {
   ],
 }
 
+function toYmd(d: Date) {
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
+
 export default function CashDeskPage() {
   const { summary, transactions } = mockCashDesk
 
+  const [preset, setPreset] = useState<'daily' | 'weekly' | 'monthly' | null>(null)
+  const [fromDate, setFromDate] = useState<string>('')
+  const [toDate, setToDate] = useState<string>('')
+
   function formatMoney(value: number) {
     return `${new Intl.NumberFormat('uz-UZ').format(Math.round(value))} so'm`
+  }
+
+  function applyPreset(next: 'daily' | 'weekly' | 'monthly' | null) {
+    setPreset(next)
+    if (!next) return
+    const end = new Date()
+    const start = new Date()
+    if (next === 'daily') start.setDate(end.getDate())
+    if (next === 'weekly') start.setDate(end.getDate() - 6)
+    if (next === 'monthly') start.setDate(end.getDate() - 29)
+    setFromDate(toYmd(start))
+    setToDate(toYmd(end))
+  }
+
+  function exportSnapshot() {
+    // Backend-driven export will be wired here.
   }
 
   return (
@@ -173,11 +205,65 @@ export default function CashDeskPage() {
           }}
         >
           {/* Table on the left */}
-          <Box sx={{ minHeight: 0, height: { lg: '100%' }, overflow: 'hidden' }}>
+          <Box
+            sx={{
+              minHeight: 0,
+              height: { lg: '100%' },
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2,
+            }}
+          >
+            <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2} flexWrap="wrap">
+              <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap">
+                <Button variant="outlined" startIcon={<UploadFileIcon />} onClick={exportSnapshot}>
+                  Export snapshot
+                </Button>
+              </Stack>
+
+              <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap" justifyContent="flex-end">
+                <ToggleButtonGroup
+                  exclusive
+                  value={preset}
+                  onChange={(_, next) => applyPreset(next)}
+                  size="small"
+                  aria-label="Date presets"
+                >
+                  <ToggleButton value="daily">Daily</ToggleButton>
+                  <ToggleButton value="weekly">Weekly</ToggleButton>
+                  <ToggleButton value="monthly">Monthly</ToggleButton>
+                </ToggleButtonGroup>
+
+                <TextField
+                  size="small"
+                  type="date"
+                  label="From"
+                  value={fromDate}
+                  onChange={(e) => {
+                    setPreset(null)
+                    setFromDate(e.target.value)
+                  }}
+                  InputLabelProps={{ shrink: true }}
+                />
+                <TextField
+                  size="small"
+                  type="date"
+                  label="To"
+                  value={toDate}
+                  onChange={(e) => {
+                    setPreset(null)
+                    setToDate(e.target.value)
+                  }}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Stack>
+            </Stack>
+
             <TableContainer
               component={Paper}
               variant="outlined"
-              sx={{ borderRadius: 3, height: '100%', minHeight: 0, overflow: 'auto' }}
+              sx={{ borderRadius: 3, flex: 1, minHeight: 0, overflow: 'auto' }}
             >
               <Table size="small" stickyHeader>
                 <TableHead>
@@ -238,26 +324,14 @@ export default function CashDeskPage() {
               {/* Current Amount */}
               <Box sx={{ textAlign: 'center', pb: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
                 <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 1 }}>Current Amount</Typography>
-                <Stack direction="row" alignItems="baseline" justifyContent="center" gap={1}>
-                  <AttachMoneyIcon sx={{ fontSize: 40, color: 'primary.main' }} />
-                  <Typography sx={{ fontWeight: 1000, fontSize: 32, color: 'primary.main' }}>
-                    {new Intl.NumberFormat('uz-UZ').format(Math.round(summary.current_amount))}
-                  </Typography>
-                </Stack>
+                <Typography sx={{ fontWeight: 1000, fontSize: 32, color: 'primary.main' }}>
+                  {new Intl.NumberFormat('uz-UZ').format(Math.round(summary.current_amount))}
+                </Typography>
                 <Typography sx={{ fontWeight: 700, color: 'text.secondary', mt: 1, fontSize: 14 }}>so'm</Typography>
               </Box>
 
               {/* Income and Expenses */}
               <Box>
-                <Box sx={{ mb: 1.5, pb: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
-                  <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 14 }}>
-                    Total Income
-                  </Typography>
-                  <Typography sx={{ fontWeight: 900, fontSize: 20, color: 'success.main' }}>
-                    +{formatMoney(summary.total_income)}
-                  </Typography>
-                </Box>
-
                 <Box sx={{ mb: 1.5, pb: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
                   <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 14 }}>
                     Total Order Income
