@@ -10,6 +10,7 @@ import {
   Card,
   Divider,
   IconButton,
+  Pagination,
   Paper,
   Stack,
   Table,
@@ -110,6 +111,8 @@ export default function CashDeskPage() {
   const [fromDate, setFromDate] = useState<string>('')
   const [toDate, setToDate] = useState<string>('')
   const [createAmount, setCreateAmount] = useState<string>('')
+  const [page, setPage] = useState(1)
+  const [size] = useState(10)
 
   function formatMoney(value: number) {
     return `${new Intl.NumberFormat('uz-UZ').format(Math.round(value))} so'm`
@@ -162,6 +165,9 @@ export default function CashDeskPage() {
   function numpadClear() {
     setCreateAmount('')
   }
+
+  const pages = Math.max(1, Math.ceil(transactions.length / size))
+  const pagedTransactions = transactions.slice((page - 1) * size, (page - 1) * size + size)
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
@@ -226,9 +232,10 @@ export default function CashDeskPage() {
           minHeight: 0,
           flex: 1,
           height: { xs: 'calc(100dvh - 56px)', sm: 'calc(100dvh - 64px)' },
+          overflow: 'hidden',
         }}
       >
-          <Box
+        <Box
           sx={{
             display: 'grid',
             gridTemplateColumns: { xs: '1fr', lg: '1fr 570px' },
@@ -324,7 +331,7 @@ export default function CashDeskPage() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {transactions.map((transaction) => (
+                  {pagedTransactions.map((transaction) => (
                     <TableRow key={transaction.id} hover>
                       <TableCell>{transaction.username}</TableCell>
                       <TableCell
@@ -380,6 +387,19 @@ export default function CashDeskPage() {
                 </TableBody>
               </Table>
             </TableContainer>
+
+            {pages > 1 ? (
+              <Stack direction="row" justifyContent="flex-end">
+                <Pagination
+                  color="primary"
+                  page={page}
+                  count={pages}
+                  onChange={(_, next) => setPage(next)}
+                  showFirstButton
+                  showLastButton
+                />
+              </Stack>
+            ) : null}
           </Box>
 
           {/* Summary card on the right */}

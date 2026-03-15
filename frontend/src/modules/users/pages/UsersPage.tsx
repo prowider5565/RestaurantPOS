@@ -17,6 +17,7 @@ import {
   DialogTitle,
   IconButton,
   InputAdornment,
+  Pagination,
   Paper,
   Stack,
   Table,
@@ -83,6 +84,8 @@ export default function UsersPage() {
     confirmPassword: '',
     position: '',
   })
+  const [page, setPage] = useState(1)
+  const [size] = useState(12)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -262,6 +265,17 @@ export default function UsersPage() {
     })
   }, [rows, search])
 
+  const pages = useMemo(() => Math.max(1, Math.ceil(visibleRows.length / size)), [size, visibleRows.length])
+
+  const pagedRows = useMemo(() => {
+    const start = (page - 1) * size
+    return visibleRows.slice(start, start + size)
+  }, [page, size, visibleRows])
+
+  useEffect(() => {
+    setPage(1)
+  }, [search])
+
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       <AppBar position="sticky" color="transparent" elevation={0}>
@@ -326,13 +340,23 @@ export default function UsersPage() {
         </Toolbar>
       </AppBar>
 
-      <Box sx={{ p: 2, pb: 12 }}>
+      <Box
+        sx={{
+          p: 2,
+          pb: 12,
+          height: { xs: 'calc(100vh - 56px)', sm: 'calc(100vh - 64px)' },
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+          overflow: 'hidden',
+        }}
+      >
         {loading ? (
-          <Box sx={{ display: 'grid', placeItems: 'center', py: 6 }}>
+          <Box sx={{ display: 'grid', placeItems: 'center', py: 6, flex: 1 }}>
             <CircularProgress />
           </Box>
         ) : error ? (
-          <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+          <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, flex: 1 }}>
             <Stack gap={1}>
               <Typography sx={{ fontWeight: 900 }}>Could not load users</Typography>
               <Typography variant="body2" color="text.secondary">
@@ -344,7 +368,7 @@ export default function UsersPage() {
             </Stack>
           </Paper>
         ) : (
-          <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 3, overflow: 'auto' }}>
+          <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 3, overflow: 'auto', flex: 1 }}>
             <Table
               size="small"
               stickyHeader
@@ -367,7 +391,7 @@ export default function UsersPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {visibleRows.map((u) => (
+                {pagedRows.map((u) => (
                   <TableRow key={u.id} hover>
                     <TableCell sx={{ fontWeight: 1000 }}>{u.username}</TableCell>
                     <TableCell>{u.position ?? '-'}</TableCell>
@@ -399,12 +423,25 @@ export default function UsersPage() {
             </Table>
           </TableContainer>
         )}
+
+        {!loading && !error && pages > 1 ? (
+          <Stack direction="row" justifyContent="flex-end">
+            <Pagination
+              color="primary"
+              page={page}
+              count={pages}
+              onChange={(_, next) => setPage(next)}
+              showFirstButton
+              showLastButton
+            />
+          </Stack>
+        ) : null}
       </Box>
 
       <Dialog open={createOpen} onClose={closeCreate} fullWidth maxWidth="sm">
         <DialogTitle sx={{ fontWeight: 1000 }}>Create user</DialogTitle>
-        <DialogContent sx={{ pt: 1 }}>
-          <Stack gap={2} sx={{ mt: 1 }}>
+        <DialogContent sx={{ pt: 1, display: 'flex', flexDirection: 'column' }}>
+          <Stack gap={2} sx={{ mt: 1, flex: 1 }}>
             {createError ? <Alert severity="error">{createError}</Alert> : null}
 
             <TextField
@@ -448,7 +485,20 @@ export default function UsersPage() {
               fullWidth
             />
 
-            <Paper variant="outlined" sx={{ borderRadius: 2, p: 1.5 }}>
+            <Paper
+              variant="outlined"
+              sx={{
+                borderRadius: 2,
+                p: 1.5,
+                mt: 'auto',
+                overflowX: 'auto',
+                '& .simple-keyboard': {
+                  transform: 'scale(1.4)',
+                  transformOrigin: 'top left',
+                  width: 'calc(100% / 1.4)',
+                },
+              }}
+            >
               <Keyboard
                 input={createForm}
                 inputName={createInputName}
