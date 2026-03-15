@@ -454,12 +454,15 @@ export default function UsersPage() {
         PaperProps={{
           sx: {
             width: { xs: 'calc(100% - 32px)', sm: '780px' },
+            height: { xs: 'calc(100dvh - 32px)', sm: '90dvh' },
+            maxHeight: { xs: 'calc(100dvh - 32px)', sm: 920 },
           },
         }}
       >
         <DialogTitle sx={{ fontWeight: 1000 }}>Create user</DialogTitle>
-        <DialogContent sx={{ pt: 1, display: 'flex', flexDirection: 'column' }}>
-          <Stack gap={2} sx={{ mt: 1, flex: 1 }}>
+        <DialogContent sx={{ pt: 1, display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', gap: 2 }}>
+          <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+            <Stack gap={2} sx={{ mt: 1 }}>
             {createError ? <Alert severity="error">{createError}</Alert> : null}
 
             <TextField
@@ -502,34 +505,34 @@ export default function UsersPage() {
               onChange={(e) => setCreateForm((prev) => ({ ...prev, position: e.target.value }))}
               fullWidth
             />
-
-            <Paper
-              variant="outlined"
-              sx={{
-                borderRadius: 2,
-                p: 1.5,
-                mt: 'auto',
-                overflowX: 'auto',
-                '& .simple-keyboard': {
-                  transform: 'scale(1.4)',
-                  transformOrigin: 'top left',
-                  width: 'calc(100% / 1.4)',
-                },
-              }}
-            >
-              <Keyboard
-                input={createForm}
-                inputName={createInputName}
-                layoutName={createLayout}
-                onChangeAll={(inputs) => setCreateForm(inputs as CreateUserForm)}
-                onKeyPress={(btn) => {
-                  if (btn === '{shift}' || btn === '{lock}') {
-                    setCreateLayout((prev) => (prev === 'default' ? 'shift' : 'default'))
-                  }
-                }}
-              />
-            </Paper>
           </Stack>
+          </Box>
+
+          <Paper
+            variant="outlined"
+            sx={{
+              borderRadius: 2,
+              p: 1.5,
+              overflowX: 'auto',
+              '& .simple-keyboard': {
+                transform: 'scale(1.4)',
+                transformOrigin: 'top left',
+                width: 'calc(100% / 1.4)',
+              },
+            }}
+          >
+            <Keyboard
+              input={createForm}
+              inputName={createInputName}
+              layoutName={createLayout}
+              onChangeAll={(inputs) => setCreateForm(inputs as CreateUserForm)}
+              onKeyPress={(btn) => {
+                if (btn === '{shift}' || btn === '{lock}') {
+                  setCreateLayout((prev) => (prev === 'default' ? 'shift' : 'default'))
+                }
+              }}
+            />
+          </Paper>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, display: 'flex', gap: 1, flexDirection: { xs: 'column', sm: 'row' } }}>
           <Button

@@ -1063,12 +1063,15 @@ export default function PosPage() {
         PaperProps={{
           sx: {
             width: { xs: 'calc(100% - 32px)', sm: '780px' },
+            height: { xs: 'calc(100dvh - 32px)', sm: '90dvh' },
+            maxHeight: { xs: 'calc(100dvh - 32px)', sm: 920 },
           },
         }}
       >
         <DialogTitle sx={{ fontWeight: 1000 }}>Create product</DialogTitle>
-        <DialogContent sx={{ pt: 1, display: 'flex', flexDirection: 'column' }}>
-          <Stack gap={2} sx={{ mt: 1, flex: 1 }}>
+        <DialogContent sx={{ pt: 1, display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', gap: 2 }}>
+          <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+            <Stack gap={2} sx={{ mt: 1 }}>
             <TextField
               label="Name"
               value={newFood.name}
@@ -1192,40 +1195,40 @@ export default function PosPage() {
                 )}
               </Box>
             </Paper>
-
-            <Paper
-              variant="outlined"
-              sx={{
-                borderRadius: 2,
-                p: 1.5,
-                mt: 'auto',
-                overflowX: 'auto',
-                '& .simple-keyboard': {
-                  transform: 'scale(1.4)',
-                  transformOrigin: 'top left',
-                  width: 'calc(100% / 1.4)',
-                },
-              }}
-            >
-              <Keyboard
-                input={{ name: newFood.name, priceDigits: newFood.priceDigits }}
-                inputName={createKeyboardInput}
-                layoutName={createKeyboardLayout}
-                onChange={(value) => {
-                  if (createKeyboardInput === 'name') {
-                    setNewFood((prev) => ({ ...prev, name: value }))
-                    return
-                  }
-                  setNewFood((prev) => ({ ...prev, priceDigits: value.replaceAll(/[^\d]/g, '').slice(0, 18) }))
-                }}
-                onKeyPress={(btn) => {
-                  if (btn === '{shift}' || btn === '{lock}') {
-                    setCreateKeyboardLayout((prev) => (prev === 'default' ? 'shift' : 'default'))
-                  }
-                }}
-              />
-            </Paper>
           </Stack>
+          </Box>
+
+          <Paper
+            variant="outlined"
+            sx={{
+              borderRadius: 2,
+              p: 1.5,
+              overflowX: 'auto',
+              '& .simple-keyboard': {
+                transform: 'scale(1.4)',
+                transformOrigin: 'top left',
+                width: 'calc(100% / 1.4)',
+              },
+            }}
+          >
+            <Keyboard
+              input={{ name: newFood.name, priceDigits: newFood.priceDigits }}
+              inputName={createKeyboardInput}
+              layoutName={createKeyboardLayout}
+              onChange={(value) => {
+                if (createKeyboardInput === 'name') {
+                  setNewFood((prev) => ({ ...prev, name: value }))
+                  return
+                }
+                setNewFood((prev) => ({ ...prev, priceDigits: value.replaceAll(/[^\d]/g, '').slice(0, 18) }))
+              }}
+              onKeyPress={(btn) => {
+                if (btn === '{shift}' || btn === '{lock}') {
+                  setCreateKeyboardLayout((prev) => (prev === 'default' ? 'shift' : 'default'))
+                }
+              }}
+            />
+          </Paper>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, display: 'flex', gap: 1, flexDirection: { xs: 'column', sm: 'row' } }}>
           <Button

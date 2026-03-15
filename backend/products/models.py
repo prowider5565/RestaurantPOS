@@ -11,7 +11,7 @@ class Product(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
     image_path = Column(String, index=True)
-    price = Column(Float, index=True)
+    price = Column(Integer, index=True)
     category_id = Column(
         Integer,
         ForeignKey("product_categories.id", ondelete="SET NULL"),

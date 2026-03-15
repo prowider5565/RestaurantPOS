@@ -78,33 +78,35 @@ export default function BottomDock({
         Cash desk
       </Button>
 
-      <Tooltip title={active === 'users' ? 'Add new user' : 'Add new food & Drinks'} placement="top">
-        <Button
-          aria-label={active === 'users' ? 'Add new user' : 'Add new food & Drinks'}
-          onClick={() => {
-            if (active === 'menu') window.dispatchEvent(new CustomEvent('pos:createFood'))
-            if (active === 'users') window.dispatchEvent(new CustomEvent('users:createUser'))
-          }}
-          sx={{
-            position: 'absolute',
-            right: 10,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            minWidth: 0,
-            width: 56,
-            height: 56,
-            borderRadius: 999,
-            bgcolor: 'primary.main',
-            color: 'common.white',
-            border: '1px solid',
-            borderColor: 'primary.dark',
-            boxShadow: 3,
-            '&:hover': { bgcolor: 'primary.dark', boxShadow: 6 },
-          }}
-        >
-          <AddIcon sx={{ fontSize: 28 }} />
-        </Button>
-      </Tooltip>
+      {active === 'menu' || active === 'users' ? (
+        <Tooltip title={active === 'users' ? 'Add new user' : 'Add new food & Drinks'} placement="top">
+          <Button
+            aria-label={active === 'users' ? 'Add new user' : 'Add new food & Drinks'}
+            onClick={() => {
+              if (active === 'menu') window.dispatchEvent(new CustomEvent('pos:createFood'))
+              if (active === 'users') window.dispatchEvent(new CustomEvent('users:createUser'))
+            }}
+            sx={{
+              position: 'absolute',
+              right: 10,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              minWidth: 0,
+              width: 56,
+              height: 56,
+              borderRadius: 999,
+              bgcolor: 'primary.main',
+              color: 'common.white',
+              border: '1px solid',
+              borderColor: 'primary.dark',
+              boxShadow: 3,
+              '&:hover': { bgcolor: 'primary.dark', boxShadow: 6 },
+            }}
+          >
+            <AddIcon sx={{ fontSize: 28 }} />
+          </Button>
+        </Tooltip>
+      ) : null}
     </Paper>
   )
 }
