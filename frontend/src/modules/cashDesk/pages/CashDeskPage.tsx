@@ -7,6 +7,10 @@ import {
   Box,
   Button,
   Card,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   IconButton,
   Paper,
   Stack,
@@ -107,6 +111,9 @@ export default function CashDeskPage() {
   const [preset, setPreset] = useState<'daily' | 'weekly' | 'monthly' | null>(null)
   const [fromDate, setFromDate] = useState<string>('')
   const [toDate, setToDate] = useState<string>('')
+  const [createType, setCreateType] = useState<'income' | 'expense' | null>(null)
+  const [createAmount, setCreateAmount] = useState<string>('')
+  const [createNote, setCreateNote] = useState<string>('')
 
   function formatMoney(value: number) {
     return `${new Intl.NumberFormat('uz-UZ').format(Math.round(value))} so'm`
@@ -126,6 +133,21 @@ export default function CashDeskPage() {
 
   function exportSnapshot() {
     // Backend-driven export will be wired here.
+  }
+
+  function openCreate(next: 'income' | 'expense') {
+    setCreateType(next)
+    setCreateAmount('')
+    setCreateNote('')
+  }
+
+  function closeCreate() {
+    setCreateType(null)
+  }
+
+  function submitCreate() {
+    // Backend-driven create will be wired here.
+    closeCreate()
   }
 
   return (
@@ -319,8 +341,11 @@ export default function CashDeskPage() {
           </Box>
 
           {/* Summary card on the right */}
-          <Card variant="outlined" sx={{ borderRadius: 3, p: 3, height: 'fit-content' }}>
-            <Stack spacing={2}>
+          <Card
+            variant="outlined"
+            sx={{ borderRadius: 3, p: 3, height: 'fit-content', display: 'flex', flexDirection: 'column' }}
+          >
+            <Stack spacing={2} sx={{ flex: 1 }}>
               {/* Current Amount */}
               <Box sx={{ textAlign: 'center', pb: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
                 <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 1 }}>Current Amount</Typography>
@@ -360,9 +385,76 @@ export default function CashDeskPage() {
                 </Box>
               </Box>
             </Stack>
+
+            <Box
+              sx={{
+                mt: 'auto',
+                pt: 2,
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: '1fr 1fr' },
+                gap: 1,
+              }}
+            >
+              <Button
+                color="success"
+                variant="contained"
+                onClick={() => openCreate('income')}
+                sx={{ py: 2.2, borderRadius: 2, fontSize: 18 }}
+                fullWidth
+              >
+                + Add income
+              </Button>
+              <Button
+                color="error"
+                variant="contained"
+                onClick={() => openCreate('expense')}
+                sx={{ py: 2.2, borderRadius: 2, fontSize: 18 }}
+                fullWidth
+              >
+                - Add expense
+              </Button>
+            </Box>
           </Card>
         </Box>
       </Box>
+
+      <Dialog open={createType !== null} onClose={closeCreate} fullWidth maxWidth="xs">
+        <DialogTitle sx={{ fontWeight: 1000 }}>
+          {createType === 'income' ? 'Add income' : 'Add expense'}
+        </DialogTitle>
+        <DialogContent sx={{ pt: 1 }}>
+          <Stack gap={2} sx={{ mt: 1 }}>
+            <TextField
+              label="Amount"
+              type="number"
+              value={createAmount}
+              onChange={(e) => setCreateAmount(e.target.value)}
+              inputProps={{ min: 0 }}
+              fullWidth
+            />
+            <TextField
+              label="Note"
+              value={createNote}
+              onChange={(e) => setCreateNote(e.target.value)}
+              fullWidth
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button color="error" variant="contained" onClick={closeCreate} sx={{ borderRadius: 2 }}>
+            Cancel
+          </Button>
+          <Button
+            color="success"
+            variant="contained"
+            onClick={submitCreate}
+            sx={{ borderRadius: 2 }}
+            disabled={!createAmount.trim()}
+          >
+            {createType === 'income' ? 'Add income' : 'Add expense'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   )
 }
