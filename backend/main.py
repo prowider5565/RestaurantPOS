@@ -10,6 +10,8 @@ from fastapi_pagination import add_pagination
 from config.database import Base, engine
 from config.settings import settings
 from cheque.handlers import router as printer_router
+from cash_desk.models import CashDesk  # noqa: F401
+from cash_desk.router import router as cash_desk_router
 from orders.models import Order, OrderItem  # noqa: F401
 from orders.router import router as orders_router
 from products.models import Product, ProductCategory  # noqa: F401
@@ -40,6 +42,7 @@ app.include_router(products_router)
 app.include_router(product_categories_router)
 app.include_router(orders_router)
 app.include_router(users_router, prefix="/users", tags=["users"])
+app.include_router(cash_desk_router)
 app.include_router(printer_router)
 add_pagination(app)
 

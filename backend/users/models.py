@@ -15,3 +15,4 @@ class User(Base):
     password = Column(String, nullable=False)
 
     orders = relationship("Order", back_populates="user")
+    cash_desk = relationship("CashDesk", back_populates="user")

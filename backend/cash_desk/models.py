@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DateTime, Integer, ForeignKey, func, Enum
+from sqlalchemy import Column, DateTime, Integer, ForeignKey, func, Enum, String
 from sqlalchemy.orm import relationship
 
 from cash_desk.types import TransactionType
