@@ -389,7 +389,7 @@ export default function PosPage() {
 
     // Header
     lines.push('+' + '-'.repeat(tableWidth - 2) + '+')
-    lines.push('|' + centerText('RESTAURANT RECEIPT', tableWidth - 2) + '|')
+    lines.push('|' + centerText('RESTORAN ROSHNOMASI', tableWidth - 2) + '|')
     lines.push('+' + '-'.repeat(tableWidth - 2) + '+')
 
     // Date and time
@@ -419,13 +419,13 @@ export default function PosPage() {
       '|' +
       'ID'.padEnd(idWidth + 1) +
       '|' +
-      'Name'.padEnd(nameWidth + 1) +
+      'Nomi'.padEnd(nameWidth + 1) +
       '|' +
-      'Qty'.padEnd(qtyWidth + 1) +
+      'Soni'.padEnd(qtyWidth + 1) +
       '|' +
-      'Price'.padEnd(priceWidth + 1) +
+      'Narx'.padEnd(priceWidth + 1) +
       '|' +
-      'Subtotal|'
+      'Jami|'
     lines.push(headerRow)
     lines.push('+' + '-'.repeat(idWidth + 1) + '+' + '-'.repeat(nameWidth + 1) + '+' + '-'.repeat(qtyWidth + 1) + '+' + '-'.repeat(priceWidth + 1) + '+' + '-'.repeat(subtotalWidth + 1) + '+')
 
@@ -476,11 +476,11 @@ export default function PosPage() {
 
     // Total
     const totalStr = totalAmount.toLocaleString('uz-UZ') + " so'm"
-    const totalContent = 'Total: ' + totalStr
+    const totalContent = 'Umumiy Jami: ' + totalStr
     lines.push('|' + totalContent.padEnd(tableWidth - 2) + '|')
 
     lines.push('+' + '-'.repeat(tableWidth - 2) + '+')
-    lines.push('|' + centerText('Thank you!', tableWidth - 2) + '|')
+    lines.push('|' + centerText('Rahmat!', tableWidth - 2) + '|')
     lines.push('+' + '-'.repeat(tableWidth - 2) + '+')
 
     return lines.join('\n')
