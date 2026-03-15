@@ -17,7 +17,7 @@ class OrderItemCreate(BaseModel):
 
 class OrderCreate(BaseModel):
     total: float = Field(gt=0)
-    status: OrderStatus = OrderStatus.PENDING
+    # status: OrderStatus = OrderStatus.PENDING
     items: list[OrderItemCreate] = Field(min_length=1)
 
 
@@ -51,7 +51,7 @@ class OrderOut(BaseModel):
 
     id: int
     total_price: float
-    status: OrderStatus
+    # status: OrderStatus
     items: list[OrderItemDetailOut]
 
 
@@ -60,7 +60,7 @@ class OrderHistoryRowOut(BaseModel):
 
     id: int
     total_price: float
-    status: OrderStatus
+    # status: OrderStatus
     created_at: datetime
     items: list[OrderItemOut]
 

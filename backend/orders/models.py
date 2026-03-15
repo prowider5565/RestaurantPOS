@@ -12,19 +12,21 @@ class Order(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     total_price = Column(Float, default=0.0)
-    status = Column(
-        Enum(OrderStatus, name="order_status"),
-        default=OrderStatus.PENDING,
-        nullable=False,
-    )
+    # status = Column(
+    #     Enum(OrderStatus, name="order_status"),
+    #     default=OrderStatus.PENDING,
+    #     nullable=False,
+    # )
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
-
+    user_id = Column(Integer, ForeignKey("users.id"))
     items = relationship(
         "OrderItem",
         back_populates="order",
         lazy="selectin",
         cascade="all, delete-orphan",
     )
+    user = relationship("User", back_populates="orders")
+
 
 
 class OrderItem(Base):

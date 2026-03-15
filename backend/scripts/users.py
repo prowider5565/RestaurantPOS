@@ -13,6 +13,7 @@ sys.path.insert(0, str(BACKEND_DIR))
 from config.database import Base, SessionLocal, engine
 from users.helpers import hash_password
 from users.models import User
+from orders.models import Order, OrderItem # noqa: F401
 
 
 def seed_users() -> None:

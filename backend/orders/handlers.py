@@ -23,7 +23,7 @@ def create_order(db: Session, payload: OrderCreate) -> tuple[Order, list[OrderIt
 
     order = Order(
         total_price=payload.total,
-        status=payload.status,
+        # status=payload.status,
     )
     db.add(order)
     db.flush()
