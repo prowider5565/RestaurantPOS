@@ -7,6 +7,7 @@ import {
   Box,
   Button,
   Card,
+  Divider,
   Dialog,
   DialogActions,
   DialogContent,
@@ -137,7 +138,6 @@ export default function CashDeskPage() {
 
   function openCreate(next: 'income' | 'expense') {
     setCreateType(next)
-    setCreateAmount('')
     setCreateNote('')
   }
 
@@ -148,6 +148,21 @@ export default function CashDeskPage() {
   function submitCreate() {
     // Backend-driven create will be wired here.
     closeCreate()
+  }
+
+  function addNumpadDigit(digit: string) {
+    setCreateAmount((prev) => {
+      const next = (prev + digit).replace(/^0+(?=\d)/, '')
+      return next
+    })
+  }
+
+  function numpadBackspace() {
+    setCreateAmount((prev) => prev.slice(0, -1))
+  }
+
+  function numpadClear() {
+    setCreateAmount('')
   }
 
   return (
@@ -215,10 +230,10 @@ export default function CashDeskPage() {
           height: { xs: 'calc(100dvh - 56px)', sm: 'calc(100dvh - 64px)' },
         }}
       >
-        <Box
+          <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', lg: '1fr 380px' },
+            gridTemplateColumns: { xs: '1fr', lg: '1fr 570px' },
             gap: 2,
             alignItems: { xs: 'start', lg: 'stretch' },
             flex: 1,
@@ -287,7 +302,16 @@ export default function CashDeskPage() {
               variant="outlined"
               sx={{ borderRadius: 3, flex: 1, minHeight: 0, overflow: 'auto' }}
             >
-              <Table size="small" stickyHeader>
+              <Table
+                size="small"
+                stickyHeader
+                sx={{
+                  '& .MuiTableCell-root': {
+                    fontSize: '1.3em',
+                    py: 1.1,
+                  },
+                }}
+              >
                 <TableHead>
                   <TableRow sx={{ bgcolor: 'background.default' }}>
                     <TableCell sx={{ fontWeight: 900 }}>Username</TableCell>
@@ -296,7 +320,6 @@ export default function CashDeskPage() {
                     </TableCell>
                     <TableCell sx={{ fontWeight: 900 }}>Type</TableCell>
                     <TableCell sx={{ fontWeight: 900 }}>Date</TableCell>
-                    <TableCell sx={{ fontWeight: 900 }}>Note</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -332,7 +355,6 @@ export default function CashDeskPage() {
                         </Box>
                       </TableCell>
                       <TableCell>{transaction.date}</TableCell>
-                      <TableCell>{transaction.note}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -343,7 +365,7 @@ export default function CashDeskPage() {
           {/* Summary card on the right */}
           <Card
             variant="outlined"
-            sx={{ borderRadius: 3, p: 3, height: 'fit-content', display: 'flex', flexDirection: 'column' }}
+            sx={{ borderRadius: 3, p: 3, height: 'fit-content', width: '100%', display: 'flex', flexDirection: 'column' }}
           >
             <Stack spacing={2} sx={{ flex: 1 }}>
               {/* Current Amount */}
@@ -356,26 +378,42 @@ export default function CashDeskPage() {
               </Box>
 
               {/* Income and Expenses */}
-              <Box>
-                <Box sx={{ mb: 1.5, pb: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
-                  <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 14 }}>
-                    Total Order Income
-                  </Typography>
-                  <Typography sx={{ fontWeight: 900, fontSize: 18, color: 'success.main' }}>
-                    +{formatMoney(summary.total_order_income)}
-                  </Typography>
-                </Box>
+              <Box
+                sx={{
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 2,
+                  p: 1.5,
+                  bgcolor: 'background.paper',
+                }}
+              >
+                <Stack
+                  direction="row"
+                  alignItems="stretch"
+                  divider={<Divider orientation="vertical" flexItem />}
+                  sx={{ mb: 1.5 }}
+                >
+                  <Box sx={{ flex: 1, pr: 2, textAlign: 'center' }}>
+                    <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 14 }}>
+                      Total Order Income
+                    </Typography>
+                    <Typography sx={{ fontWeight: 900, fontSize: 18, color: 'success.main' }}>
+                      +{formatMoney(summary.total_order_income)}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ flex: 1, pl: 2, textAlign: 'center' }}>
+                    <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 14 }}>
+                      Total Misc Income
+                    </Typography>
+                    <Typography sx={{ fontWeight: 900, fontSize: 18, color: 'success.main' }}>
+                      +{formatMoney(summary.total_misc_income)}
+                    </Typography>
+                  </Box>
+                </Stack>
 
-                <Box sx={{ mb: 1.5, pb: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
-                  <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 14 }}>
-                    Total Misc Income
-                  </Typography>
-                  <Typography sx={{ fontWeight: 900, fontSize: 18, color: 'success.main' }}>
-                    +{formatMoney(summary.total_misc_income)}
-                  </Typography>
-                </Box>
+                <Divider sx={{ my: 1.5 }} />
 
-                <Box>
+                <Box sx={{ textAlign: 'center' }}>
                   <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 14 }}>
                     Total Expenses
                   </Typography>
@@ -385,6 +423,67 @@ export default function CashDeskPage() {
                 </Box>
               </Box>
             </Stack>
+
+            <Paper
+              variant="outlined"
+              sx={{
+                mt: 2,
+                borderRadius: 2,
+                p: 1.5,
+                textAlign: 'center',
+              }}
+            >
+              <Typography sx={{ fontWeight: 1000, fontSize: 24, lineHeight: 1.1 }}>
+                {createAmount ? new Intl.NumberFormat('uz-UZ').format(Number(createAmount)) : '0'}
+              </Typography>
+              <Typography sx={{ fontWeight: 700, color: 'text.secondary', fontSize: 12, mt: 0.5 }}>Amount</Typography>
+            </Paper>
+
+            <Box
+              sx={{
+                pt: 2,
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: 1,
+              }}
+            >
+              <Button variant="outlined" onClick={() => addNumpadDigit('1')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
+                1
+              </Button>
+              <Button variant="outlined" onClick={() => addNumpadDigit('2')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
+                2
+              </Button>
+              <Button variant="outlined" onClick={() => addNumpadDigit('3')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
+                3
+              </Button>
+              <Button variant="outlined" onClick={() => addNumpadDigit('4')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
+                4
+              </Button>
+              <Button variant="outlined" onClick={() => addNumpadDigit('5')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
+                5
+              </Button>
+              <Button variant="outlined" onClick={() => addNumpadDigit('6')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
+                6
+              </Button>
+              <Button variant="outlined" onClick={() => addNumpadDigit('7')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
+                7
+              </Button>
+              <Button variant="outlined" onClick={() => addNumpadDigit('8')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
+                8
+              </Button>
+              <Button variant="outlined" onClick={() => addNumpadDigit('9')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
+                9
+              </Button>
+              <Button variant="outlined" onClick={numpadClear} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
+                C
+              </Button>
+              <Button variant="outlined" onClick={() => addNumpadDigit('0')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
+                0
+              </Button>
+              <Button variant="outlined" onClick={numpadBackspace} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
+                Del
+              </Button>
+            </Box>
 
             <Box
               sx={{
