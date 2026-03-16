@@ -21,8 +21,12 @@ def create_order(db: Session, payload: OrderCreate) -> tuple[Order, list[OrderIt
     # if missing:
     #     raise HTTPException(status_code=400, detail="Invalid product id(s)")
 
+    discounted_total = max(0.0, min(payload.discounted_total, payload.total))
+    discount_amount = int(max(0, round(payload.total - discounted_total)))
+
     order = Order(
         total_price=payload.total,
+        discount_amount=discount_amount,
         user_id=payload.user_id
         # status=payload.status,
     )

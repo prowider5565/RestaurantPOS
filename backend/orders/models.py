@@ -19,6 +19,7 @@ class Order(Base):
     #     nullable=False,
     # )
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    discount_amount = Column(Integer, nullable=True, default=0)
     user_id = Column(Integer, ForeignKey("users.id"))
     items = relationship(
         "OrderItem",
@@ -27,7 +28,6 @@ class Order(Base):
         cascade="all, delete-orphan",
     )
     user = relationship("User", back_populates="orders", lazy="selectin")
-
 
 
 class OrderItem(Base):

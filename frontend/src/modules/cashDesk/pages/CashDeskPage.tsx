@@ -35,6 +35,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { API_URL } from '../../../config/env'
 import { logout } from '../../../shared/auth'
 import { useAuth } from '../../../shared/authContext'
+import Numpad from '../../../shared/components/ui/Numpad'
 
 type ApiUser = {
     id: number
@@ -621,51 +622,7 @@ export default function CashDeskPage() {
                             <Typography sx={{ fontWeight: 700, color: 'text.secondary', fontSize: 12, mt: 0.5 }}>Amount</Typography>
                         </Paper>
 
-                        <Box
-                            sx={{
-                                pt: 2,
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(3, 1fr)',
-                                gap: 1,
-                            }}
-                        >
-                            <Button variant="outlined" onClick={() => addNumpadDigit('1')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
-                                1
-                            </Button>
-                            <Button variant="outlined" onClick={() => addNumpadDigit('2')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
-                                2
-                            </Button>
-                            <Button variant="outlined" onClick={() => addNumpadDigit('3')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
-                                3
-                            </Button>
-                            <Button variant="outlined" onClick={() => addNumpadDigit('4')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
-                                4
-                            </Button>
-                            <Button variant="outlined" onClick={() => addNumpadDigit('5')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
-                                5
-                            </Button>
-                            <Button variant="outlined" onClick={() => addNumpadDigit('6')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
-                                6
-                            </Button>
-                            <Button variant="outlined" onClick={() => addNumpadDigit('7')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
-                                7
-                            </Button>
-                            <Button variant="outlined" onClick={() => addNumpadDigit('8')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
-                                8
-                            </Button>
-                            <Button variant="outlined" onClick={() => addNumpadDigit('9')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
-                                9
-                            </Button>
-                            <Button variant="outlined" onClick={numpadClear} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
-                                C
-                            </Button>
-                            <Button variant="outlined" onClick={() => addNumpadDigit('0')} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
-                                0
-                            </Button>
-                            <Button variant="outlined" onClick={numpadBackspace} sx={{ py: 1.4, borderRadius: 2, fontSize: 18 }}>
-                                Del
-                            </Button>
-                        </Box>
+                        <Numpad onDigit={addNumpadDigit} onClear={numpadClear} onBackspace={numpadBackspace} />
 
                         <Box
                             sx={{

@@ -31,6 +31,7 @@ import {
   Toolbar,
   Tooltip,
   Typography,
+  Slide,
 } from '@mui/material'
 import { invoke } from '@tauri-apps/api/core'
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
@@ -39,6 +40,7 @@ import 'react-simple-keyboard/build/css/index.css'
 
 import { API_URL } from '../../../config/env'
 import { getCurrentUser, logout } from '../../../shared/auth'
+import Numpad from '../../../shared/components/ui/Numpad'
 
 type ApiProduct = {
   id: number
@@ -162,8 +164,14 @@ export default function PosPage() {
   const [createCategoryOpen, setCreateCategoryOpen] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState('')
 
+  const cartItemsRef = useRef<HTMLDivElement | null>(null)
+
   const cartLines = useMemo(() => Object.values(cart), [cart])
   const cartCount = useMemo(() => cartLines.reduce((sum, line) => sum + line.qty, 0), [cartLines])
+
+  const [isEditingTotal, setIsEditingTotal] = useState(false)
+  const [discountDigits, setDiscountDigits] = useState('')
+  const [discountedTotalOverride, setDiscountedTotalOverride] = useState<number | null>(null)
 
   const menuCategories: Category[] = useMemo(() => {
     const base: Category[] = [{ id: 'all', label: 'All', imageSrc: DEFAULT_CATEGORY_IMAGE_SRC }]
@@ -186,6 +194,45 @@ export default function PosPage() {
     () => cartLines.reduce((sum, line) => sum + line.qty * line.product.price, 0),
     [cartLines],
   )
+  const totalInt = useMemo(() => Math.round(total), [total])
+
+  const discountedTotal = useMemo(() => {
+    if (isEditingTotal) {
+      const n = discountDigits ? Number(discountDigits) : 0
+      if (!Number.isFinite(n)) return totalInt
+      return Math.min(Math.max(Math.round(n), 0), totalInt)
+    }
+
+    const raw = discountedTotalOverride ?? totalInt
+    if (!Number.isFinite(raw)) return totalInt
+    return Math.min(Math.max(Math.round(raw), 0), totalInt)
+  }, [discountDigits, discountedTotalOverride, isEditingTotal, totalInt])
+
+  function addDiscountDigit(digit: string) {
+    setDiscountDigits((prev) => (prev + digit).replace(/^0+(?=\d)/, ''))
+  }
+
+  function discountBackspace() {
+    setDiscountDigits((prev) => prev.slice(0, -1))
+  }
+
+  function discountClear() {
+    setDiscountDigits('')
+  }
+
+  function toggleEditTotal() {
+    if (cartCount === 0) return
+    if (!isEditingTotal) {
+      setDiscountDigits(String(discountedTotal))
+      setIsEditingTotal(true)
+      return
+    }
+
+    const n = discountDigits ? Number(discountDigits) : 0
+    const next = Number.isFinite(n) ? Math.min(Math.max(Math.round(n), 0), totalInt) : totalInt
+    setDiscountedTotalOverride(next === totalInt ? null : next)
+    setIsEditingTotal(false)
+  }
 
   function addToCart(product: UiProduct) {
     setCart((prev) => {
@@ -212,6 +259,13 @@ export default function PosPage() {
   function clearCart() {
     setCart({})
   }
+
+  useEffect(() => {
+    if (cartCount !== 0) return
+    setIsEditingTotal(false)
+    setDiscountDigits('')
+    setDiscountedTotalOverride(null)
+  }, [cartCount])
 
   function SwipeToDeleteRow({
     children,
@@ -376,6 +430,7 @@ export default function PosPage() {
   async function generateReceipt(orderData: {
     id: number
     total_price: number
+    discount_amount?: number | null
     created_at: string
     user: { id: number; username: string; position: string | null }
     items: Array<{
@@ -507,10 +562,19 @@ export default function PosPage() {
     lines.push('|' + '-'.repeat(tableWidth - 2) + '|')
 
     // Total - left aligned
-    const totalStr = totalAmount.toLocaleString('uz-UZ') + " so'm"
+    const originalTotal = Math.round(orderData.total_price ?? totalAmount)
+    const discountAmount = Math.max(0, Number(orderData.discount_amount ?? 0) || 0)
+    const discountedTotalForReceipt = Math.max(0, originalTotal - discountAmount)
+
+    const totalStr = originalTotal.toLocaleString('uz-UZ') + " so'm"
     const totalLabel = 'Umumiy Summa: '
     const totalContent = totalLabel + totalStr
     lines.push('|' + totalContent.padEnd(tableWidth - 2) + ' |')
+
+    const discountedTotalStr = discountedTotalForReceipt.toLocaleString('uz-UZ') + " so'm"
+    const discountedLabel = 'Chegirmali Summa: '
+    const discountedContent = discountedLabel + discountedTotalStr
+    lines.push('|' + discountedContent.padEnd(tableWidth - 2) + ' |')
     lines.push('-'.repeat(tableWidth))
 
     const req = requisites as
@@ -580,7 +644,8 @@ export default function PosPage() {
       if (!currentUser) return
 
       const payload = {
-        total,
+        total: totalInt,
+        discounted_total: discountedTotal,
         user_id: currentUser.id,
         items: cartLines.map((line) => ({ product: line.product.id, quantity: line.qty })),
       }
@@ -976,7 +1041,46 @@ export default function PosPage() {
 
             <Divider sx={{ my: 1 }} />
 
-            <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+            <Box ref={cartItemsRef} sx={{ flex: 1, minHeight: 0, overflow: 'visible', position: 'relative' }}>
+              <Slide
+                in={isEditingTotal}
+                direction="up"
+                container={cartItemsRef.current}
+                mountOnEnter
+                unmountOnExit
+                timeout={180}
+              >
+                <Box sx={{ position: 'absolute', left: 0, right: 0, top: 0, zIndex: 5 }}>
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      mb: 1.25,
+                      p: 1.25,
+                      borderRadius: 2,
+                      bgcolor: 'background.paper',
+                      boxShadow: '0 14px 30px rgba(0,0,0,0.08)',
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                  >
+                    <Typography sx={{ fontWeight: 1000, fontSize: 24, lineHeight: 1.1, textAlign: 'center' }}>
+                      {formatIntegerForInput(discountDigits) || '0'}
+                    </Typography>
+                    <Typography sx={{ fontWeight: 700, color: 'text.secondary', fontSize: 12, mt: 0.5, textAlign: 'center' }}>
+                      Chegirmali summa
+                    </Typography>
+                    <TextField
+                      value={discountDigits}
+                      onChange={(e) => setDiscountDigits(e.target.value.replaceAll(/[^\d]/g, '').slice(0, 18))}
+                      inputMode="numeric"
+                      fullWidth
+                      size="small"
+                      sx={{ mt: 1 }}
+                    />
+                    <Numpad onDigit={addDiscountDigit} onClear={discountClear} onBackspace={discountBackspace} />
+                  </Paper>
+                </Box>
+              </Slide>
               <List dense disablePadding sx={{ height: '100%', overflow: 'auto' }}>
                 {cartLines.length === 0 ? (
                   <Box sx={{ py: 6, textAlign: 'center', color: 'text.secondary' }}>
@@ -1070,7 +1174,25 @@ export default function PosPage() {
             <Stack sx={{ mb: 2, mt: 'auto' }}>
               <Stack direction="row" justifyContent="space-between" alignItems="baseline">
                 <Typography sx={{ fontWeight: 1000, fontSize: 22 }}>Total</Typography>
-                <Typography sx={{ fontWeight: 1100, fontSize: 28 }}>{formatMoney(total)}</Typography>
+                <Typography
+                  onClick={toggleEditTotal}
+                  sx={{
+                    fontWeight: 1100,
+                    fontSize: 28,
+                    cursor: cartCount === 0 ? 'default' : 'pointer',
+                    userSelect: 'none',
+                    transition: 'color 140ms ease',
+                    ...(cartCount === 0
+                      ? {}
+                      : {
+                          '&:hover': {
+                            color: 'primary.main',
+                          },
+                        }),
+                  }}
+                >
+                  {formatMoney(discountedTotal)}
+                </Typography>
               </Stack>
             </Stack>
 
