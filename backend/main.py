@@ -1,4 +1,5 @@
 from pathlib import Path
+import asyncio
 
 from fastapi import FastAPI
 from fastapi import HTTPException
@@ -19,11 +20,33 @@ from products.categories_router import router as product_categories_router
 from products.router import router as products_router
 from users.handlers import router as users_router
 from users.models import User  # noqa: F401
+from config.database import SessionLocal
+from users.helpers import hash_password
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    db = SessionLocal()
+
+    try:
+        admin = db.query(User).filter(User.is_admin == True).first()
+
+        if not admin:
+            default_admin = User(
+                username="admin",
+                password=hash_password("123123123"),
+                is_admin=True,
+                is_active=True,
+                position="Administrator",
+            )
+
+            db.add(default_admin)
+            db.commit()
+
+    finally:
+        db.close()
+
     yield
 
 
@@ -31,7 +54,7 @@ app = FastAPI(lifespan=lifespan)
 MEDIA_ROOT = Path(settings.media_storage_path).resolve()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=list(settings.cors_allowed_origins),
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -69,4 +92,4 @@ def read_root():
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=False)
+    uvicorn.run(app, host="0.0.0.0", port=8000, reload=False, log_level="debug")

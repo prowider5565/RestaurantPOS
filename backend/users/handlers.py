@@ -30,8 +30,8 @@ def login(response: Response, login_payload: LoginSchema):
         key="access_token",
         value=token,
         httponly=True,
-        secure=False,
-        samesite="lax",
+        secure=True,
+        samesite="none",
         max_age=3600,
     )
     return {"message": "Logged in"}
