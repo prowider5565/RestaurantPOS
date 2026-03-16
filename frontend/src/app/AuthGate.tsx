@@ -1,9 +1,9 @@
 import { Box, CircularProgress } from '@mui/material'
 import { useCallback, useEffect, useState } from 'react'
 
-import { API_URL } from '../config/env'
 import LoginPage from '../modules/auth/pages/LoginPage'
 import { AuthProvider, type Me } from '../shared/authContext'
+import { getCurrentUser } from '../shared/auth'
 
 type Status = 'checking' | 'authed' | 'guest'
 
@@ -13,13 +13,12 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
 
   const checkMe = useCallback(async (): Promise<void> => {
     try {
-      const res = await fetch(`${API_URL}/users/me`, { credentials: 'include' })
-      if (!res.ok) {
+      const data = (await getCurrentUser()) as Me | null
+      if (!data) {
         setMe(null)
         setStatus('guest')
         return
       }
-      const data = (await res.json()) as Me
       setMe(data)
       setStatus('authed')
     } catch {

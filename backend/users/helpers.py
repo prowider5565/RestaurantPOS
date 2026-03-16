@@ -3,7 +3,6 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 
 import bcrypt
-from fastapi import Request
 from fastapi.exceptions import HTTPException
 from jose import JWTError, jwt
 
@@ -34,11 +33,15 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 
-def get_token_from_cookie(request: Request) -> str:
-    token = request.cookies.get("access_token")
-    if not token:
+def get_bearer_token(authorization: str | None) -> str:
+    if not authorization:
         raise HTTPException(status_code=401, detail="Missing token")
-    return token
+
+    parts = authorization.split(" ", 1)
+    if len(parts) != 2 or parts[0].lower() != "bearer" or not parts[1].strip():
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    return parts[1].strip()
 
 
 def get_user_by_id(user_id: int | str) -> User | None:

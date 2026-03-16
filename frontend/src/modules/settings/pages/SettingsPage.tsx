@@ -15,6 +15,7 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
+import { getAuthHeaders } from '../../../shared/auth'
 
 type Me = {
   id: number
@@ -52,7 +53,7 @@ export default function SettingsPage() {
   useEffect(() => {
     let alive = true
     ;(async () => {
-      const res = await fetch(`${API_URL}/users/me`, { credentials: 'include' })
+      const res = await fetch(`${API_URL}/users/me`, { headers: getAuthHeaders() })
       if (!res.ok) return
       const data = (await res.json()) as Me
       if (!alive) return
@@ -103,8 +104,7 @@ export default function SettingsPage() {
       if (usernameChanged) {
         const res = await fetch(`${API_URL}/users/update-username`, {
           method: 'PUT',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
           body: JSON.stringify({ username: nextUsername }),
         })
         if (!res.ok) {
@@ -118,8 +118,7 @@ export default function SettingsPage() {
       if (wantsPasswordChange) {
         const res = await fetch(`${API_URL}/users/update-password`, {
           method: 'PUT',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
           body: JSON.stringify({ password }),
         })
         if (!res.ok) {

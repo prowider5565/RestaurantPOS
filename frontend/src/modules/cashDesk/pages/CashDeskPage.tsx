@@ -33,7 +33,7 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
-import { logout } from '../../../shared/auth'
+import { getAuthHeaders, logout } from '../../../shared/auth'
 import { useAuth } from '../../../shared/authContext'
 import Numpad from '../../../shared/components/ui/Numpad'
 
@@ -124,7 +124,7 @@ export default function CashDeskPage() {
             setSummaryLoading(true)
             setSummaryError(null)
             try {
-                const res = await fetch(`${API_URL}/cash-desk/summary`, { credentials: 'include' })
+                const res = await fetch(`${API_URL}/cash-desk/summary`)
                 if (!res.ok) {
                     const msg = (await res.json().catch(() => null)) as { detail?: string } | null
                     throw new Error(msg?.detail || `Failed to load summary (${res.status})`)
@@ -157,7 +157,9 @@ export default function CashDeskPage() {
                 params.set('size', String(size))
                 if (fromDate) params.set('from_date', fromDate)
                 if (toDate) params.set('to_date', toDate)
-                const res = await fetch(`${API_URL}/cash-desk/transactions?${params.toString()}`, { credentials: 'include' })
+                const res = await fetch(`${API_URL}/cash-desk/transactions?${params.toString()}`, {
+                    headers: getAuthHeaders(),
+                })
                 if (!res.ok) {
                     const msg = (await res.json().catch(() => null)) as { detail?: string } | null
                     throw new Error(msg?.detail || `Failed to load transactions (${res.status})`)
@@ -194,8 +196,7 @@ export default function CashDeskPage() {
         try {
             const res = await fetch(`${API_URL}/cash-desk/transactions`, {
                 method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
                 body: JSON.stringify({ amount: createAmountInt, transaction_type }),
             })
             if (!res.ok) {
@@ -232,7 +233,7 @@ export default function CashDeskPage() {
         try {
             const res = await fetch(`${API_URL}/cash-desk/transactions/${deleteTarget.id}`, {
                 method: 'DELETE',
-                credentials: 'include',
+                headers: getAuthHeaders(),
             })
             if (!res.ok) {
                 const msg = (await res.json().catch(() => null)) as { detail?: string } | null

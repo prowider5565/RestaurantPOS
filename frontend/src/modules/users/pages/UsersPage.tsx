@@ -36,7 +36,7 @@ import Keyboard from 'react-simple-keyboard'
 import 'react-simple-keyboard/build/css/index.css'
 
 import { API_URL } from '../../../config/env'
-import { logout } from '../../../shared/auth'
+import { getAuthHeaders, logout } from '../../../shared/auth'
 
 type ApiUser = {
   id: number
@@ -91,7 +91,7 @@ export default function UsersPage() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`${API_URL}/users/admin/get-user-list`, { credentials: 'include' })
+      const res = await fetch(`${API_URL}/users/admin/get-user-list`, { headers: getAuthHeaders() })
       if (!res.ok) {
         const msg = (await res.json().catch(() => null)) as { detail?: string } | null
         const detail = msg?.detail ? `: ${msg.detail}` : ''
@@ -146,8 +146,7 @@ export default function UsersPage() {
     try {
       const res = await fetch(`${API_URL}/users/admin/create-user`, {
         method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password, position: position || null }),
       })
       if (!res.ok) {
@@ -202,7 +201,7 @@ export default function UsersPage() {
 
       const res = await fetch(path, {
         method: 'PUT',
-        credentials: 'include',
+        headers: getAuthHeaders(),
       })
       if (!res.ok) {
         const msg = (await res.json().catch(() => null)) as { detail?: string } | null
@@ -236,8 +235,7 @@ export default function UsersPage() {
 
       const res = await fetch(`${API_URL}/users/admin/update-user/${editUser.id}`, {
         method: 'PUT',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
       if (!res.ok) {

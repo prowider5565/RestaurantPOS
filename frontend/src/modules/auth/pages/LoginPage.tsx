@@ -15,6 +15,7 @@ import {
 import { useState } from 'react'
 
 import { API_URL } from '../../../config/env'
+import { setAccessToken } from '../../../shared/auth'
 
 export default function LoginPage({ onSuccess }: { onSuccess: () => void }) {
   const [username, setUsername] = useState('')
@@ -34,7 +35,6 @@ export default function LoginPage({ onSuccess }: { onSuccess: () => void }) {
     try {
       const res = await fetch(`${API_URL}/users/login`, {
         method: 'POST',
-        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       })
@@ -42,6 +42,11 @@ export default function LoginPage({ onSuccess }: { onSuccess: () => void }) {
         const msg = (await res.json().catch(() => null)) as { detail?: string } | null
         throw new Error(msg?.detail || 'Login failed')
       }
+      const data = (await res.json().catch(() => null)) as
+        | { access_token?: string; token_type?: string }
+        | null
+      if (!data?.access_token) throw new Error('Login failed')
+      setAccessToken(data.access_token)
       onSuccess()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed')

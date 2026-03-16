@@ -1,12 +1,11 @@
 from fastapi import Request
-from fastapi.exceptions import HTTPException
 
-from users.helpers import get_token_from_cookie, get_user_by_id, verify_token
+from users.helpers import get_bearer_token, get_user_by_id, verify_token
 
 
 def get_current_user(request: Request):
 
-    token = get_token_from_cookie(request)
+    token = get_bearer_token(request.headers.get("Authorization"))
 
     user_id = verify_token(token)
 

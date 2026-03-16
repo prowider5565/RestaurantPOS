@@ -24,7 +24,7 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
-import { logout } from '../../../shared/auth'
+import { getAuthHeaders, logout } from '../../../shared/auth'
 
 type ApiUserSummary = { id: number; username: string; position?: string | null }
 type ApiOrderItemRef = { product_id: number; quantity: number }
@@ -69,7 +69,9 @@ export default function StatisticsPage() {
         const params = new URLSearchParams()
         params.set('page', String(page))
         params.set('size', String(size))
-        const res = await fetch(`${API_URL}/orders/my-history?${params.toString()}`, { credentials: 'include' })
+        const res = await fetch(`${API_URL}/orders/my-history?${params.toString()}`, {
+          headers: getAuthHeaders(),
+        })
         if (!res.ok) return
         const data = (await res.json()) as ApiOrderHistoryResponse
         if (cancelled) return
@@ -286,4 +288,3 @@ export default function StatisticsPage() {
     </Box>
   )
 }
-

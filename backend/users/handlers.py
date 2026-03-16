@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from config.database import get_db
@@ -20,26 +20,17 @@ router = APIRouter()
 
 
 @router.post("/login")
-def login(response: Response, login_payload: LoginSchema):
+def login(login_payload: LoginSchema):
     user = authenticate_user(login_payload.username, login_payload.password)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     token = create_access_token({"sub": str(user.id)})
-    response.set_cookie(
-        key="access_token",
-        value=token,
-        httponly=True,
-        secure=False,
-        samesite="lax",
-        max_age=3600,
-    )
-    return {"message": "Logged in"}
+    return {"access_token": token, "token_type": "bearer"}
 
 
 @router.post("/logout")
-def logout(response: Response):
-    response.delete_cookie(key="access_token")
+def logout():
     return {"message": "Logged out"}
 
 

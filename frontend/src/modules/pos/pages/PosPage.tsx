@@ -448,7 +448,7 @@ export default function PosPage() {
 
     let requisites: unknown = null
     try {
-      const res = await fetch(`${API_URL}/cheque/requisites`, { credentials: 'include' })
+      const res = await fetch(`${API_URL}/cheque/requisites`)
       if (res.ok) requisites = await res.json()
     } catch {
       // ignore
