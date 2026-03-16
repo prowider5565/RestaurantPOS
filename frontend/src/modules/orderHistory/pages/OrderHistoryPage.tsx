@@ -63,6 +63,7 @@ type ApiOrderItemDetail = { product: ApiProductSummary; quantity: number }
 type ApiOrderRow = {
   id: number
   total_price: number
+  discount_amount?: number | null
   status: 'Pending' | 'Completed'
   created_at: string
   items: ApiOrderItemRef[]
@@ -152,6 +153,8 @@ function DetailsDialog({
   if (!open) return null
 
   const total = order?.total_price ?? 0
+  const discountAmount = Math.max(0, Number(order?.discount_amount ?? 0) || 0)
+  const discountedTotal = Math.max(0, Math.round(total) - Math.round(discountAmount))
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -176,7 +179,16 @@ function DetailsDialog({
       <DialogContent sx={{ pt: 2 }}>
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
           {order && <PayTypeChip status={order.status} />}
-          <Typography sx={{ fontWeight: 1000 }}>Total: {formatMoney(total)}</Typography>
+          {discountAmount > 0 ? (
+            <Stack alignItems="flex-end" spacing={0} sx={{ lineHeight: 1.15 }}>
+              <Typography sx={{ fontWeight: 900, textDecoration: 'line-through', color: 'text.secondary' }}>
+                {formatMoney(total)}
+              </Typography>
+              <Typography sx={{ fontWeight: 1000 }}>{formatMoney(discountedTotal)}</Typography>
+            </Stack>
+          ) : (
+            <Typography sx={{ fontWeight: 1000 }}>Total: {formatMoney(total)}</Typography>
+          )}
         </Stack>
 
         <Paper variant="outlined" sx={{ borderRadius: 2 }}>
@@ -496,6 +508,8 @@ export default function OrderHistoryPage() {
               <TableBody>
                 {rows.map((o) => {
                   const total = o.total_price
+                  const discountAmount = Math.max(0, Number(o.discount_amount ?? 0) || 0)
+                  const discountedTotal = Math.max(0, Math.round(total) - Math.round(discountAmount))
                   const foodTypes = countFoodTypes(o.items)
                   const drinkTypes = 0
                   const username = o.user?.username ?? '-'
@@ -520,7 +534,16 @@ export default function OrderHistoryPage() {
                         </Stack>
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 1000 }}>
-                        {formatMoney(total)}
+                        {discountAmount > 0 ? (
+                          <Stack alignItems="flex-end" spacing={0} sx={{ lineHeight: 1.1 }}>
+                            <Typography sx={{ fontWeight: 900, textDecoration: 'line-through', color: 'text.secondary' }}>
+                              {formatMoney(total)}
+                            </Typography>
+                            <Typography sx={{ fontWeight: 1100 }}>{formatMoney(discountedTotal)}</Typography>
+                          </Stack>
+                        ) : (
+                          formatMoney(total)
+                        )}
                       </TableCell>
                       <TableCell>{formatCreated(o.created_at)}</TableCell>
                       <TableCell align="right">
