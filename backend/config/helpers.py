@@ -1,11 +1,13 @@
 import os
 import re
+import sys
 from pathlib import Path
 
 
 def _backend_dir() -> Path:
+    if getattr(sys, "frozen", False):
+        return Path(sys._MEIPASS)
     return Path(__file__).resolve().parents[1]
-
 
 def _expand_vars(value: str) -> str:
     pattern = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}")
