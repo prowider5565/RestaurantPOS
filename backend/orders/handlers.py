@@ -27,7 +27,7 @@ def create_order(db: Session, payload: OrderCreate) -> tuple[Order, list[OrderIt
     order = Order(
         total_price=payload.total,
         discount_amount=discount_amount,
-        user_id=payload.user_id
+        user_id=payload.user_id,
         # status=payload.status,
     )
     db.add(order)
@@ -40,7 +40,7 @@ def create_order(db: Session, payload: OrderCreate) -> tuple[Order, list[OrderIt
         items.append(item)
 
     db.commit()
-    
+
     # Refresh and eagerly load relationships
     db.refresh(order, ["user", "items"])
     for item in items:
@@ -59,29 +59,70 @@ def get_order_history(
             q = q.filter(Order.created_at <= datetime.combine(to_date, time.max))
         return q
 
-    sum_query = apply_filters(
+    total_sum_query = apply_filters(
         db.query(func.coalesce(func.sum(Order.total_price), 0.0)).select_from(Order)
     )
-    total_sum = float(sum_query.scalar() or 0.0)
+    total_sum = float(total_sum_query.scalar() or 0.0)
 
-    query = apply_filters(db.query(Order).options(selectinload(Order.items), selectinload(Order.user))).order_by(
-        Order.created_at.desc()
+    discount_sum_query = apply_filters(
+        db.query(
+            func.coalesce(func.sum(func.coalesce(Order.discount_amount, 0)), 0)
+        ).select_from(Order)
     )
+    total_discount_sum = float(discount_sum_query.scalar() or 0.0)
+
+    net_sum_query = apply_filters(
+        db.query(
+            func.coalesce(
+                func.sum(Order.total_price - func.coalesce(Order.discount_amount, 0)),
+                0.0,
+            )
+        ).select_from(Order)
+    )
+    total_net_sum = float(net_sum_query.scalar() or 0.0)
+
+    query = apply_filters(
+        db.query(Order).options(selectinload(Order.items), selectinload(Order.user))
+    ).order_by(Order.created_at.desc())
     page = paginate(db, query, params)
 
     overview = OrderHistoryOverviewOut(
-        total_orders=int(page.total), total_sum=total_sum
+        total_orders=int(page.total),
+        total_sum=total_sum,
+        total_net_sum=total_net_sum,
+        total_discount_sum=total_discount_sum,
     )
     return OrderHistoryResponseOut(overview=overview, page=page)
 
 
-def get_my_order_history(db: Session, user_id: int, params: Params) -> OrderHistoryResponseOut:
-    sum_query = (
+def get_my_order_history(
+    db: Session, user_id: int, params: Params
+) -> OrderHistoryResponseOut:
+    total_sum_query = (
         db.query(func.coalesce(func.sum(Order.total_price), 0.0))
         .select_from(Order)
         .filter(Order.user_id == user_id)
     )
-    total_sum = float(sum_query.scalar() or 0.0)
+    total_sum = float(total_sum_query.scalar() or 0.0)
+
+    discount_sum_query = (
+        db.query(func.coalesce(func.sum(func.coalesce(Order.discount_amount, 0)), 0))
+        .select_from(Order)
+        .filter(Order.user_id == user_id)
+    )
+    total_discount_sum = float(discount_sum_query.scalar() or 0.0)
+
+    net_sum_query = (
+        db.query(
+            func.coalesce(
+                func.sum(Order.total_price - func.coalesce(Order.discount_amount, 0)),
+                0.0,
+            )
+        )
+        .select_from(Order)
+        .filter(Order.user_id == user_id)
+    )
+    total_net_sum = float(net_sum_query.scalar() or 0.0)
 
     query = (
         db.query(Order)
@@ -91,14 +132,22 @@ def get_my_order_history(db: Session, user_id: int, params: Params) -> OrderHist
     )
     page = paginate(db, query, params)
 
-    overview = OrderHistoryOverviewOut(total_orders=int(page.total), total_sum=total_sum)
+    overview = OrderHistoryOverviewOut(
+        total_orders=int(page.total),
+        total_sum=total_sum,
+        total_net_sum=total_net_sum,
+        total_discount_sum=total_discount_sum,
+    )
     return OrderHistoryResponseOut(overview=overview, page=page)
 
 
 def get_order_or_404(db: Session, order_id: int) -> Order:
     order = (
         db.query(Order)
-        .options(selectinload(Order.items).selectinload(OrderItem.product), selectinload(Order.user))
+        .options(
+            selectinload(Order.items).selectinload(OrderItem.product),
+            selectinload(Order.user),
+        )
         .filter(Order.id == order_id)
         .first()
     )

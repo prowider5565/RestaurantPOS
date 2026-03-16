@@ -71,7 +71,7 @@ type ApiOrderRow = {
 }
 type ApiOrderDetail = Omit<ApiOrderRow, 'items'> & { items: ApiOrderItemDetail[] }
 type ApiPage<T> = { items: T[]; total: number; page: number; size: number; pages: number }
-type ApiHistoryOverview = { total_orders: number; total_sum: number }
+type ApiHistoryOverview = { total_orders: number; total_sum: number; total_net_sum: number; total_discount_sum: number }
 type ApiOrderHistoryResponse = { overview: ApiHistoryOverview; page: ApiPage<ApiOrderRow> }
 
 function formatCreated(createdAtIso: string) {
@@ -231,9 +231,9 @@ function DetailsDialog({
 export default function OrderHistoryPage() {
   const [search, setSearch] = useState('')
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null)
-  const [preset, setPreset] = useState<'daily' | 'weekly' | 'monthly' | null>(null)
-  const [fromDate, setFromDate] = useState<string>('')
-  const [toDate, setToDate] = useState<string>('')
+  const [preset, setPreset] = useState<'daily' | 'weekly' | 'monthly' | null>('daily')
+  const [fromDate, setFromDate] = useState<string>(toYmd(new Date()))
+  const [toDate, setToDate] = useState<string>(toYmd(new Date()))
   const [page, setPage] = useState(1)
   const [size] = useState(12)
   const [history, setHistory] = useState<ApiOrderHistoryResponse | null>(null)
@@ -402,16 +402,6 @@ export default function OrderHistoryPage() {
             <Button variant="outlined" startIcon={<UploadFileIcon />} onClick={exportToExcelCsv} disabled={rows.length === 0}>
               Export to Excel
             </Button>
-            <Chip
-              label={`Orders: ${history?.overview.total_orders ?? 0}`}
-              variant="outlined"
-              sx={{ fontWeight: 900 }}
-            />
-            <Chip
-              label={`Sum: ${formatMoney(history?.overview.total_sum ?? 0)}`}
-              variant="outlined"
-              sx={{ fontWeight: 900 }}
-            />
           </Stack>
 
           <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap" justifyContent="flex-end">
@@ -453,6 +443,36 @@ export default function OrderHistoryPage() {
             />
           </Stack>
         </Stack>
+
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
+            gap: 1.5,
+          }}
+        >
+          <Paper variant="outlined" sx={{ borderRadius: 3, p: 2 }}>
+            <Typography sx={{ fontWeight: 900, color: 'text.secondary', fontSize: 13 }}>Total Orders</Typography>
+            <Typography sx={{ fontWeight: 1100, fontSize: 28, mt: 0.25 }}>{history?.overview.total_orders ?? 0}</Typography>
+          </Paper>
+
+          <Paper variant="outlined" sx={{ borderRadius: 3, p: 2 }}>
+            <Typography sx={{ fontWeight: 900, color: 'text.secondary', fontSize: 13 }}>Total Income</Typography>
+            <Stack spacing={0} sx={{ mt: 0.25, lineHeight: 1.1 }}>
+              <Typography sx={{ fontWeight: 900, textDecoration: 'line-through', color: 'text.secondary' }}>
+                {formatMoney(history?.overview.total_sum ?? 0)}
+              </Typography>
+              <Typography sx={{ fontWeight: 1100, fontSize: 24 }}>{formatMoney(history?.overview.total_net_sum ?? 0)}</Typography>
+            </Stack>
+          </Paper>
+
+          <Paper variant="outlined" sx={{ borderRadius: 3, p: 2 }}>
+            <Typography sx={{ fontWeight: 900, color: 'text.secondary', fontSize: 13 }}>Total Discount</Typography>
+            <Typography sx={{ fontWeight: 1100, fontSize: 28, mt: 0.25 }}>
+              {formatMoney(history?.overview.total_discount_sum ?? 0)}
+            </Typography>
+          </Paper>
+        </Box>
 
         {!loading && rows.length === 0 ? (
           <Paper
