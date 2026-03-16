@@ -389,6 +389,15 @@ export default function PosPage() {
     const qtyWidth = 3
     const priceWidth = 7
     const subtotalWidth = 8
+    const programName = (localStorage.getItem('programName') || 'Restoran Cheki').trim() || 'Restoran Cheki'
+
+    let requisites: unknown = null
+    try {
+      const res = await fetch(`${API_URL}/cheque/requisites`, { credentials: 'include' })
+      if (res.ok) requisites = await res.json()
+    } catch {
+      // ignore
+    }
 
     const lines: string[] = []
 
@@ -411,7 +420,7 @@ export default function PosPage() {
 
     // Header
     lines.push('-'.repeat(tableWidth))
-    lines.push('|' + centerText('Restoran Cheki', tableWidth - 2) + ' |')
+    lines.push('|' + centerText(programName, tableWidth - 2) + ' |')
     lines.push('-'.repeat(tableWidth))
 
     // Date and time
@@ -499,13 +508,57 @@ export default function PosPage() {
 
     // Total - left aligned
     const totalStr = totalAmount.toLocaleString('uz-UZ') + " so'm"
-    const totalLabel = 'Umumiy Jami: '
+    const totalLabel = 'Umumiy Summa: '
     const totalContent = totalLabel + totalStr
     lines.push('|' + totalContent.padEnd(tableWidth - 2) + ' |')
-
-    lines.push('|' + '-'.repeat(tableWidth - 2) + '|')
-    lines.push('|' + centerText('Tashrifingizdan mamnunmiz!', tableWidth - 2) + ' |')
     lines.push('-'.repeat(tableWidth))
+
+    const req = requisites as
+      | {
+          company_name?: string
+          address?: string
+          phone_number?: string
+          STIR?: number | string
+          stir?: number | string
+          registry_number?: number | string
+        }
+      | null
+
+    const stir = req?.STIR ?? req?.stir
+    const companyName = req?.company_name?.trim() || ''
+    const address = req?.address?.trim() || ''
+    const phoneNumber = req?.phone_number?.trim() || ''
+    const stirText = stir !== undefined && stir !== null && String(stir).trim() ? String(stir).trim() : ''
+    const registryNumber =
+      req?.registry_number !== undefined && req?.registry_number !== null && String(req.registry_number).trim()
+        ? String(req.registry_number).trim()
+        : ''
+
+    function pushRightAlignedValue(label: string, value: string) {
+      const combined = `${label} ${value}`.trim()
+      if (!value) return
+      if (combined.length > tableWidth) {
+        for (const line of wrapText(combined, tableWidth)) lines.push(line)
+        return
+      }
+      lines.push(`${label} `.padEnd(tableWidth - value.length) + value)
+    }
+
+    // Credentials (no table borders). Order:
+    // 5) Company name, 6) STIR, 7) Phone number, 8) Registry number, 9) Address (raw)
+    if (companyName) {
+      for (const line of wrapText(companyName, tableWidth)) lines.push(line.padStart(tableWidth))
+    }
+    pushRightAlignedValue('STIR:', stirText)
+    pushRightAlignedValue('Telefon:', phoneNumber)
+    pushRightAlignedValue('Reestr Raqami:', registryNumber)
+    if (address) {
+      for (const line of wrapText(address, tableWidth)) lines.push(line)
+    }
+
+    lines.push('')
+    lines.push('')
+    lines.push(centerText('Tashrifingizdan mamnunmiz!', tableWidth))
 
     return lines.join('\n')
   }
@@ -886,16 +939,16 @@ export default function PosPage() {
                         />
 
                         <Box sx={{ position: 'absolute', left: 12, right: 12, bottom: 12, color: 'common.white' }}>
-                        <Typography sx={{ fontWeight: 900, fontSize: 24, lineHeight: 1.1 }} noWrap>
-                          {p.name}
-                        </Typography>
-                        <Typography sx={{ opacity: 0.95, fontWeight: 900, fontSize: 42, lineHeight: 1.05 }}>
-                          {formatMoney(p.price)}
-                        </Typography>
+                          <Typography sx={{ fontWeight: 900, fontSize: 24, lineHeight: 1.1 }} noWrap>
+                            {p.name}
+                          </Typography>
+                          <Typography sx={{ opacity: 0.95, fontWeight: 900, fontSize: 42, lineHeight: 1.05 }}>
+                            {formatMoney(p.price)}
+                          </Typography>
+                        </Box>
                       </Box>
-                    </Box>
-                  </CardActionArea>
-                </Card>
+                    </CardActionArea>
+                  </Card>
                 ))}
               </Box>
             )}
@@ -1072,130 +1125,130 @@ export default function PosPage() {
         <DialogContent sx={{ pt: 1, display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', gap: 2 }}>
           <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
             <Stack gap={2} sx={{ mt: 1 }}>
-            <TextField
-              label="Name"
-              value={newFood.name}
-              onFocus={() => setCreateKeyboardInput('name')}
-              onChange={(e) => setNewFood((prev) => ({ ...prev, name: e.target.value }))}
-              fullWidth
-            />
-
-            <Stack direction={{ xs: 'column', sm: 'row' }} gap={2}>
               <TextField
-                label="Price"
-                value={formatIntegerForInput(newFood.priceDigits)}
-                onFocus={() => setCreateKeyboardInput('priceDigits')}
-                onChange={(e) =>
-                  setNewFood((prev) => ({
-                    ...prev,
-                    priceDigits: e.target.value.replaceAll(/[^\d]/g, '').slice(0, 18),
-                  }))
-                }
-                inputMode="numeric"
-                sx={{ flex: 1 }}
+                label="Name"
+                value={newFood.name}
+                onFocus={() => setCreateKeyboardInput('name')}
+                onChange={(e) => setNewFood((prev) => ({ ...prev, name: e.target.value }))}
+                fullWidth
               />
 
-              <FormControl sx={{ flex: 1 }}>
-                <InputLabel id="new-food-measure-label">Measure</InputLabel>
-                <Select
-                  labelId="new-food-measure-label"
-                  label="Measure"
-                  value={newFood.measure}
+              <Stack direction={{ xs: 'column', sm: 'row' }} gap={2}>
+                <TextField
+                  label="Price"
+                  value={formatIntegerForInput(newFood.priceDigits)}
+                  onFocus={() => setCreateKeyboardInput('priceDigits')}
                   onChange={(e) =>
                     setNewFood((prev) => ({
                       ...prev,
-                      measure: e.target.value as NewFoodForm['measure'],
+                      priceDigits: e.target.value.replaceAll(/[^\d]/g, '').slice(0, 18),
                     }))
                   }
-                >
-                  <MenuItem value="unit">Unit</MenuItem>
-                  <MenuItem value="gram">Gram</MenuItem>
-                  <MenuItem value="portion">Portion</MenuItem>
-                </Select>
-              </FormControl>
+                  inputMode="numeric"
+                  sx={{ flex: 1 }}
+                />
 
-              <Stack direction="row" gap={1} sx={{ flex: 1 }}>
-                <FormControl fullWidth>
-                  <InputLabel id="new-food-category-label">Category</InputLabel>
+                <FormControl sx={{ flex: 1 }}>
+                  <InputLabel id="new-food-measure-label">Measure</InputLabel>
                   <Select
-                    labelId="new-food-category-label"
-                    label="Category"
-                    value={newFood.categoryId}
-                    onChange={(e) => setNewFood((prev) => ({ ...prev, categoryId: String(e.target.value) }))}
+                    labelId="new-food-measure-label"
+                    label="Measure"
+                    value={newFood.measure}
+                    onChange={(e) =>
+                      setNewFood((prev) => ({
+                        ...prev,
+                        measure: e.target.value as NewFoodForm['measure'],
+                      }))
+                    }
                   >
-                    {menuCategories
-                      .filter((c) => c.id !== 'all')
-                      .map((c) => (
-                        <MenuItem key={c.id} value={c.id}>
-                          {c.label}
-                        </MenuItem>
-                      ))}
+                    <MenuItem value="unit">Unit</MenuItem>
+                    <MenuItem value="gram">Gram</MenuItem>
+                    <MenuItem value="portion">Portion</MenuItem>
                   </Select>
                 </FormControl>
-                <Tooltip title="Add category" placement="top">
-                  <IconButton
-                    aria-label="Add category"
-                    onClick={openCreateCategory}
-                    sx={{
-                      width: 52,
-                      height: 52,
-                      borderRadius: 2,
-                      border: '1px solid',
-                      borderColor: 'divider',
-                      flex: '0 0 auto',
-                    }}
-                  >
-                    <AddIcon />
-                  </IconButton>
-                </Tooltip>
+
+                <Stack direction="row" gap={1} sx={{ flex: 1 }}>
+                  <FormControl fullWidth>
+                    <InputLabel id="new-food-category-label">Category</InputLabel>
+                    <Select
+                      labelId="new-food-category-label"
+                      label="Category"
+                      value={newFood.categoryId}
+                      onChange={(e) => setNewFood((prev) => ({ ...prev, categoryId: String(e.target.value) }))}
+                    >
+                      {menuCategories
+                        .filter((c) => c.id !== 'all')
+                        .map((c) => (
+                          <MenuItem key={c.id} value={c.id}>
+                            {c.label}
+                          </MenuItem>
+                        ))}
+                    </Select>
+                  </FormControl>
+                  <Tooltip title="Add category" placement="top">
+                    <IconButton
+                      aria-label="Add category"
+                      onClick={openCreateCategory}
+                      sx={{
+                        width: 52,
+                        height: 52,
+                        borderRadius: 2,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        flex: '0 0 auto',
+                      }}
+                    >
+                      <AddIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Stack>
               </Stack>
-            </Stack>
 
-            <Paper variant="outlined" sx={{ borderRadius: 2, p: 2, display: 'grid', gap: 1 }}>
-              <Typography sx={{ fontWeight: 900 }}>Image upload</Typography>
-              <Typography variant="body2" color="text.secondary">
-                Upload a photo for the menu card background.
-              </Typography>
-
-              <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ sm: 'center' }} gap={2}>
-                <Button component="label" variant="outlined">
-                  Choose image
-                  <input
-                    hidden
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => onPickImage(e.target.files?.[0] ?? null)}
-                  />
-                </Button>
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                  {newFood.imageFile ? newFood.imageFile.name : 'No file selected'}
+              <Paper variant="outlined" sx={{ borderRadius: 2, p: 2, display: 'grid', gap: 1 }}>
+                <Typography sx={{ fontWeight: 900 }}>Image upload</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Upload a photo for the menu card background.
                 </Typography>
-              </Stack>
 
-              <Box
-                sx={{
-                  mt: 1,
-                  height: 160,
-                  borderRadius: 2,
-                  border: '1px dashed',
-                  borderColor: 'divider',
-                  overflow: 'hidden',
-                  bgcolor: 'background.default',
-                  display: 'grid',
-                  placeItems: 'center',
-                  backgroundImage: newFoodPreviewUrl ? `url("${newFoodPreviewUrl}")` : 'none',
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                }}
-              >
-                {!newFoodPreviewUrl && (
-                  <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 800 }}>
-                    Image preview
+                <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ sm: 'center' }} gap={2}>
+                  <Button component="label" variant="outlined">
+                    Choose image
+                    <input
+                      hidden
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => onPickImage(e.target.files?.[0] ?? null)}
+                    />
+                  </Button>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                    {newFood.imageFile ? newFood.imageFile.name : 'No file selected'}
                   </Typography>
-                )}
-              </Box>
-            </Paper>
-          </Stack>
+                </Stack>
+
+                <Box
+                  sx={{
+                    mt: 1,
+                    height: 160,
+                    borderRadius: 2,
+                    border: '1px dashed',
+                    borderColor: 'divider',
+                    overflow: 'hidden',
+                    bgcolor: 'background.default',
+                    display: 'grid',
+                    placeItems: 'center',
+                    backgroundImage: newFoodPreviewUrl ? `url("${newFoodPreviewUrl}")` : 'none',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }}
+                >
+                  {!newFoodPreviewUrl && (
+                    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 800 }}>
+                      Image preview
+                    </Typography>
+                  )}
+                </Box>
+              </Paper>
+            </Stack>
           </Box>
 
           <Paper

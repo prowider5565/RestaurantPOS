@@ -23,10 +23,17 @@ type Me = {
   is_admin: boolean
 }
 
+const PROGRAM_NAME_STORAGE_KEY = 'programName'
+const DEFAULT_PROGRAM_NAME = 'Restoran Cheki'
+
 export default function SettingsPage() {
   const [me, setMe] = useState<Me | null>(null)
 
   const [username, setUsername] = useState('')
+
+  const [programName, setProgramName] = useState(DEFAULT_PROGRAM_NAME)
+  const [savedProgramName, setSavedProgramName] = useState(DEFAULT_PROGRAM_NAME)
+  const [logoFileName, setLogoFileName] = useState<string | null>(null)
 
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
@@ -34,6 +41,13 @@ export default function SettingsPage() {
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false)
   const [status, setStatus] = useState<{ kind: 'ok' | 'err'; msg: string } | null>(null)
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    const fromStorage = localStorage.getItem(PROGRAM_NAME_STORAGE_KEY)
+    const next = (fromStorage ?? DEFAULT_PROGRAM_NAME).trim() || DEFAULT_PROGRAM_NAME
+    setProgramName(next)
+    setSavedProgramName(next)
+  }, [])
 
   useEffect(() => {
     let alive = true
@@ -52,6 +66,7 @@ export default function SettingsPage() {
 
   const saveDisabled = useMemo(() => {
     if (saving) return true
+
     const next = username.trim()
     const usernameChanged = Boolean(me) && next !== me!.username
 
@@ -59,10 +74,14 @@ export default function SettingsPage() {
     if (wantsPasswordChange && (!password || !passwordConfirm)) return true
     if (wantsPasswordChange && password !== passwordConfirm) return true
 
+    const nextProgramName = programName.trim() || DEFAULT_PROGRAM_NAME
+    const programNameChanged = nextProgramName !== savedProgramName
+
+    if (programNameChanged) return false
     if (usernameChanged) return false
     if (wantsPasswordChange) return false
     return true
-  }, [me, password, passwordConfirm, saving, username])
+  }, [me, password, passwordConfirm, programName, savedProgramName, saving, username])
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -71,6 +90,13 @@ export default function SettingsPage() {
     setSaving(true)
     setStatus(null)
     try {
+      const nextProgramName = programName.trim() || DEFAULT_PROGRAM_NAME
+      const programNameChanged = nextProgramName !== savedProgramName
+      if (programNameChanged) {
+        localStorage.setItem(PROGRAM_NAME_STORAGE_KEY, nextProgramName)
+        setSavedProgramName(nextProgramName)
+      }
+
       const nextUsername = username.trim()
       const usernameChanged = Boolean(me) && nextUsername !== me!.username
 
@@ -134,11 +160,39 @@ export default function SettingsPage() {
         <Stack spacing={1} component="form" onSubmit={save}>
           <Typography sx={{ fontWeight: 1100, fontSize: 24, textAlign: 'center' }}>Settings</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
-            Update your account details.
+            Update branding and account details.
           </Typography>
           <Divider sx={{ my: 1 }} />
 
           {status ? <Alert severity={status.kind === 'ok' ? 'success' : 'error'}>{status.msg}</Alert> : null}
+
+          <Typography sx={{ fontWeight: 900, mt: 0.5 }}>Branding</Typography>
+
+          <TextField
+            label="Program name"
+            value={programName}
+            onChange={(e) => setProgramName(e.target.value)}
+            helperText="This name is printed on receipts."
+            fullWidth
+          />
+
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Button component="label" variant="outlined">
+              Upload logo
+              <input
+                hidden
+                type="file"
+                accept="image/*"
+                onChange={(e) => setLogoFileName(e.target.files?.[0]?.name ?? null)}
+              />
+            </Button>
+            <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
+              {logoFileName ? `Selected: ${logoFileName}` : 'No logo selected'}
+            </Typography>
+          </Stack>
+          <Typography variant="caption" color="text.secondary">
+            Logo upload UI only (not saved yet).
+          </Typography>
 
           <TextField
             label="Username"

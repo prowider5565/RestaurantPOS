@@ -1,7 +1,7 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
-from cheque.schemas import PrintPayload
-from cheque.helpers import print_with_detected_printer
+from cheque.schemas import PrintPayload, RequisiteSchema
+from cheque.helpers import get_requisite_data, print_with_detected_printer
 
 router = APIRouter(prefix="/cheque", tags=["printer"])
 
@@ -19,3 +19,8 @@ def print_api(payload: PrintPayload):
     #     raise HTTPException(status_code=500, detail="Printing failed")
 
     return {"message": "Printed successfully"}
+
+
+@router.get("/requisites", response_model=RequisiteSchema)
+async def get_requisites():
+    return get_requisite_data()

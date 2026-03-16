@@ -16,6 +16,12 @@ class Settings:
     ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_DAYS: int
 
+    COMPANY_NAME: str
+    STIR: int
+    REGISTRY_NUMBER: int
+    PHONE_NUMBER: str
+    ADDRESS: str
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
@@ -36,6 +42,11 @@ def get_settings() -> Settings:
         SECRET_KEY=os.getenv("SECRET_KEY"),
         ALGORITHM=os.getenv("ALGORITHM"),
         ACCESS_TOKEN_EXPIRE_DAYS=int(os.getenv("ACCESS_TOKEN_EXPIRE_DAYS", 30)),
+        COMPANY_NAME=os.getenv("COMPANY_NAME"),
+        STIR=int(os.getenv("STIR")),
+        REGISTRY_NUMBER=int(os.getenv("REGISTRY_NUMBER")),
+        PHONE_NUMBER=os.getenv("PHONE_NUMBER"),
+        ADDRESS=os.getenv("ADDRESS"),
         cors_allowed_origins=(
             os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
             if os.getenv("CORS_ALLOWED_ORIGINS")
