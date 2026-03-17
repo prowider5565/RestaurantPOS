@@ -518,7 +518,9 @@ async function generateReceipt(orderData: {
       "|"
     )
   }
-
+  function formatNumberPlain(n: number): string {
+    return String(Math.round(n))
+  }
   function separator() {
     return "-".repeat(tableWidth)
   }
@@ -583,8 +585,8 @@ async function generateReceipt(orderData: {
     const id = String(item.product.id)
     const nameLines = wrapText(item.product.name, nameWidth)
     const qty = String(item.quantity)
-    const price = item.product.price.toLocaleString('uz-UZ')
-    const subtotal = (item.quantity * item.product.price).toLocaleString('uz-UZ')
+    const price = formatNumberPlain(item.product.price)
+    const subtotal = formatNumberPlain(item.quantity * item.product.price)
 
     totalAmount += item.quantity * item.product.price
 
@@ -601,10 +603,10 @@ async function generateReceipt(orderData: {
   const discountAmount = Math.max(0, Number(orderData.discount_amount ?? 0) || 0)
   const discountedTotal = Math.max(0, originalTotal - discountAmount)
 
-  const totalLine = `Umumiy Summa: ${originalTotal.toLocaleString('uz-UZ')} so'm`
+  const totalLine = `Umumiy Summa: ${formatNumberPlain(originalTotal)} so'm`
   lines.push('|' + totalLine.padEnd(tableWidth - 2) + '|')
 
-  const discountLine = `Chegirmali Summa: ${discountedTotal.toLocaleString('uz-UZ')} so'm`
+  const discountLine = `Chegirmali Summa: ${formatNumberPlain(discountedTotal)} so'm`
   lines.push('|' + discountLine.padEnd(tableWidth - 2) + '|')
 
   lines.push(separator())
