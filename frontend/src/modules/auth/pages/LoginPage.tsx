@@ -40,16 +40,16 @@ export default function LoginPage({ onSuccess }: { onSuccess: () => void }) {
       })
       if (!res.ok) {
         const msg = (await res.json().catch(() => null)) as { detail?: string } | null
-        throw new Error(msg?.detail || 'Login failed')
+        throw new Error(msg?.detail || "Kirish amalga oshmadi")
       }
       const data = (await res.json().catch(() => null)) as
         | { access_token?: string; token_type?: string }
         | null
-      if (!data?.access_token) throw new Error('Login failed')
+      if (!data?.access_token) throw new Error("Kirish amalga oshmadi")
       setAccessToken(data.access_token)
       onSuccess()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed')
+      setError(err instanceof Error ? err.message : "Kirish amalga oshmadi")
     } finally {
       setLoading(false)
     }
@@ -94,23 +94,23 @@ export default function LoginPage({ onSuccess }: { onSuccess: () => void }) {
           </Box>
 
           <Typography variant="h5" sx={{ fontWeight: 900, textAlign: 'center' }}>
-            Login
+            Kirish
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
-            Sign in to continue.
+            Davom etish uchun tizimga kiring.
           </Typography>
 
           {error ? <Alert severity="error">{error}</Alert> : null}
 
           <TextField
-            label="Username"
+            label="Foydalanuvchi nomi"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             autoComplete="username"
             fullWidth
           />
           <TextField
-            label="Password"
+            label="Parol"
             type={showPassword ? 'text' : 'password'}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -120,7 +120,7 @@ export default function LoginPage({ onSuccess }: { onSuccess: () => void }) {
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    aria-label={showPassword ? "Parolni yashirish" : "Parolni ko'rsatish"}
                     onClick={() => setShowPassword((v) => !v)}
                     edge="end"
                   >
@@ -138,7 +138,7 @@ export default function LoginPage({ onSuccess }: { onSuccess: () => void }) {
             disabled={submitDisabled}
             sx={{ py: 1.25, fontWeight: 900 }}
           >
-            {loading ? 'Signing in…' : 'Sign in'}
+            {loading ? "Kirilmoqda..." : "Kirish"}
           </Button>
         </Stack>
       </Paper>

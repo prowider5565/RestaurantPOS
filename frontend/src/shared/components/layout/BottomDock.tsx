@@ -46,7 +46,7 @@ export default function BottomDock({
         onClick={() => onChange('menu')}
         sx={{ fontWeight: 900, borderRadius: 999, px: 2, py: 1.25, fontSize: 18 }}
       >
-        Menu
+        Menyu
       </Button>
       {showUsers ? (
         <Button
@@ -56,7 +56,7 @@ export default function BottomDock({
           onClick={() => onChange('users')}
           sx={{ fontWeight: 900, borderRadius: 999, px: 2, py: 1.25, fontSize: 18 }}
         >
-          Users
+          Foydalanuvchilar
         </Button>
       ) : null}
       <Button
@@ -66,7 +66,7 @@ export default function BottomDock({
         onClick={() => onChange('order_history')}
         sx={{ fontWeight: 900, borderRadius: 999, px: 2, py: 1.25, fontSize: 18 }}
       >
-        Order history
+        Buyurtmalar tarixi
       </Button>
 
       <Button
@@ -76,7 +76,7 @@ export default function BottomDock({
         onClick={() => onChange('cash_desk')}
         sx={{ fontWeight: 900, borderRadius: 999, px: 2, py: 1.25, fontSize: 18 }}
       >
-        Cash desk
+        Kassa
       </Button>
 
       <Button
@@ -86,13 +86,13 @@ export default function BottomDock({
         onClick={() => onChange('statistics')}
         sx={{ fontWeight: 900, borderRadius: 999, px: 2, py: 1.25, fontSize: 18 }}
       >
-        Statistics
+        Statistika
       </Button>
 
       {active === 'menu' || active === 'users' ? (
-        <Tooltip title={active === 'users' ? 'Add new user' : 'Add new food & Drinks'} placement="top">
+        <Tooltip title={active === 'users' ? "Yangi foydalanuvchi qo'shish" : "Yangi taom va ichimlik qo'shish"} placement="top">
           <Button
-            aria-label={active === 'users' ? 'Add new user' : 'Add new food & Drinks'}
+            aria-label={active === 'users' ? "Yangi foydalanuvchi qo'shish" : "Yangi taom va ichimlik qo'shish"}
             onClick={() => {
               if (active === 'menu') window.dispatchEvent(new CustomEvent('pos:createFood'))
               if (active === 'users') window.dispatchEvent(new CustomEvent('users:createUser'))
