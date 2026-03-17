@@ -98,28 +98,28 @@ export default function StatisticsPage() {
           <Stack direction="row" alignItems="center" gap={1} sx={{ minWidth: 220 }}>
             <RestaurantMenuIcon color="primary" />
             <Typography variant="h6" sx={{ fontWeight: 900 }}>
-              Restaurant POS
+              Parhez Plyus
             </Typography>
           </Stack>
 
           <Stack direction="row" alignItems="center" gap={1} sx={{ color: 'text.secondary' }}>
             <BarChartIcon />
-            <Typography sx={{ fontWeight: 900 }}>Statistics</Typography>
+            <Typography sx={{ fontWeight: 900 }}>Statistika</Typography>
           </Stack>
 
           <Box sx={{ flex: 1 }} />
 
           <Stack direction="row" alignItems="center" gap={1}>
-            <Tooltip title="Settings" placement="bottom">
+            <Tooltip title="Sozlamalar" placement="bottom">
               <IconButton
-                aria-label="Settings"
+                aria-label="Sozlamalar"
                 onClick={() => window.dispatchEvent(new CustomEvent('app:navigate', { detail: 'settings' }))}
               >
                 <SettingsIcon />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Logout" placement="bottom">
-              <IconButton aria-label="Logout" onClick={logout}>
+            <Tooltip title="Chiqish" placement="bottom">
+              <IconButton aria-label="Chiqish" onClick={logout}>
                 <LogoutIcon />
               </IconButton>
             </Tooltip>
@@ -173,11 +173,11 @@ export default function StatisticsPage() {
               >
                 <TableHead>
                   <TableRow sx={{ bgcolor: 'background.default' }}>
-                    <TableCell sx={{ fontWeight: 900 }}>Order ID</TableCell>
+                    <TableCell sx={{ fontWeight: 900 }}>Buyurtma ID</TableCell>
                     <TableCell align="right" sx={{ fontWeight: 900 }}>
-                      Total
+                      Jami
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 900 }}>Created</TableCell>
+                    <TableCell sx={{ fontWeight: 900 }}>Sana</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -193,7 +193,7 @@ export default function StatisticsPage() {
                   {loading && rows.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={3} sx={{ py: 6, textAlign: 'center', color: 'text.secondary', fontWeight: 800 }}>
-                        Loading...
+                        Yuklanmoqda...
                       </TableCell>
                     </TableRow>
                   ) : null}
@@ -238,11 +238,11 @@ export default function StatisticsPage() {
           >
             <Stack spacing={2} sx={{ flex: 1, minHeight: 0 }}>
               <Box sx={{ textAlign: 'center', pb: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
-                <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 1 }}>Your Orders</Typography>
+                <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 1 }}>Buyurtmalaringiz</Typography>
                 <Typography sx={{ fontWeight: 1000, fontSize: 48, color: 'primary.main' }}>
                   {new Intl.NumberFormat('uz-UZ').format(Math.round(overview.total_sum))}
                 </Typography>
-                <Typography sx={{ fontWeight: 700, color: 'text.secondary', mt: 1, fontSize: 14 }}>so'm total</Typography>
+                <Typography sx={{ fontWeight: 700, color: 'text.secondary', mt: 1, fontSize: 14 }}>jami so'm</Typography>
               </Box>
 
               <Box
@@ -256,11 +256,11 @@ export default function StatisticsPage() {
               >
                 <Stack direction="row" alignItems="stretch" divider={<Divider orientation="vertical" flexItem />}>
                   <Box sx={{ flex: 1, pr: 2, textAlign: 'center' }}>
-                    <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 14 }}>Total Orders</Typography>
+                    <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 14 }}>Jami buyurtmalar</Typography>
                     <Typography sx={{ fontWeight: 1000, fontSize: 22 }}>{new Intl.NumberFormat('uz-UZ').format(overview.total_orders)}</Typography>
                   </Box>
                   <Box sx={{ flex: 1, pl: 2, textAlign: 'center' }}>
-                    <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 14 }}>Total Sum</Typography>
+                    <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 14 }}>Jami summa</Typography>
                     <Typography sx={{ fontWeight: 1000, fontSize: 22 }}>{formatMoney(overview.total_sum)}</Typography>
                   </Box>
                 </Stack>
@@ -277,7 +277,7 @@ export default function StatisticsPage() {
                   }}
                 >
                   <Typography sx={{ fontWeight: 900, color: 'text.secondary', fontSize: 13 }}>
-                    Orders shown are only the ones created by your account.
+                    Bu yerda faqat sizning hisobingiz yaratgan buyurtmalar ko'rsatiladi.
                   </Typography>
                 </Paper>
               </Box>

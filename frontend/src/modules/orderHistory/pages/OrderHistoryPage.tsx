@@ -90,8 +90,8 @@ function countFoodTypes(items: ApiOrderItemRef[]) {
 }
 
 function PayTypeChip({ status }: { status: ApiOrderRow['status'] }) {
-  if (status === 'Pending') return <Chip label="On hold" color="warning" size="small" />
-  return <Chip label="Pay now" color="success" size="small" />
+  if (status === 'Pending') return <Chip label="Kutilmoqda" color="warning" size="small" />
+  return <Chip label="To'langan" color="success" size="small" />
 }
 
 function toImageSrc(raw?: string | null) {
@@ -161,7 +161,7 @@ function DetailsDialog({
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 2, py: 1.5 }}>
         <Box>
           <Typography sx={{ fontWeight: 1000 }}>
-            {order ? `Order #${order.id}` : 'Order'}
+            {order ? `Buyurtma #${order.id}` : 'Buyurtma'}
           </Typography>
           {order && (
             <Typography variant="body2" color="text.secondary">
@@ -169,7 +169,7 @@ function DetailsDialog({
             </Typography>
           )}
         </Box>
-        <IconButton onClick={onClose} aria-label="Close">
+        <IconButton onClick={onClose} aria-label="Yopish">
           <CloseIcon />
         </IconButton>
       </Stack>
@@ -187,7 +187,7 @@ function DetailsDialog({
               <Typography sx={{ fontWeight: 1000 }}>{formatMoney(discountedTotal)}</Typography>
             </Stack>
           ) : (
-            <Typography sx={{ fontWeight: 1000 }}>Total: {formatMoney(total)}</Typography>
+            <Typography sx={{ fontWeight: 1000 }}>Jami: {formatMoney(total)}</Typography>
           )}
         </Stack>
 
@@ -288,11 +288,11 @@ export default function OrderHistoryPage() {
   }
 
   function exportToExcelCsv() {
-    const header = ['ID', 'Username', 'Position', 'Food Types', 'Drink Types', 'Pay Type', 'Total Price', 'Date Created']
+    const header = ['ID', 'Foydalanuvchi', 'Lavozim', 'Taom turlari', 'Ichimlik turlari', "To'lov holati", 'Jami summa', 'Sana']
     const lines = rows.map((o) => {
       const foodTypes = countFoodTypes(o.items)
       const drinkTypes = 0
-      const payTypeLabel = o.status === 'Pending' ? 'On hold' : 'Pay now'
+      const payTypeLabel = o.status === 'Pending' ? 'Kutilmoqda' : "To'langan"
       const total = o.total_price
       const username = o.user?.username ?? '-'
       const position = o.user?.position ?? '-'
@@ -327,7 +327,7 @@ export default function OrderHistoryPage() {
           <Stack direction="row" alignItems="center" gap={1} sx={{ minWidth: 220 }}>
             <RestaurantMenuIcon color="primary" />
             <Typography variant="h6" sx={{ fontWeight: 900 }}>
-              Restaurant POS
+              Parhez Plyus
             </Typography>
           </Stack>
 
@@ -335,7 +335,7 @@ export default function OrderHistoryPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             size="small"
-            placeholder="Search orders..."
+            placeholder="Buyurtma qidirish..."
             fullWidth
             InputProps={{
               startAdornment: (
@@ -347,9 +347,9 @@ export default function OrderHistoryPage() {
           />
 
           <Stack direction="row" alignItems="center" gap={1}>
-            <Tooltip title="Settings" placement="bottom">
+            <Tooltip title="Sozlamalar" placement="bottom">
               <IconButton
-                aria-label="Settings"
+                aria-label="Sozlamalar"
                 onClick={() => window.dispatchEvent(new CustomEvent('app:navigate', { detail: 'settings' }))}
                 sx={{
                   width: 52,
@@ -363,9 +363,9 @@ export default function OrderHistoryPage() {
               </IconButton>
             </Tooltip>
 
-            <Tooltip title="Logout" placement="bottom">
+            <Tooltip title="Chiqish" placement="bottom">
               <IconButton
-                aria-label="Logout"
+                aria-label="Chiqish"
                 onClick={() => logout()}
                 sx={{
                   width: 52,
@@ -400,7 +400,7 @@ export default function OrderHistoryPage() {
         <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2} flexWrap="wrap">
           <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap">
             <Button variant="outlined" startIcon={<UploadFileIcon />} onClick={exportToExcelCsv} disabled={rows.length === 0}>
-              Export to Excel
+              Excelga eksport qilish
             </Button>
           </Stack>
 
@@ -410,17 +410,17 @@ export default function OrderHistoryPage() {
               value={preset}
               onChange={(_, next) => applyPreset(next)}
               size="small"
-              aria-label="Date presets"
+              aria-label="Sana oraliqlari"
             >
-              <ToggleButton value="daily">Daily</ToggleButton>
-              <ToggleButton value="weekly">Weekly</ToggleButton>
-              <ToggleButton value="monthly">Monthly</ToggleButton>
+              <ToggleButton value="daily">Kunlik</ToggleButton>
+              <ToggleButton value="weekly">Haftalik</ToggleButton>
+              <ToggleButton value="monthly">Oylik</ToggleButton>
             </ToggleButtonGroup>
 
             <TextField
               size="small"
               type="date"
-              label="From"
+              label="Boshlanish"
               value={fromDate}
               onChange={(e) => {
                 setPreset(null)
@@ -432,7 +432,7 @@ export default function OrderHistoryPage() {
             <TextField
               size="small"
               type="date"
-              label="To"
+              label="Tugash"
               value={toDate}
               onChange={(e) => {
                 setPreset(null)
@@ -452,12 +452,12 @@ export default function OrderHistoryPage() {
           }}
         >
           <Paper variant="outlined" sx={{ borderRadius: 3, p: 2 }}>
-            <Typography sx={{ fontWeight: 900, color: 'text.secondary', fontSize: 13 }}>Total Orders</Typography>
+            <Typography sx={{ fontWeight: 900, color: 'text.secondary', fontSize: 13 }}>Jami buyurtmalar</Typography>
             <Typography sx={{ fontWeight: 1100, fontSize: 28, mt: 0.25 }}>{history?.overview.total_orders ?? 0}</Typography>
           </Paper>
 
           <Paper variant="outlined" sx={{ borderRadius: 3, p: 2 }}>
-            <Typography sx={{ fontWeight: 900, color: 'text.secondary', fontSize: 13 }}>Total Income</Typography>
+            <Typography sx={{ fontWeight: 900, color: 'text.secondary', fontSize: 13 }}>Jami daromad</Typography>
             <Stack spacing={0} sx={{ mt: 0.25, lineHeight: 1.1 }}>
               <Typography sx={{ fontWeight: 900, textDecoration: 'line-through', color: 'text.secondary' }}>
                 {formatMoney(history?.overview.total_sum ?? 0)}
@@ -467,7 +467,7 @@ export default function OrderHistoryPage() {
           </Paper>
 
           <Paper variant="outlined" sx={{ borderRadius: 3, p: 2 }}>
-            <Typography sx={{ fontWeight: 900, color: 'text.secondary', fontSize: 13 }}>Total Discount</Typography>
+            <Typography sx={{ fontWeight: 900, color: 'text.secondary', fontSize: 13 }}>Jami chegirma</Typography>
             <Typography sx={{ fontWeight: 1100, fontSize: 28, mt: 0.25 }}>
               {formatMoney(history?.overview.total_discount_sum ?? 0)}
             </Typography>
@@ -486,9 +486,9 @@ export default function OrderHistoryPage() {
           >
             <Stack alignItems="center" spacing={1}>
               <HistoryIcon sx={{ fontSize: 64, color: 'text.secondary' }} />
-              <Typography sx={{ fontWeight: 1000 }}>No order history</Typography>
+              <Typography sx={{ fontWeight: 1000 }}>Buyurtmalar tarixi yo'q</Typography>
               <Typography variant="body2" color="text.secondary">
-                Try adjusting the date range or search.
+                Sana oralig'ini o'zgartiring yoki qidirib ko'ring.
               </Typography>
             </Stack>
           </Paper>
@@ -513,15 +513,15 @@ export default function OrderHistoryPage() {
                   <TableCell sx={{ fontWeight: 900 }} align="right">
                     ID
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 900 }}>Username</TableCell>
-                  <TableCell sx={{ fontWeight: 900 }}>Position</TableCell>
-                  <TableCell sx={{ fontWeight: 900 }}>Types</TableCell>
+                  <TableCell sx={{ fontWeight: 900 }}>Foydalanuvchi</TableCell>
+                  <TableCell sx={{ fontWeight: 900 }}>Lavozim</TableCell>
+                  <TableCell sx={{ fontWeight: 900 }}>Turlar</TableCell>
                   <TableCell sx={{ fontWeight: 900 }} align="right">
-                    Total
+                    Jami
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 900 }}>Date created</TableCell>
+                  <TableCell sx={{ fontWeight: 900 }}>Sana</TableCell>
                   <TableCell sx={{ fontWeight: 900 }} align="right">
-                    Actions
+                    Amallar
                   </TableCell>
                 </TableRow>
               </TableHead>
@@ -568,7 +568,7 @@ export default function OrderHistoryPage() {
                       <TableCell>{formatCreated(o.created_at)}</TableCell>
                       <TableCell align="right">
                         <Button variant="outlined" onClick={() => setSelectedOrderId(o.id)}>
-                          Details
+                          Tafsilotlar
                         </Button>
                       </TableCell>
                     </TableRow>

@@ -40,7 +40,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     if (!res.ok) return null
     return await res.json()
   } catch (error) {
-    console.error('Error fetching current user:', error)
+    console.error("Joriy foydalanuvchini olishda xatolik:", error)
     return null
   }
 }

@@ -127,7 +127,7 @@ export default function CashDeskPage() {
                 const res = await fetch(`${API_URL}/cash-desk/summary`)
                 if (!res.ok) {
                     const msg = (await res.json().catch(() => null)) as { detail?: string } | null
-                    throw new Error(msg?.detail || `Failed to load summary (${res.status})`)
+                    throw new Error(msg?.detail || `Hisobotni yuklab bo'lmadi (${res.status})`)
                 }
                 const data = (await res.json()) as CashDeskSummary
                 if (cancelled) return
@@ -135,7 +135,7 @@ export default function CashDeskPage() {
             } catch (e) {
                 if (cancelled) return
                 setSummary(null)
-                setSummaryError(e instanceof Error ? e.message : 'Failed to load summary')
+                setSummaryError(e instanceof Error ? e.message : "Hisobotni yuklab bo'lmadi")
             } finally {
                 if (!cancelled) setSummaryLoading(false)
             }
@@ -162,7 +162,7 @@ export default function CashDeskPage() {
                 })
                 if (!res.ok) {
                     const msg = (await res.json().catch(() => null)) as { detail?: string } | null
-                    throw new Error(msg?.detail || `Failed to load transactions (${res.status})`)
+                    throw new Error(msg?.detail || `Tranzaksiyalarni yuklab bo'lmadi (${res.status})`)
                 }
                 const data = (await res.json()) as ApiPage<ApiCashDeskTransaction>
                 if (cancelled) return
@@ -201,14 +201,14 @@ export default function CashDeskPage() {
             })
             if (!res.ok) {
                 const msg = (await res.json().catch(() => null)) as { detail?: string } | null
-                throw new Error(msg?.detail || `Failed to create transaction (${res.status})`)
+                throw new Error(msg?.detail || `Tranzaksiyani yaratib bo'lmadi (${res.status})`)
             }
             await res.json().catch(() => null)
             setCreateAmount('')
             setPage(1)
             setReloadKey((v) => v + 1)
         } catch (e) {
-            setCreateError(e instanceof Error ? e.message : 'Failed to create transaction')
+            setCreateError(e instanceof Error ? e.message : "Tranzaksiyani yaratib bo'lmadi")
         } finally {
             setCreating(false)
         }
@@ -237,13 +237,13 @@ export default function CashDeskPage() {
             })
             if (!res.ok) {
                 const msg = (await res.json().catch(() => null)) as { detail?: string } | null
-                throw new Error(msg?.detail || `Failed to delete transaction (${res.status})`)
+                throw new Error(msg?.detail || `Tranzaksiyani o'chirib bo'lmadi (${res.status})`)
             }
             await res.json().catch(() => null as ApiDeleteOut | null)
             setDeleteOpen(false)
             setReloadKey((v) => v + 1)
         } catch (e) {
-            setDeleteError(e instanceof Error ? e.message : 'Failed to delete transaction')
+            setDeleteError(e instanceof Error ? e.message : "Tranzaksiyani o'chirib bo'lmadi")
         } finally {
             setDeleting(false)
         }
@@ -280,16 +280,16 @@ export default function CashDeskPage() {
                     <Stack direction="row" alignItems="center" gap={1} sx={{ minWidth: 220 }}>
                         <RestaurantMenuIcon color="primary" />
                         <Typography variant="h6" sx={{ fontWeight: 900 }}>
-                            Restaurant POS
+                            Parhez Plyus
                         </Typography>
                     </Stack>
 
                     <Box sx={{ flex: 1 }} />
 
                     <Stack direction="row" alignItems="center" gap={1}>
-                        <Tooltip title="Settings" placement="bottom">
+                        <Tooltip title="Sozlamalar" placement="bottom">
                             <IconButton
-                                aria-label="Settings"
+                                aria-label="Sozlamalar"
                                 onClick={() => window.dispatchEvent(new CustomEvent('app:navigate', { detail: 'settings' }))}
                                 sx={{
                                     width: 52,
@@ -303,9 +303,9 @@ export default function CashDeskPage() {
                             </IconButton>
                         </Tooltip>
 
-                        <Tooltip title="Logout" placement="bottom">
+                        <Tooltip title="Chiqish" placement="bottom">
                             <IconButton
-                                aria-label="Logout"
+                                aria-label="Chiqish"
                                 onClick={() => logout()}
                                 sx={{
                                     width: 52,
@@ -364,7 +364,7 @@ export default function CashDeskPage() {
                         <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2} flexWrap="wrap">
                             <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap">
                                 <Button variant="outlined" startIcon={<UploadFileIcon />} onClick={exportSnapshot}>
-                                    Export snapshot
+                                    Hisobotni eksport qilish
                                 </Button>
                             </Stack>
 
@@ -374,17 +374,17 @@ export default function CashDeskPage() {
                                     value={preset}
                                     onChange={(_, next) => applyPreset(next)}
                                     size="small"
-                                    aria-label="Date presets"
+                                    aria-label="Sana oraliqlari"
                                 >
-                                    <ToggleButton value="daily">Daily</ToggleButton>
-                                    <ToggleButton value="weekly">Weekly</ToggleButton>
-                                    <ToggleButton value="monthly">Monthly</ToggleButton>
+                                    <ToggleButton value="daily">Kunlik</ToggleButton>
+                                    <ToggleButton value="weekly">Haftalik</ToggleButton>
+                                    <ToggleButton value="monthly">Oylik</ToggleButton>
                                 </ToggleButtonGroup>
 
                                 <TextField
                                     size="small"
                                     type="date"
-                                    label="From"
+                                    label="Boshlanish"
                                     value={fromDate}
                                     onChange={(e) => {
                                         setPreset(null)
@@ -396,7 +396,7 @@ export default function CashDeskPage() {
                                 <TextField
                                     size="small"
                                     type="date"
-                                    label="To"
+                                    label="Tugash"
                                     value={toDate}
                                     onChange={(e) => {
                                         setPreset(null)
@@ -425,15 +425,15 @@ export default function CashDeskPage() {
                             >
 	                                <TableHead>
 	                                    <TableRow sx={{ bgcolor: 'background.default' }}>
-	                                        <TableCell sx={{ fontWeight: 900 }}>Username</TableCell>
+	                                        <TableCell sx={{ fontWeight: 900 }}>Foydalanuvchi</TableCell>
 	                                        <TableCell align="right" sx={{ fontWeight: 900 }}>
-	                                            Amount
+	                                            Miqdor
 	                                        </TableCell>
-	                                        <TableCell sx={{ fontWeight: 900 }}>Type</TableCell>
-	                                        <TableCell sx={{ fontWeight: 900 }}>Date</TableCell>
+	                                        <TableCell sx={{ fontWeight: 900 }}>Turi</TableCell>
+	                                        <TableCell sx={{ fontWeight: 900 }}>Sana</TableCell>
 	                                        {isAdmin ? (
 	                                            <TableCell align="right" sx={{ fontWeight: 900 }}>
-	                                                Actions
+	                                                Amallar
 	                                            </TableCell>
 	                                        ) : null}
 	                                    </TableRow>
@@ -467,7 +467,7 @@ export default function CashDeskPage() {
                                                         fontSize: 12,
                                                     }}
                                                 >
-                                                    {transaction.transaction_type === 'in' ? 'IN' : 'OUT'}
+                                                    {transaction.transaction_type === 'in' ? 'KIRIM' : 'CHIQIM'}
                                                 </Box>
                                             </TableCell>
                                             <TableCell>
@@ -485,9 +485,9 @@ export default function CashDeskPage() {
                                             </TableCell>
 	                                            {isAdmin ? (
 	                                                <TableCell align="right">
-	                                                    <Tooltip title="Delete" placement="top">
+	                                                    <Tooltip title="O'chirish" placement="top">
 	                                                        <IconButton
-	                                                            aria-label="Delete"
+	                                                            aria-label="O'chirish"
 	                                                            onClick={() => requestDeleteTransactionRow(transaction)}
 	                                                            sx={{
 	                                                                color: 'error.main',
@@ -549,7 +549,7 @@ export default function CashDeskPage() {
                         <Stack spacing={2}>
                             {/* Current Amount */}
                             <Box sx={{ textAlign: 'center', pb: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
-                                <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 1 }}>Current Amount</Typography>
+                                <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 1 }}>Joriy summa</Typography>
                                 <Typography sx={{ fontWeight: 1000, fontSize: 48, color: 'primary.main' }}>
                                     {new Intl.NumberFormat('uz-UZ').format(Math.round(safeSummary.current_amount))}
                                 </Typography>
@@ -557,7 +557,7 @@ export default function CashDeskPage() {
                                 {summaryError ? (
                                     <Typography sx={{ mt: 1, fontSize: 12, color: 'error.main' }}>{summaryError}</Typography>
                                 ) : summaryLoading ? (
-                                    <Typography sx={{ mt: 1, fontSize: 12, color: 'text.secondary' }}>Loading...</Typography>
+                                    <Typography sx={{ mt: 1, fontSize: 12, color: 'text.secondary' }}>Yuklanmoqda...</Typography>
                                 ) : null}
                             </Box>
 
@@ -579,7 +579,7 @@ export default function CashDeskPage() {
                                 >
                                     <Box sx={{ flex: 1, pr: 2, textAlign: 'center' }}>
                                         <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 14 }}>
-                                            Total Order Income
+                                            Buyurtmalardan jami daromad
                                         </Typography>
                                         <Typography sx={{ fontWeight: 900, fontSize: 18, color: 'success.main' }}>
                                             +{formatMoney(safeSummary.total_order_income)}
@@ -587,7 +587,7 @@ export default function CashDeskPage() {
                                     </Box>
                                     <Box sx={{ flex: 1, pl: 2, textAlign: 'center' }}>
                                         <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 14 }}>
-                                            Total Misc Income
+                                            Boshqa jami daromad
                                         </Typography>
                                         <Typography sx={{ fontWeight: 900, fontSize: 18, color: 'success.main' }}>
                                             +{formatMoney(safeSummary.total_misc_income)}
@@ -599,7 +599,7 @@ export default function CashDeskPage() {
 
                                 <Box sx={{ textAlign: 'center' }}>
                                     <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 14 }}>
-                                        Total Expenses
+                                        Jami xarajatlar
                                     </Typography>
                                     <Typography sx={{ fontWeight: 900, fontSize: 20, color: 'error.main' }}>
                                         -{formatMoney(safeSummary.total_expense)}
@@ -620,7 +620,7 @@ export default function CashDeskPage() {
                             <Typography sx={{ fontWeight: 1000, fontSize: 24, lineHeight: 1.1 }}>
                                 {createAmount ? new Intl.NumberFormat('uz-UZ').format(Number(createAmount)) : '0'}
                             </Typography>
-                            <Typography sx={{ fontWeight: 700, color: 'text.secondary', fontSize: 12, mt: 0.5 }}>Amount</Typography>
+                            <Typography sx={{ fontWeight: 700, color: 'text.secondary', fontSize: 12, mt: 0.5 }}>Miqdor</Typography>
                         </Paper>
 
                         <Numpad onDigit={addNumpadDigit} onClear={numpadClear} onBackspace={numpadBackspace} />
@@ -642,7 +642,7 @@ export default function CashDeskPage() {
                                 fullWidth
                                 disabled={creating || !createAmountInt}
                             >
-                                + Add income
+                                + Daromad qo'shish
                             </Button>
                             <Button
                                 color="error"
@@ -652,7 +652,7 @@ export default function CashDeskPage() {
                                 fullWidth
                                 disabled={creating || !createAmountInt}
                             >
-                                - Add expense
+                                - Xarajat qo'shish
                             </Button>
                         </Box>
 
@@ -667,16 +667,16 @@ export default function CashDeskPage() {
 
             {isAdmin ? (
                 <Dialog open={deleteOpen} onClose={closeDelete} fullWidth maxWidth="xs">
-                    <DialogTitle sx={{ fontWeight: 1000 }}>Delete transaction</DialogTitle>
+                    <DialogTitle sx={{ fontWeight: 1000 }}>Tranzaksiyani o'chirish</DialogTitle>
                     <DialogContent sx={{ pt: 1 }}>
                         <Stack gap={1.5} sx={{ mt: 1 }}>
                             <Typography variant="body2" color="text.secondary">
-                                {deleteTarget ? `Delete transaction #${deleteTarget.id}?` : 'Delete this transaction?'}
+                                {deleteTarget ? `#${deleteTarget.id} tranzaksiyasini o'chirasizmi?` : 'Ushbu tranzaksiyani o‘chirasizmi?'}
                             </Typography>
                             {deleteTarget ? (
                                 <Paper variant="outlined" sx={{ borderRadius: 2, p: 1.5 }}>
                                     <Stack direction="row" justifyContent="space-between" gap={2}>
-                                        <Typography sx={{ fontWeight: 900 }}>Amount</Typography>
+                                        <Typography sx={{ fontWeight: 900 }}>Miqdor</Typography>
                                         <Typography sx={{ fontWeight: 1000 }}>
                                             {(deleteTarget.transaction_type === 'in' ? '+' : '-') +
                                                 new Intl.NumberFormat('uz-UZ').format(deleteTarget.amount)}
@@ -691,10 +691,10 @@ export default function CashDeskPage() {
                     </DialogContent>
                     <DialogActions sx={{ px: 3, pb: 2, display: 'flex', gap: 1 }}>
                         <Button variant="outlined" onClick={closeDelete} disabled={deleting}>
-                            Cancel
+                            Bekor qilish
                         </Button>
                         <Button color="error" variant="contained" onClick={confirmDelete} disabled={!deleteTarget || deleting}>
-                            {deleting ? 'Deleting…' : 'Delete'}
+                            {deleting ? "O'chirilmoqda…" : "O'chirish"}
                         </Button>
                     </DialogActions>
                 </Dialog>

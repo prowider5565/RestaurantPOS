@@ -109,7 +109,7 @@ export default function SettingsPage() {
         })
         if (!res.ok) {
           const msg = (await res.json().catch(() => null)) as { detail?: string } | null
-          throw new Error(msg?.detail || 'Failed to update username')
+          throw new Error(msg?.detail || "Foydalanuvchi nomini yangilab bo'lmadi")
         }
         setMe((prev) => (prev ? { ...prev, username: nextUsername } : prev))
       }
@@ -123,15 +123,15 @@ export default function SettingsPage() {
         })
         if (!res.ok) {
           const msg = (await res.json().catch(() => null)) as { detail?: string } | null
-          throw new Error(msg?.detail || 'Failed to update password')
+          throw new Error(msg?.detail || "Parolni yangilab bo'lmadi")
         }
         setPassword('')
         setPasswordConfirm('')
       }
 
-      setStatus({ kind: 'ok', msg: 'Saved' })
+      setStatus({ kind: 'ok', msg: 'Saqlandi' })
     } catch (err) {
-      setStatus({ kind: 'err', msg: err instanceof Error ? err.message : 'Failed to save' })
+      setStatus({ kind: 'err', msg: err instanceof Error ? err.message : "Saqlab bo'lmadi" })
     } finally {
       setSaving(false)
     }
@@ -157,27 +157,27 @@ export default function SettingsPage() {
         }}
       >
         <Stack spacing={1} component="form" onSubmit={save}>
-          <Typography sx={{ fontWeight: 1100, fontSize: 24, textAlign: 'center' }}>Settings</Typography>
+          <Typography sx={{ fontWeight: 1100, fontSize: 24, textAlign: 'center' }}>Sozlamalar</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
-            Update branding and account details.
+            Brend va hisob ma'lumotlarini yangilang.
           </Typography>
           <Divider sx={{ my: 1 }} />
 
           {status ? <Alert severity={status.kind === 'ok' ? 'success' : 'error'}>{status.msg}</Alert> : null}
 
-          <Typography sx={{ fontWeight: 900, mt: 0.5 }}>Branding</Typography>
+          <Typography sx={{ fontWeight: 900, mt: 0.5 }}>Brend</Typography>
 
           <TextField
-            label="Program name"
+            label="Dastur nomi"
             value={programName}
             onChange={(e) => setProgramName(e.target.value)}
-            helperText="This name is printed on receipts."
+            helperText="Bu nom cheklarda chop etiladi."
             fullWidth
           />
 
           <Stack direction="row" spacing={1.5} alignItems="center">
             <Button component="label" variant="outlined">
-              Upload logo
+              Logotip yuklash
               <input
                 hidden
                 type="file"
@@ -186,15 +186,15 @@ export default function SettingsPage() {
               />
             </Button>
             <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
-              {logoFileName ? `Selected: ${logoFileName}` : 'No logo selected'}
+              {logoFileName ? `Tanlangan: ${logoFileName}` : 'Logotip tanlanmagan'}
             </Typography>
           </Stack>
           <Typography variant="caption" color="text.secondary">
-            Logo upload UI only (not saved yet).
+            Logotip yuklash faqat UI uchun (hali saqlanmaydi).
           </Typography>
 
           <TextField
-            label="Username"
+            label="Foydalanuvchi nomi"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             autoComplete="username"
@@ -204,7 +204,7 @@ export default function SettingsPage() {
           <Divider sx={{ my: 1 }} />
 
           <TextField
-            label="New password"
+            label="Yangi parol"
             type={showPassword ? 'text' : 'password'}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -214,7 +214,7 @@ export default function SettingsPage() {
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    aria-label={showPassword ? "Parolni yashirish" : "Parolni ko'rsatish"}
                     onClick={() => setShowPassword((v) => !v)}
                     edge="end"
                   >
@@ -226,19 +226,19 @@ export default function SettingsPage() {
           />
 
           <TextField
-            label="Confirm password"
+            label="Parolni tasdiqlash"
             type={showPasswordConfirm ? 'text' : 'password'}
             value={passwordConfirm}
             onChange={(e) => setPasswordConfirm(e.target.value)}
             autoComplete="new-password"
             error={Boolean(passwordConfirm) && password !== passwordConfirm}
-            helperText={Boolean(passwordConfirm) && password !== passwordConfirm ? 'Passwords do not match' : ' '}
+            helperText={Boolean(passwordConfirm) && password !== passwordConfirm ? 'Parollar mos emas' : ' '}
             fullWidth
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
-                    aria-label={showPasswordConfirm ? 'Hide password' : 'Show password'}
+                    aria-label={showPasswordConfirm ? "Parolni yashirish" : "Parolni ko'rsatish"}
                     onClick={() => setShowPasswordConfirm((v) => !v)}
                     edge="end"
                   >
@@ -257,7 +257,7 @@ export default function SettingsPage() {
             sx={{ py: 1.25, fontWeight: 900 }}
             fullWidth
           >
-            {saving ? 'Saving…' : 'Save'}
+            {saving ? 'Saqlanmoqda…' : 'Saqlash'}
           </Button>
         </Stack>
       </Paper>

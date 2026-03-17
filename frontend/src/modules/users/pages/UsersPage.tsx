@@ -95,12 +95,12 @@ export default function UsersPage() {
       if (!res.ok) {
         const msg = (await res.json().catch(() => null)) as { detail?: string } | null
         const detail = msg?.detail ? `: ${msg.detail}` : ''
-        throw new Error(`Failed to load users (${res.status})${detail}`)
+        throw new Error(`Foydalanuvchilarni yuklab bo'lmadi (${res.status})${detail}`)
       }
       const data = (await res.json()) as ApiUser[]
       setRows(Array.isArray(data) ? data : [])
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load users')
+      setError(e instanceof Error ? e.message : "Foydalanuvchilarni yuklab bo'lmadi")
       setRows([])
     } finally {
       setLoading(false)
@@ -137,7 +137,7 @@ export default function UsersPage() {
     const position = createForm.position.trim()
     if (!username || !password || !confirmPassword) return
     if (password !== confirmPassword) {
-      setCreateError('Passwords do not match')
+      setCreateError('Parollar mos emas')
       return
     }
 
@@ -151,12 +151,12 @@ export default function UsersPage() {
       })
       if (!res.ok) {
         const msg = (await res.json().catch(() => null)) as { detail?: string } | null
-        throw new Error(msg?.detail || 'Failed to create user')
+        throw new Error(msg?.detail || "Foydalanuvchini yaratib bo'lmadi")
       }
       setCreateOpen(false)
       await load()
     } catch (e) {
-      setCreateError(e instanceof Error ? e.message : 'Failed to create user')
+      setCreateError(e instanceof Error ? e.message : "Foydalanuvchini yaratib bo'lmadi")
     } finally {
       setCreateSaving(false)
     }
@@ -205,13 +205,13 @@ export default function UsersPage() {
       })
       if (!res.ok) {
         const msg = (await res.json().catch(() => null)) as { detail?: string } | null
-        throw new Error(msg?.detail || 'Failed to update user')
+        throw new Error(msg?.detail || "Foydalanuvchini yangilab bo'lmadi")
       }
-      setDeactivateStatus({ kind: 'ok', msg: deactivateNextActive ? 'User activated' : 'User deactivated' })
+      setDeactivateStatus({ kind: 'ok', msg: deactivateNextActive ? 'Foydalanuvchi faollashtirildi' : 'Foydalanuvchi faolsizlantirildi' })
       setDeactivateOpen(false)
       await load()
     } catch (e) {
-      setDeactivateStatus({ kind: 'err', msg: e instanceof Error ? e.message : 'Failed to update user' })
+      setDeactivateStatus({ kind: 'err', msg: e instanceof Error ? e.message : "Foydalanuvchini yangilab bo'lmadi" })
     } finally {
       setDeactivating(false)
     }
@@ -240,14 +240,14 @@ export default function UsersPage() {
       })
       if (!res.ok) {
         const msg = (await res.json().catch(() => null)) as { detail?: string } | null
-        throw new Error(msg?.detail || 'Failed to update user')
+        throw new Error(msg?.detail || "Foydalanuvchini yangilab bo'lmadi")
       }
 
-      setSaveStatus({ kind: 'ok', msg: 'User updated' })
+      setSaveStatus({ kind: 'ok', msg: 'Foydalanuvchi yangilandi' })
       setEditOpen(false)
       await load()
     } catch (e) {
-      setSaveStatus({ kind: 'err', msg: e instanceof Error ? e.message : 'Failed to update user' })
+      setSaveStatus({ kind: 'err', msg: e instanceof Error ? e.message : "Foydalanuvchini yangilab bo'lmadi" })
     } finally {
       setSaving(false)
     }
@@ -278,13 +278,13 @@ export default function UsersPage() {
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       <AppBar position="sticky" color="transparent" elevation={0}>
         <Toolbar sx={{ gap: 1 }}>
-          <Typography sx={{ fontWeight: 1100, fontSize: 20, flex: 1 }}>Users</Typography>
+          <Typography sx={{ fontWeight: 1100, fontSize: 20, flex: 1 }}>Foydalanuvchilar</Typography>
 
           <TextField
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             size="small"
-            placeholder="Search users..."
+            placeholder="Foydalanuvchi qidirish..."
             sx={{ maxWidth: 520, flex: 1 }}
             InputProps={{
               startAdornment: (
@@ -295,9 +295,9 @@ export default function UsersPage() {
             }}
           />
 
-          <Tooltip title="Refresh" placement="bottom">
+          <Tooltip title="Yangilash" placement="bottom">
             <IconButton
-              aria-label="Refresh"
+              aria-label="Yangilash"
               onClick={load}
               sx={{ width: 52, height: 52, borderRadius: 999, border: '1px solid', borderColor: 'divider' }}
             >
@@ -305,9 +305,9 @@ export default function UsersPage() {
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Settings" placement="bottom">
+          <Tooltip title="Sozlamalar" placement="bottom">
             <IconButton
-              aria-label="Settings"
+              aria-label="Sozlamalar"
               onClick={() => window.dispatchEvent(new CustomEvent('app:navigate', { detail: 'settings' }))}
               sx={{ width: 52, height: 52, borderRadius: 999, border: '1px solid', borderColor: 'divider' }}
             >
@@ -315,9 +315,9 @@ export default function UsersPage() {
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Logout" placement="bottom">
+          <Tooltip title="Chiqish" placement="bottom">
             <IconButton
-              aria-label="Logout"
+              aria-label="Chiqish"
               onClick={() => logout()}
               sx={{
                 width: 52,
@@ -356,12 +356,12 @@ export default function UsersPage() {
         ) : error ? (
           <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, flex: 1 }}>
             <Stack gap={1}>
-              <Typography sx={{ fontWeight: 900 }}>Could not load users</Typography>
+              <Typography sx={{ fontWeight: 900 }}>Foydalanuvchilar yuklanmadi</Typography>
               <Typography variant="body2" color="text.secondary">
                 {error}
               </Typography>
               <Button onClick={load} variant="contained" color="primary" size="large">
-                Try again
+                Qayta urinish
               </Button>
             </Stack>
           </Paper>
@@ -379,12 +379,12 @@ export default function UsersPage() {
             >
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 900 }}>Username</TableCell>
-                  <TableCell sx={{ fontWeight: 900 }}>Position</TableCell>
-                  <TableCell sx={{ fontWeight: 900 }}>Role</TableCell>
-                  <TableCell sx={{ fontWeight: 900 }}>Status</TableCell>
+                  <TableCell sx={{ fontWeight: 900 }}>Foydalanuvchi</TableCell>
+                  <TableCell sx={{ fontWeight: 900 }}>Lavozim</TableCell>
+                  <TableCell sx={{ fontWeight: 900 }}>Rol</TableCell>
+                  <TableCell sx={{ fontWeight: 900 }}>Holat</TableCell>
                   <TableCell sx={{ fontWeight: 900 }} align="right">
-                    Actions
+                    Amallar
                   </TableCell>
                 </TableRow>
               </TableHead>
@@ -394,15 +394,15 @@ export default function UsersPage() {
                     <TableCell sx={{ fontWeight: 1000 }}>{u.username}</TableCell>
                     <TableCell>{u.position ?? '-'}</TableCell>
                     <TableCell>
-                      {u.is_admin ? <Chip label="Admin" color="warning" size="small" /> : <Chip label="User" size="small" />}
+                      {u.is_admin ? <Chip label="Admin" color="warning" size="small" /> : <Chip label="Foydalanuvchi" size="small" />}
                     </TableCell>
                     <TableCell>
-                      {u.is_active === false ? <Chip label="Inactive" color="error" size="small" /> : <Chip label="Active" color="success" size="small" />}
+                      {u.is_active === false ? <Chip label="Faol emas" color="error" size="small" /> : <Chip label="Faol" color="success" size="small" />}
                     </TableCell>
                     <TableCell align="right">
                       <Stack direction="row" gap={1} justifyContent="flex-end">
                         <Button variant="outlined" size="large" sx={{ minWidth: 120 }} onClick={() => openEdit(u)}>
-                          Edit
+                          Tahrirlash
                         </Button>
                         <Button
                           variant="contained"
@@ -411,7 +411,7 @@ export default function UsersPage() {
                           sx={{ minWidth: 140 }}
                           onClick={() => openDeactivate(u)}
                         >
-                          {u.is_active === false ? 'Activate' : 'Deactivate'}
+                          {u.is_active === false ? 'Faollashtirish' : 'Faolsizlantirish'}
                         </Button>
                       </Stack>
                     </TableCell>
@@ -457,14 +457,14 @@ export default function UsersPage() {
           },
         }}
       >
-        <DialogTitle sx={{ fontWeight: 1000 }}>Create user</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 1000 }}>Foydalanuvchi yaratish</DialogTitle>
         <DialogContent sx={{ pt: 1, display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', gap: 2 }}>
           <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
             <Stack gap={2} sx={{ mt: 1 }}>
             {createError ? <Alert severity="error">{createError}</Alert> : null}
 
             <TextField
-              label="Username"
+              label="Foydalanuvchi nomi"
               value={createForm.username}
               onFocus={() => setCreateInputName('username')}
               onChange={(e) => setCreateForm((prev) => ({ ...prev, username: e.target.value }))}
@@ -473,7 +473,7 @@ export default function UsersPage() {
 
             <Stack direction={{ xs: 'column', sm: 'row' }} gap={2}>
               <TextField
-                label="Password"
+                label="Parol"
                 type="password"
                 value={createForm.password}
                 onFocus={() => setCreateInputName('password')}
@@ -481,7 +481,7 @@ export default function UsersPage() {
                 fullWidth
               />
               <TextField
-                label="Confirm password"
+                label="Parolni tasdiqlash"
                 type="password"
                 value={createForm.confirmPassword}
                 onFocus={() => setCreateInputName('confirmPassword')}
@@ -489,7 +489,7 @@ export default function UsersPage() {
                 error={Boolean(createForm.confirmPassword) && createForm.password !== createForm.confirmPassword}
                 helperText={
                   Boolean(createForm.confirmPassword) && createForm.password !== createForm.confirmPassword
-                    ? 'Passwords do not match'
+                    ? 'Parollar mos emas'
                     : ' '
                 }
                 fullWidth
@@ -497,7 +497,7 @@ export default function UsersPage() {
             </Stack>
 
             <TextField
-              label="Position"
+              label="Lavozim"
               value={createForm.position}
               onFocus={() => setCreateInputName('position')}
               onChange={(e) => setCreateForm((prev) => ({ ...prev, position: e.target.value }))}
@@ -542,7 +542,7 @@ export default function UsersPage() {
             sx={{ py: 1.6, fontSize: 16, fontWeight: 900 }}
             disabled={createSaving}
           >
-            Cancel
+            Bekor qilish
           </Button>
           <Button
             color="success"
@@ -553,13 +553,13 @@ export default function UsersPage() {
             sx={{ py: 1.6, fontSize: 16, fontWeight: 900 }}
             disabled={createSaving || !createForm.username.trim() || !createForm.password || !createForm.confirmPassword}
           >
-            {createSaving ? 'Creating…' : 'Create'}
+            {createSaving ? 'Yaratilmoqda…' : 'Yaratish'}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={editOpen} onClose={closeEdit} fullWidth maxWidth="sm">
-        <DialogTitle sx={{ fontWeight: 1000 }}>Edit user</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 1000 }}>Foydalanuvchini tahrirlash</DialogTitle>
         <DialogContent sx={{ pt: 1 }}>
           <Stack gap={2} sx={{ mt: 1 }}>
             {saveStatus ? (
@@ -567,14 +567,14 @@ export default function UsersPage() {
             ) : null}
 
             <TextField
-              label="Username"
+              label="Foydalanuvchi nomi"
               value={editUsername}
               onChange={(e) => setEditUsername(e.target.value)}
               fullWidth
             />
 
             <TextField
-              label="New password"
+              label="Yangi parol"
               type={showPassword ? 'text' : 'password'}
               value={editPassword}
               onChange={(e) => setEditPassword(e.target.value)}
@@ -583,7 +583,7 @@ export default function UsersPage() {
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
-                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      aria-label={showPassword ? "Parolni yashirish" : "Parolni ko'rsatish"}
                       onClick={() => setShowPassword((v) => !v)}
                       edge="end"
                     >
@@ -595,20 +595,20 @@ export default function UsersPage() {
             />
 
             <TextField
-              label="Confirm password"
+              label="Parolni tasdiqlash"
               type={showPasswordConfirm ? 'text' : 'password'}
               value={editPasswordConfirm}
               onChange={(e) => setEditPasswordConfirm(e.target.value)}
               error={Boolean(editPasswordConfirm) && editPassword !== editPasswordConfirm}
               helperText={
-                Boolean(editPasswordConfirm) && editPassword !== editPasswordConfirm ? 'Passwords do not match' : ' '
+                Boolean(editPasswordConfirm) && editPassword !== editPasswordConfirm ? 'Parollar mos emas' : ' '
               }
               fullWidth
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
-                      aria-label={showPasswordConfirm ? 'Hide password' : 'Show password'}
+                      aria-label={showPasswordConfirm ? "Parolni yashirish" : "Parolni ko'rsatish"}
                       onClick={() => setShowPasswordConfirm((v) => !v)}
                       edge="end"
                     >
@@ -630,7 +630,7 @@ export default function UsersPage() {
             sx={{ py: 1.6, fontSize: 16, fontWeight: 900 }}
             disabled={saving}
           >
-            Cancel
+            Bekor qilish
           </Button>
           <Button
             color="success"
@@ -641,14 +641,14 @@ export default function UsersPage() {
             sx={{ py: 1.6, fontSize: 16, fontWeight: 900 }}
             disabled={saveDisabled}
           >
-            {saving ? 'Saving…' : 'Save'}
+            {saving ? 'Saqlanmoqda…' : 'Saqlash'}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={deactivateOpen} onClose={closeDeactivate} fullWidth maxWidth="xs">
         <DialogTitle sx={{ fontWeight: 1000 }}>
-          {deactivateNextActive ? 'Activate user' : 'Deactivate user'}
+          {deactivateNextActive ? 'Foydalanuvchini faollashtirish' : 'Foydalanuvchini faolsizlantirish'}
         </DialogTitle>
         <DialogContent sx={{ pt: 1 }}>
           <Stack gap={2} sx={{ mt: 1 }}>
@@ -659,8 +659,8 @@ export default function UsersPage() {
             ) : null}
             <Typography variant="body2" color="text.secondary">
               {deactivateUser
-                ? `${deactivateNextActive ? 'Activate' : 'Deactivate'} "${deactivateUser.username}"?`
-                : 'Update this user?'}
+                ? `${deactivateNextActive ? 'Faollashtirish' : 'Faolsizlantirish'} "${deactivateUser.username}"?`
+                : 'Ushbu foydalanuvchini yangilaysizmi?'}
             </Typography>
           </Stack>
         </DialogContent>
@@ -674,7 +674,7 @@ export default function UsersPage() {
             sx={{ py: 1.6, fontSize: 16, fontWeight: 900 }}
             disabled={deactivating}
           >
-            Cancel
+            Bekor qilish
           </Button>
           <Button
             color={deactivateNextActive ? 'success' : 'error'}
@@ -685,7 +685,7 @@ export default function UsersPage() {
             sx={{ py: 1.6, fontSize: 16, fontWeight: 900 }}
             disabled={!deactivateUser || deactivating}
           >
-            {deactivating ? 'Saving…' : deactivateNextActive ? 'Activate' : 'Deactivate'}
+            {deactivating ? 'Saqlanmoqda…' : deactivateNextActive ? 'Faollashtirish' : 'Faolsizlantirish'}
           </Button>
         </DialogActions>
       </Dialog>

@@ -913,7 +913,7 @@ async function generateReceipt(orderData: {
           <Stack direction="row" alignItems="center" gap={1} sx={{ minWidth: 220 }}>
             <RestaurantMenuIcon color="primary" />
             <Typography variant="h6" sx={{ fontWeight: 900 }}>
-              Restoran POS
+              Parhez Plyus
             </Typography>
           </Stack>
 
