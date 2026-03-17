@@ -202,7 +202,7 @@ export default function PosPage() {
   const [discountedTotalOverride, setDiscountedTotalOverride] = useState<number | null>(null)
 
   const menuCategories: Category[] = useMemo(() => {
-    const base: Category[] = [{ id: 'all', label: 'All', imageSrc: DEFAULT_CATEGORY_IMAGE_SRC }]
+    const base: Category[] = [{ id: 'all', label: 'Barchasi', imageSrc: DEFAULT_CATEGORY_IMAGE_SRC }]
 
     const next = apiCategories.map((c) => ({
       id: String(c.id),
@@ -913,7 +913,7 @@ async function generateReceipt(orderData: {
           <Stack direction="row" alignItems="center" gap={1} sx={{ minWidth: 220 }}>
             <RestaurantMenuIcon color="primary" />
             <Typography variant="h6" sx={{ fontWeight: 900 }}>
-              Restaurant POS
+              Restoran POS
             </Typography>
           </Stack>
 
@@ -921,7 +921,7 @@ async function generateReceipt(orderData: {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             size="small"
-            placeholder="Search items..."
+            placeholder="Mahsulot qidirish..."
             fullWidth
             InputProps={{
               startAdornment: (
@@ -933,9 +933,9 @@ async function generateReceipt(orderData: {
           />
 
           <Stack direction="row" alignItems="center" gap={1}>
-            <Tooltip title="Settings" placement="bottom">
+            <Tooltip title="Sozlamalar" placement="bottom">
               <IconButton
-                aria-label="Settings"
+                aria-label="Sozlamalar"
                 onClick={() => window.dispatchEvent(new CustomEvent('app:navigate', { detail: 'settings' }))}
                 sx={{
                   width: 52,
@@ -949,9 +949,9 @@ async function generateReceipt(orderData: {
               </IconButton>
             </Tooltip>
 
-            <Tooltip title="Logout" placement="bottom">
+            <Tooltip title="Chiqish" placement="bottom">
               <IconButton
-                aria-label="Logout"
+                aria-label="Chiqish"
                 onClick={() => logout()}
                 sx={{
                   width: 52,
@@ -1070,10 +1070,10 @@ async function generateReceipt(orderData: {
                 <Stack spacing={1} alignItems="center">
                   <RestaurantMenuIcon sx={{ fontSize: 64, color: 'primary.main' }} />
                   <Typography sx={{ fontWeight: 1000, color: 'text.primary', fontSize: 20 }}>
-                    No products yet
+                    Hali mahsulot yo'q
                   </Typography>
                   <Typography variant="body2">
-                    Use the <b>+</b> button in the bottom bar to add food & drinks.
+                    Pastki paneldagi <b>+</b> tugmasi orqali taom va ichimlik qo'shing.
                   </Typography>
                 </Stack>
               </Paper>
@@ -1166,8 +1166,8 @@ async function generateReceipt(orderData: {
             }}
           >
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
-              <Typography sx={{ fontWeight: 900 }}>Cart</Typography>
-              <IconButton aria-label="Clear order" onClick={clearCart} disabled={cartCount === 0}>
+              <Typography sx={{ fontWeight: 900 }}>Savat</Typography>
+              <IconButton aria-label="Buyurtmani tozalash" onClick={clearCart} disabled={cartCount === 0}>
                 <CloseIcon />
               </IconButton>
             </Stack>
@@ -1217,8 +1217,8 @@ async function generateReceipt(orderData: {
               <List dense disablePadding sx={{ height: '100%', overflow: 'auto' }}>
                 {cartLines.length === 0 ? (
                   <Box sx={{ py: 6, textAlign: 'center', color: 'text.secondary' }}>
-                    <Typography sx={{ fontWeight: 700 }}>No items yet</Typography>
-                    <Typography variant="body2">Tap a product to add it to the order.</Typography>
+                    <Typography sx={{ fontWeight: 700 }}>Hali mahsulot yo'q</Typography>
+                    <Typography variant="body2">Buyurtmaga qo'shish uchun mahsulotni bosing.</Typography>
                   </Box>
                 ) : (
                   cartLines.map((line) => (
@@ -1265,7 +1265,7 @@ async function generateReceipt(orderData: {
                         <Stack direction="row" alignItems="center" gap={0.5} sx={{ flex: '0 0 auto' }}>
                           <IconButton
                             size="small"
-                            aria-label="Decrease quantity"
+                            aria-label="Miqdorni kamaytirish"
                             onClick={() => setQty(line.product.id, line.qty - 1)}
                             sx={{
                               width: 44,
@@ -1282,7 +1282,7 @@ async function generateReceipt(orderData: {
                           </Typography>
                           <IconButton
                             size="small"
-                            aria-label="Increase quantity"
+                            aria-label="Miqdorni oshirish"
                             onClick={() => setQty(line.product.id, line.qty + 1)}
                             sx={{
                               width: 44,
@@ -1306,7 +1306,7 @@ async function generateReceipt(orderData: {
 
             <Stack sx={{ mb: 2, mt: 'auto' }}>
               <Stack direction="row" justifyContent="space-between" alignItems="baseline">
-                <Typography sx={{ fontWeight: 1000, fontSize: 22 }}>Total</Typography>
+                <Typography sx={{ fontWeight: 1000, fontSize: 22 }}>Jami</Typography>
                 <Typography
                   onClick={toggleEditTotal}
                   sx={{
@@ -1345,7 +1345,7 @@ async function generateReceipt(orderData: {
                 sx={{ py: 2.2, borderRadius: 2, fontSize: 18 }}
                 fullWidth
               >
-                Pay Now
+                Hozir to'lash
               </Button>
               <Button
                 color="error"
@@ -1356,7 +1356,7 @@ async function generateReceipt(orderData: {
                 sx={{ py: 2.2, borderRadius: 2, fontSize: 18 }}
                 fullWidth
               >
-                Cancel
+                Bekor qilish
               </Button>
             </Box>
           </Paper>
@@ -1376,12 +1376,12 @@ async function generateReceipt(orderData: {
           },
         }}
       >
-        <DialogTitle sx={{ fontWeight: 1000 }}>Create product</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 1000 }}>Mahsulot yaratish</DialogTitle>
         <DialogContent sx={{ pt: 1, display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', gap: 2 }}>
           <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
             <Stack gap={2} sx={{ mt: 1 }}>
               <TextField
-                label="Name"
+                label="Nomi"
                 value={newFood.name}
                 onFocus={() => setCreateKeyboardInput('name')}
                 onChange={(e) => setNewFood((prev) => ({ ...prev, name: e.target.value }))}
@@ -1390,7 +1390,7 @@ async function generateReceipt(orderData: {
 
               <Stack direction={{ xs: 'column', sm: 'row' }} gap={2}>
                 <TextField
-                  label="Price"
+                  label="Narxi"
                   value={formatIntegerForInput(newFood.priceDigits)}
                   onFocus={() => setCreateKeyboardInput('priceDigits')}
                   onChange={(e) =>
@@ -1404,10 +1404,10 @@ async function generateReceipt(orderData: {
                 />
 
                 <FormControl sx={{ flex: 1 }}>
-                  <InputLabel id="new-food-measure-label">Measure</InputLabel>
+                  <InputLabel id="new-food-measure-label">O'lchov</InputLabel>
                   <Select
                     labelId="new-food-measure-label"
-                    label="Measure"
+                    label="O'lchov"
                     value={newFood.measure}
                     onChange={(e) =>
                       setNewFood((prev) => ({
@@ -1416,18 +1416,18 @@ async function generateReceipt(orderData: {
                       }))
                     }
                   >
-                    <MenuItem value="unit">Unit</MenuItem>
+                    <MenuItem value="unit">Dona</MenuItem>
                     <MenuItem value="gram">Gram</MenuItem>
-                    <MenuItem value="portion">Portion</MenuItem>
+                    <MenuItem value="portion">Porsiya</MenuItem>
                   </Select>
                 </FormControl>
 
                 <Stack direction="row" gap={1} sx={{ flex: 1 }}>
                   <FormControl fullWidth>
-                    <InputLabel id="new-food-category-label">Category</InputLabel>
+                    <InputLabel id="new-food-category-label">Kategoriya</InputLabel>
                     <Select
                       labelId="new-food-category-label"
-                      label="Category"
+                      label="Kategoriya"
                       value={newFood.categoryId}
                       onChange={(e) => setNewFood((prev) => ({ ...prev, categoryId: String(e.target.value) }))}
                     >
@@ -1440,9 +1440,9 @@ async function generateReceipt(orderData: {
                         ))}
                     </Select>
                   </FormControl>
-                  <Tooltip title="Add category" placement="top">
+                  <Tooltip title="Kategoriya qo'shish" placement="top">
                     <IconButton
-                      aria-label="Add category"
+                      aria-label="Kategoriya qo'shish"
                       onClick={openCreateCategory}
                       sx={{
                         width: 52,
@@ -1460,14 +1460,14 @@ async function generateReceipt(orderData: {
               </Stack>
 
               <Paper variant="outlined" sx={{ borderRadius: 2, p: 2, display: 'grid', gap: 1 }}>
-                <Typography sx={{ fontWeight: 900 }}>Image upload</Typography>
+                <Typography sx={{ fontWeight: 900 }}>Rasm yuklash</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Upload a photo for the menu card background.
+                  Menyu kartasi foni uchun rasm yuklang.
                 </Typography>
 
                 <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ sm: 'center' }} gap={2}>
                   <Button component="label" variant="outlined">
-                    Choose image
+                    Rasm tanlash
                     <input
                       hidden
                       type="file"
@@ -1476,7 +1476,7 @@ async function generateReceipt(orderData: {
                     />
                   </Button>
                   <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    {newFood.imageFile ? newFood.imageFile.name : 'No file selected'}
+                    {newFood.imageFile ? newFood.imageFile.name : 'Fayl tanlanmagan'}
                   </Typography>
                 </Stack>
 
@@ -1498,7 +1498,7 @@ async function generateReceipt(orderData: {
                 >
                   {!newFoodPreviewUrl && (
                     <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 800 }}>
-                      Image preview
+                      Rasm ko'rinishi
                     </Typography>
                   )}
                 </Box>
@@ -1547,7 +1547,7 @@ async function generateReceipt(orderData: {
             size="large"
             sx={{ py: 1.6, fontSize: 16, fontWeight: 900 }}
           >
-            Cancel
+            Bekor qilish
           </Button>
           <Button
             color="success"
@@ -1557,7 +1557,7 @@ async function generateReceipt(orderData: {
             size="large"
             sx={{ py: 1.6, fontSize: 16, fontWeight: 900 }}
           >
-            Create
+            Yaratish
           </Button>
         </DialogActions>
       </Dialog>
@@ -1575,12 +1575,12 @@ async function generateReceipt(orderData: {
           },
         }}
       >
-        <DialogTitle sx={{ fontWeight: 1000 }}>Edit product</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 1000 }}>Mahsulotni tahrirlash</DialogTitle>
         <DialogContent sx={{ pt: 1, display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', gap: 2 }}>
           <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
             <Stack gap={2} sx={{ mt: 1 }}>
               <TextField
-                label="Name"
+                label="Nomi"
                 value={editFood.name}
                 onFocus={() => setEditKeyboardInput('name')}
                 onChange={(e) => setEditFood((prev) => ({ ...prev, name: e.target.value }))}
@@ -1589,7 +1589,7 @@ async function generateReceipt(orderData: {
 
               <Stack direction={{ xs: 'column', sm: 'row' }} gap={2}>
                 <TextField
-                  label="Price"
+                  label="Narxi"
                   value={formatIntegerForInput(editFood.priceDigits)}
                   onFocus={() => setEditKeyboardInput('priceDigits')}
                   onChange={(e) =>
@@ -1603,10 +1603,10 @@ async function generateReceipt(orderData: {
                 />
 
                 <FormControl sx={{ flex: 1 }}>
-                  <InputLabel id="edit-food-measure-label">Measure</InputLabel>
+                  <InputLabel id="edit-food-measure-label">O'lchov</InputLabel>
                   <Select
                     labelId="edit-food-measure-label"
-                    label="Measure"
+                    label="O'lchov"
                     value={editFood.measure}
                     onChange={(e) =>
                       setEditFood((prev) => ({
@@ -1615,17 +1615,17 @@ async function generateReceipt(orderData: {
                       }))
                     }
                   >
-                    <MenuItem value="unit">Unit</MenuItem>
+                    <MenuItem value="unit">Dona</MenuItem>
                     <MenuItem value="gram">Gram</MenuItem>
-                    <MenuItem value="portion">Portion</MenuItem>
+                    <MenuItem value="portion">Porsiya</MenuItem>
                   </Select>
                 </FormControl>
 
                 <FormControl sx={{ flex: 1 }}>
-                  <InputLabel id="edit-food-category-label">Category</InputLabel>
+                  <InputLabel id="edit-food-category-label">Kategoriya</InputLabel>
                   <Select
                     labelId="edit-food-category-label"
-                    label="Category"
+                    label="Kategoriya"
                     value={editFood.categoryId}
                     onChange={(e) => setEditFood((prev) => ({ ...prev, categoryId: String(e.target.value) }))}
                   >
@@ -1641,14 +1641,14 @@ async function generateReceipt(orderData: {
               </Stack>
 
               <Paper variant="outlined" sx={{ borderRadius: 2, p: 2, display: 'grid', gap: 1 }}>
-                <Typography sx={{ fontWeight: 900 }}>Image upload</Typography>
+                <Typography sx={{ fontWeight: 900 }}>Rasm yuklash</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Upload a photo for the menu card background.
+                  Menyu kartasi foni uchun rasm yuklang.
                 </Typography>
 
                 <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ sm: 'center' }} gap={2}>
                   <Button component="label" variant="outlined">
-                    Choose image
+                    Rasm tanlash
                     <input
                       hidden
                       type="file"
@@ -1657,7 +1657,7 @@ async function generateReceipt(orderData: {
                     />
                   </Button>
                   <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    {editFood.imageFile ? editFood.imageFile.name : 'No file selected'}
+                    {editFood.imageFile ? editFood.imageFile.name : 'Fayl tanlanmagan'}
                   </Typography>
                 </Stack>
 
@@ -1679,7 +1679,7 @@ async function generateReceipt(orderData: {
                 >
                   {!editFoodPreviewUrl && (
                     <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 800 }}>
-                      Image preview
+                      Rasm ko'rinishi
                     </Typography>
                   )}
                 </Box>
@@ -1728,7 +1728,7 @@ async function generateReceipt(orderData: {
             size="large"
             sx={{ py: 1.6, fontSize: 16, fontWeight: 900 }}
           >
-            Cancel
+            Bekor qilish
           </Button>
           <Button
             color="success"
@@ -1738,17 +1738,17 @@ async function generateReceipt(orderData: {
             size="large"
             sx={{ py: 1.6, fontSize: 16, fontWeight: 900 }}
           >
-            Save
+            Saqlash
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={createCategoryOpen} onClose={closeCreateCategory} fullWidth maxWidth="xs">
-        <DialogTitle sx={{ fontWeight: 1000 }}>Create category</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 1000 }}>Kategoriya yaratish</DialogTitle>
         <DialogContent sx={{ pt: 1 }}>
           <TextField
             autoFocus
-            label="Category name"
+            label="Kategoriya nomi"
             value={newCategoryName}
             onChange={(e) => setNewCategoryName(e.target.value)}
             fullWidth
@@ -1757,10 +1757,10 @@ async function generateReceipt(orderData: {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button color="error" variant="contained" onClick={closeCreateCategory}>
-            Cancel
+            Bekor qilish
           </Button>
           <Button color="success" variant="contained" onClick={createCategory}>
-            Create
+            Yaratish
           </Button>
         </DialogActions>
       </Dialog>
@@ -1779,9 +1779,9 @@ async function generateReceipt(orderData: {
             openEditFood(target)
           }}
         >
-          Edit
+          Tahrirlash
         </MenuItem>
-        <MenuItem onClick={() => setProductMenu(null)}>Cancel</MenuItem>
+        <MenuItem onClick={() => setProductMenu(null)}>Bekor qilish</MenuItem>
       </Menu>
 
     </Box>
