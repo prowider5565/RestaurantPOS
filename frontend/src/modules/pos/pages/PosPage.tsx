@@ -427,209 +427,185 @@ export default function PosPage() {
     return ' '.repeat(leftPad) + text + ' '.repeat(rightPad)
   }
 
-  async function generateReceipt(orderData: {
-    id: number
-    total_price: number
-    discount_amount?: number | null
-    created_at: string
-    user: { id: number; username: string; position: string | null }
-    items: Array<{
-      product: { id: number; name: string; price: number }
-      quantity: number
-    }>
-  }): Promise<string> {
-    const tableWidth = 42
-    const idWidth = 2
-    const nameWidth = 12
-    const qtyWidth = 3
-    const priceWidth = 7
-    const subtotalWidth = 8
-    const programName = (localStorage.getItem('programName') || 'Restoran Cheki').trim() || 'Restoran Cheki'
+async function generateReceipt(orderData: {
+  id: number
+  total_price: number
+  discount_amount?: number | null
+  created_at: string
+  user: { id: number; username: string; position: string | null }
+  items: Array<{
+    product: { id: number; name: string; price: number }
+    quantity: number
+  }>
+}): Promise<string> {
+  const tableWidth = 48
 
-    let requisites: unknown = null
-    try {
-      const res = await fetch(`${API_URL}/cheque/requisites`)
-      if (res.ok) requisites = await res.json()
-    } catch {
-      // ignore
+  // STRICT widths (must match tableWidth)
+  const idWidth = 3
+  const nameWidth = 20
+  const qtyWidth = 4
+  const priceWidth = 8
+  const subtotalWidth = 7
+
+  const programName =
+    (localStorage.getItem('programName') || 'Restoran Cheki').trim() ||
+    'Restoran Cheki'
+
+  let requisites: any = null
+  try {
+    const res = await fetch(`${API_URL}/cheque/requisites`)
+    if (res.ok) requisites = await res.json()
+  } catch {}
+
+  const lines: string[] = []
+
+  function buildRow(cols: string[]) {
+    return (
+      "|" +
+      cols[0].padEnd(idWidth) + "|" +
+      cols[1].padEnd(nameWidth) + "|" +
+      cols[2].padEnd(qtyWidth) + "|" +
+      cols[3].padEnd(priceWidth) + "|" +
+      cols[4].padEnd(subtotalWidth) +
+      "|"
+    )
+  }
+
+  function separator() {
+    return "-".repeat(tableWidth)
+  }
+
+  function safeLine(text: string) {
+    return text.length > tableWidth
+      ? text.slice(0, tableWidth)
+      : text.padEnd(tableWidth)
+  }
+
+  function pushRight(label: string, value: string) {
+    if (!value) return
+    const combined = `${label} ${value}`
+    if (combined.length <= tableWidth) {
+      lines.push(label.padEnd(tableWidth - value.length) + value)
+    } else {
+      const wrapped = wrapText(combined, tableWidth)
+      for (const l of wrapped) lines.push(l)
     }
+  }
 
-    const lines: string[] = []
+  const today = new Date().toLocaleDateString('uz-UZ', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
 
-    // Get today's date
-    const today = new Date().toLocaleDateString('uz-UZ', {
+  const username = orderData.user.username
+  const position = orderData.user.position || '-'
+
+  lines.push(safeLine('Sana: '.padEnd(tableWidth - today.length) + today))
+  lines.push(safeLine('Ism: '.padEnd(tableWidth - username.length) + username))
+  lines.push(safeLine('Lavozimi: '.padEnd(tableWidth - position.length) + position))
+  lines.push('')
+
+  // Header
+  lines.push(separator())
+  lines.push('|' + centerText(programName, tableWidth - 2) + '|')
+  lines.push(separator())
+
+  // Datetime
+  const dt = new Date(orderData.created_at)
+  if (!isNaN(dt.getTime())) {
+    const dateStr = dt.toLocaleString('uz-UZ', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
     })
-
-    // Get user info from order response
-    const username = orderData.user.username
-    const position = orderData.user.position || '-'
-
-    // User info above table - right aligned
-    lines.push('Sana: '.padEnd(tableWidth - today.length) + today)
-    lines.push('Ism: '.padEnd(tableWidth - username.length) + username)
-    lines.push('Lavozimi: '.padEnd(tableWidth - position.length) + position)
-    lines.push('')
-
-    // Header
-    lines.push('-'.repeat(tableWidth))
-    lines.push('|' + centerText(programName, tableWidth - 2) + ' |')
-    lines.push('-'.repeat(tableWidth))
-
-    // Date and time
-    let dateStr = ''
-    try {
-      const dt = new Date(orderData.created_at)
-      if (!isNaN(dt.getTime())) {
-        dateStr = dt.toLocaleString('uz-UZ', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-        })
-      }
-    } catch (error) {
-      console.error('Date parsing error:', error)
-    }
-
-    if (dateStr) {
-      lines.push('|' + centerText(dateStr, tableWidth - 2) + '|')
-      lines.push('-'.repeat(tableWidth))
-    }
-
-    // Table header
-    const headerRow =
-      '|' +
-      'ID'.padEnd(idWidth + 1) +
-      '|' +
-      'Nomi'.padEnd(nameWidth + 1) +
-      '|' +
-      'Soni'.padEnd(qtyWidth + 1) +
-      '|' +
-      'Narx'.padEnd(priceWidth + 1) +
-      '|' +
-      'Jami '.padEnd(subtotalWidth + 1) +
-      '|'
-    lines.push(headerRow)
-    lines.push('|' + '-'.repeat(tableWidth - 2) + '|')
-
-    // Items
-    let totalAmount = 0
-    for (const item of orderData.items) {
-      const id = item.product.id.toString()
-      const nameLines = wrapText(item.product.name, nameWidth)
-      const qty = item.quantity.toString()
-      const price = item.product.price.toLocaleString('uz-UZ')
-      const subtotal = (item.quantity * item.product.price).toLocaleString('uz-UZ')
-      totalAmount += item.quantity * item.product.price
-
-      // First line with ID
-      lines.push(
-        '|' +
-          id.padEnd(idWidth + 1) +
-          '|' +
-          nameLines[0].padEnd(nameWidth + 1) +
-          '|' +
-          qty.padEnd(qtyWidth + 1) +
-          '|' +
-          price.padEnd(priceWidth + 1) +
-          '|' +
-          subtotal.padEnd(subtotalWidth) +
-          ' |'
-      )
-
-      // Additional lines for wrapped name
-      for (let i = 1; i < nameLines.length; i++) {
-        lines.push(
-          '|' +
-            ' '.repeat(idWidth + 1) +
-            '|' +
-            nameLines[i].padEnd(nameWidth + 1) +
-            '|' +
-            ' '.repeat(qtyWidth + 1) +
-            '|' +
-            ' '.repeat(priceWidth + 1) +
-            '|' +
-            ' '.repeat(subtotalWidth) +
-            ' |'
-        )
-      }
-    }
-
-    lines.push('|' + '-'.repeat(tableWidth - 2) + '|')
-
-    // Total - left aligned
-    const originalTotal = Math.round(orderData.total_price ?? totalAmount)
-    const discountAmount = Math.max(0, Number(orderData.discount_amount ?? 0) || 0)
-    const discountedTotalForReceipt = Math.max(0, originalTotal - discountAmount)
-
-    const totalStr = originalTotal.toLocaleString('uz-UZ') + " so'm"
-    const totalLabel = 'Umumiy Summa: '
-    const totalContent = totalLabel + totalStr
-    lines.push('|' + totalContent.padEnd(tableWidth - 2) + ' |')
-
-    const discountedTotalStr = discountedTotalForReceipt.toLocaleString('uz-UZ') + " so'm"
-    const discountedLabel = 'Chegirmali Summa: '
-    const discountedContent = discountedLabel + discountedTotalStr
-    lines.push('|' + discountedContent.padEnd(tableWidth - 2) + ' |')
-    lines.push('-'.repeat(tableWidth))
-
-    const req = requisites as
-      | {
-          company_name?: string
-          address?: string
-          phone_number?: string
-          STIR?: number | string
-          stir?: number | string
-          registry_number?: number | string
-        }
-      | null
-
-    const stir = req?.STIR ?? req?.stir
-    const companyName = req?.company_name?.trim() || ''
-    const address = req?.address?.trim() || ''
-    const phoneNumber = req?.phone_number?.trim() || ''
-    const stirText = stir !== undefined && stir !== null && String(stir).trim() ? String(stir).trim() : ''
-    const registryNumber =
-      req?.registry_number !== undefined && req?.registry_number !== null && String(req.registry_number).trim()
-        ? String(req.registry_number).trim()
-        : ''
-
-    function pushRightAlignedValue(label: string, value: string) {
-      const combined = `${label} ${value}`.trim()
-      if (!value) return
-      if (combined.length > tableWidth) {
-        for (const line of wrapText(combined, tableWidth)) lines.push(line)
-        return
-      }
-      lines.push(`${label} `.padEnd(tableWidth - value.length) + value)
-    }
-
-    // Credentials (no table borders). Order:
-    // 5) Company name, 6) STIR, 7) Phone number, 8) Registry number, 9) Address (raw)
-    if (companyName) {
-      for (const line of wrapText(companyName, tableWidth)) lines.push(line.padStart(tableWidth))
-    }
-    pushRightAlignedValue('STIR:', stirText)
-    pushRightAlignedValue('Telefon:', phoneNumber)
-    pushRightAlignedValue('Reestr Raqami:', registryNumber)
-    if (address) {
-      for (const line of wrapText(address, tableWidth)) lines.push(line)
-    }
-
-    lines.push('')
-    lines.push('')
-    lines.push(centerText('Tashrifingizdan mamnunmiz!', tableWidth))
-
-    return lines.join('\n')
+    lines.push('|' + centerText(dateStr, tableWidth - 2) + '|')
+    lines.push(separator())
   }
+
+  // Table
+  lines.push(buildRow(['ID', 'Nomi', 'Soni', 'Narx', 'Jami']))
+  lines.push(separator())
+
+  let totalAmount = 0
+
+  for (const item of orderData.items) {
+    const id = String(item.product.id)
+    const nameLines = wrapText(item.product.name, nameWidth)
+    const qty = String(item.quantity)
+    const price = item.product.price.toLocaleString('uz-UZ')
+    const subtotal = (item.quantity * item.product.price).toLocaleString('uz-UZ')
+
+    totalAmount += item.quantity * item.product.price
+
+    lines.push(buildRow([id, nameLines[0], qty, price, subtotal]))
+
+    for (let i = 1; i < nameLines.length; i++) {
+      lines.push(buildRow(['', nameLines[i], '', '', '']))
+    }
+  }
+
+  lines.push(separator())
+
+  const originalTotal = Math.round(orderData.total_price ?? totalAmount)
+  const discountAmount = Math.max(0, Number(orderData.discount_amount ?? 0) || 0)
+  const discountedTotal = Math.max(0, originalTotal - discountAmount)
+
+  const totalLine = `Umumiy Summa: ${originalTotal.toLocaleString('uz-UZ')} so'm`
+  lines.push('|' + totalLine.padEnd(tableWidth - 2) + '|')
+
+  const discountLine = `Chegirmali Summa: ${discountedTotal.toLocaleString('uz-UZ')} so'm`
+  lines.push('|' + discountLine.padEnd(tableWidth - 2) + '|')
+
+  lines.push(separator())
+
+  // ===== REQUISITES =====
+  const req = requisites || {}
+
+  const companyName = req.company_name?.trim() || ''
+  const address = req.address?.trim() || ''
+  const phone = req.phone_number?.trim() || ''
+  const stir = (req.STIR ?? req.stir ?? '').toString().trim()
+  const registry = (req.registry_number ?? '').toString().trim()
+
+  if (companyName) {
+    for (const l of wrapText(companyName, tableWidth)) {
+      lines.push(l.padStart(tableWidth))
+    }
+  }
+
+  pushRight('STIR:', stir)
+  pushRight('Telefon:', phone)
+  pushRight('Reestr Raqami:', registry)
+
+  if (address) {
+    for (const l of wrapText(address, tableWidth)) {
+      lines.push(l)
+    }
+  }
+
+  // Footer
+  lines.push('')
+  lines.push('')
+  lines.push(centerText('Tashrifingizdan mamnunmiz!', tableWidth))
+
+  return lines.join('\n')
+}
 
   async function printReceipt(receiptContent: string) {
     try {
-      await invoke('print_receipt', { content: receiptContent })
+      const response = await fetch(
+        `${API_URL}/cheque/print?content=${encodeURIComponent(receiptContent)}`,
+        {
+          method: 'POST',
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`)
+      }
     } catch (error) {
       console.error('Error printing receipt:', error)
     }
