@@ -35,7 +35,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { API_URL } from '../../../config/env'
 import { getAuthHeaders, logout } from '../../../shared/auth'
 import { useAuth } from '../../../shared/authContext'
-import Numpad from '../../../shared/components/ui/Numpad'
 
 type ApiUser = {
     id: number
@@ -247,21 +246,6 @@ export default function CashDeskPage() {
         } finally {
             setDeleting(false)
         }
-    }
-
-    function addNumpadDigit(digit: string) {
-        setCreateAmount((prev) => {
-            const next = (prev + digit).replace(/^0+(?=\d)/, '')
-            return next
-        })
-    }
-
-    function numpadBackspace() {
-        setCreateAmount((prev) => prev.slice(0, -1))
-    }
-
-    function numpadClear() {
-        setCreateAmount('')
     }
 
     const pages = txPage?.pages ?? 1
@@ -623,7 +607,13 @@ export default function CashDeskPage() {
                             <Typography sx={{ fontWeight: 700, color: 'text.secondary', fontSize: 12, mt: 0.5 }}>Miqdor</Typography>
                         </Paper>
 
-                        <Numpad onDigit={addNumpadDigit} onClear={numpadClear} onBackspace={numpadBackspace} />
+                        <TextField
+                            label="Summani kiriting"
+                            value={createAmount}
+                            onChange={(e) => setCreateAmount(e.target.value.replaceAll(/[^\d]/g, '').slice(0, 18))}
+                            inputMode="numeric"
+                            fullWidth
+                        />
 
                         <Box
                             sx={{

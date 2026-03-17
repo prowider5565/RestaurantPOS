@@ -32,8 +32,6 @@ import {
   Typography,
 } from '@mui/material'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import Keyboard from 'react-simple-keyboard'
-import 'react-simple-keyboard/build/css/index.css'
 
 import { API_URL } from '../../../config/env'
 import { getAuthHeaders, logout } from '../../../shared/auth'
@@ -76,8 +74,6 @@ export default function UsersPage() {
   const [createOpen, setCreateOpen] = useState(false)
   const [createSaving, setCreateSaving] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
-  const [createLayout, setCreateLayout] = useState<'default' | 'shift'>('default')
-  const [createInputName, setCreateInputName] = useState<keyof CreateUserForm>('username')
   const [createForm, setCreateForm] = useState<CreateUserForm>({
     username: '',
     password: '',
@@ -466,7 +462,6 @@ export default function UsersPage() {
             <TextField
               label="Foydalanuvchi nomi"
               value={createForm.username}
-              onFocus={() => setCreateInputName('username')}
               onChange={(e) => setCreateForm((prev) => ({ ...prev, username: e.target.value }))}
               fullWidth
             />
@@ -476,7 +471,6 @@ export default function UsersPage() {
                 label="Parol"
                 type="password"
                 value={createForm.password}
-                onFocus={() => setCreateInputName('password')}
                 onChange={(e) => setCreateForm((prev) => ({ ...prev, password: e.target.value }))}
                 fullWidth
               />
@@ -484,7 +478,6 @@ export default function UsersPage() {
                 label="Parolni tasdiqlash"
                 type="password"
                 value={createForm.confirmPassword}
-                onFocus={() => setCreateInputName('confirmPassword')}
                 onChange={(e) => setCreateForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
                 error={Boolean(createForm.confirmPassword) && createForm.password !== createForm.confirmPassword}
                 helperText={
@@ -496,41 +489,15 @@ export default function UsersPage() {
               />
             </Stack>
 
-            <TextField
-              label="Lavozim"
-              value={createForm.position}
-              onFocus={() => setCreateInputName('position')}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, position: e.target.value }))}
-              fullWidth
-            />
-          </Stack>
+              <TextField
+                label="Lavozim"
+                value={createForm.position}
+                onChange={(e) => setCreateForm((prev) => ({ ...prev, position: e.target.value }))}
+                fullWidth
+              />
+            </Stack>
           </Box>
 
-          <Paper
-            variant="outlined"
-            sx={{
-              borderRadius: 2,
-              p: 1.5,
-              overflowX: 'auto',
-              '& .simple-keyboard': {
-                transform: 'scale(1.4)',
-                transformOrigin: 'top left',
-                width: 'calc(100% / 1.4)',
-              },
-            }}
-          >
-            <Keyboard
-              input={createForm}
-              inputName={createInputName}
-              layoutName={createLayout}
-              onChangeAll={(inputs) => setCreateForm(inputs as CreateUserForm)}
-              onKeyPress={(btn) => {
-                if (btn === '{shift}' || btn === '{lock}') {
-                  setCreateLayout((prev) => (prev === 'default' ? 'shift' : 'default'))
-                }
-              }}
-            />
-          </Paper>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, display: 'flex', gap: 1, flexDirection: { xs: 'column', sm: 'row' } }}>
           <Button

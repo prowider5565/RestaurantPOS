@@ -14,7 +14,9 @@
       {
         "title": "Parhez Plyus",
         "resizable": true,
-        "fullscreen": true
+        "fullscreen": false,
+        "width": 1280,
+        "height": 720
       }
     ],
     "security": {

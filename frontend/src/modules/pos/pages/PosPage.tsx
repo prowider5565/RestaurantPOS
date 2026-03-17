@@ -35,12 +35,9 @@ import {
   Slide,
 } from '@mui/material'
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
-import Keyboard from 'react-simple-keyboard'
-import 'react-simple-keyboard/build/css/index.css'
 
 import { API_URL } from '../../../config/env'
 import { getCurrentUser, logout } from '../../../shared/auth'
-import Numpad from '../../../shared/components/ui/Numpad'
 
 type ApiProduct = {
   id: number
@@ -162,8 +159,6 @@ export default function PosPage() {
   const [apiCategories, setApiCategories] = useState<ApiCategory[]>([])
 
   const [createOpen, setCreateOpen] = useState(false)
-  const [createKeyboardInput, setCreateKeyboardInput] = useState<'name' | 'priceDigits'>('name')
-  const [createKeyboardLayout, setCreateKeyboardLayout] = useState<'default' | 'shift'>('default')
   const [newFood, setNewFood] = useState<NewFoodForm>({
     name: '',
     priceDigits: '',
@@ -176,8 +171,6 @@ export default function PosPage() {
   const [newCategoryName, setNewCategoryName] = useState('')
 
   const [editOpen, setEditOpen] = useState(false)
-  const [editKeyboardInput, setEditKeyboardInput] = useState<'name' | 'priceDigits'>('name')
-  const [editKeyboardLayout, setEditKeyboardLayout] = useState<'default' | 'shift'>('default')
   const [editFood, setEditFood] = useState<EditFoodForm>({
     id: 0,
     name: '',
@@ -235,18 +228,6 @@ export default function PosPage() {
     if (!Number.isFinite(raw)) return totalInt
     return Math.min(Math.max(Math.round(raw), 0), totalInt)
   }, [discountDigits, discountedTotalOverride, isEditingTotal, totalInt])
-
-  function addDiscountDigit(digit: string) {
-    setDiscountDigits((prev) => (prev + digit).replace(/^0+(?=\d)/, ''))
-  }
-
-  function discountBackspace() {
-    setDiscountDigits((prev) => prev.slice(0, -1))
-  }
-
-  function discountClear() {
-    setDiscountDigits('')
-  }
 
   function toggleEditTotal() {
     if (cartCount === 0) return
@@ -712,8 +693,6 @@ async function generateReceipt(orderData: {
     })
     if (editFoodPreviewUrl) URL.revokeObjectURL(editFoodPreviewUrl)
     setEditFoodPreviewUrl(product.imageSrc)
-    setEditKeyboardInput('name')
-    setEditKeyboardLayout('default')
     setEditOpen(true)
   }
 
@@ -1212,7 +1191,6 @@ async function generateReceipt(orderData: {
                       size="small"
                       sx={{ mt: 1 }}
                     />
-                    <Numpad onDigit={addDiscountDigit} onClear={discountClear} onBackspace={discountBackspace} />
                   </Paper>
                 </Box>
               </Slide>
@@ -1385,7 +1363,6 @@ async function generateReceipt(orderData: {
               <TextField
                 label="Nomi"
                 value={newFood.name}
-                onFocus={() => setCreateKeyboardInput('name')}
                 onChange={(e) => setNewFood((prev) => ({ ...prev, name: e.target.value }))}
                 fullWidth
               />
@@ -1394,7 +1371,6 @@ async function generateReceipt(orderData: {
                 <TextField
                   label="Narxi"
                   value={formatIntegerForInput(newFood.priceDigits)}
-                  onFocus={() => setCreateKeyboardInput('priceDigits')}
                   onChange={(e) =>
                     setNewFood((prev) => ({
                       ...prev,
@@ -1508,37 +1484,6 @@ async function generateReceipt(orderData: {
             </Stack>
           </Box>
 
-          <Paper
-            variant="outlined"
-            sx={{
-              borderRadius: 2,
-              p: 1.5,
-              overflowX: 'auto',
-              '& .simple-keyboard': {
-                transform: 'scale(1.4)',
-                transformOrigin: 'top left',
-                width: 'calc(100% / 1.4)',
-              },
-            }}
-          >
-            <Keyboard
-              input={{ name: newFood.name, priceDigits: newFood.priceDigits }}
-              inputName={createKeyboardInput}
-              layoutName={createKeyboardLayout}
-              onChange={(value) => {
-                if (createKeyboardInput === 'name') {
-                  setNewFood((prev) => ({ ...prev, name: value }))
-                  return
-                }
-                setNewFood((prev) => ({ ...prev, priceDigits: value.replaceAll(/[^\d]/g, '').slice(0, 18) }))
-              }}
-              onKeyPress={(btn) => {
-                if (btn === '{shift}' || btn === '{lock}') {
-                  setCreateKeyboardLayout((prev) => (prev === 'default' ? 'shift' : 'default'))
-                }
-              }}
-            />
-          </Paper>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, display: 'flex', gap: 1, flexDirection: { xs: 'column', sm: 'row' } }}>
           <Button
@@ -1584,7 +1529,6 @@ async function generateReceipt(orderData: {
               <TextField
                 label="Nomi"
                 value={editFood.name}
-                onFocus={() => setEditKeyboardInput('name')}
                 onChange={(e) => setEditFood((prev) => ({ ...prev, name: e.target.value }))}
                 fullWidth
               />
@@ -1593,7 +1537,6 @@ async function generateReceipt(orderData: {
                 <TextField
                   label="Narxi"
                   value={formatIntegerForInput(editFood.priceDigits)}
-                  onFocus={() => setEditKeyboardInput('priceDigits')}
                   onChange={(e) =>
                     setEditFood((prev) => ({
                       ...prev,
@@ -1689,37 +1632,6 @@ async function generateReceipt(orderData: {
             </Stack>
           </Box>
 
-          <Paper
-            variant="outlined"
-            sx={{
-              borderRadius: 2,
-              p: 1.5,
-              overflowX: 'auto',
-              '& .simple-keyboard': {
-                transform: 'scale(1.4)',
-                transformOrigin: 'top left',
-                width: 'calc(100% / 1.4)',
-              },
-            }}
-          >
-            <Keyboard
-              input={{ name: editFood.name, priceDigits: editFood.priceDigits }}
-              inputName={editKeyboardInput}
-              layoutName={editKeyboardLayout}
-              onChange={(value) => {
-                if (editKeyboardInput === 'name') {
-                  setEditFood((prev) => ({ ...prev, name: value }))
-                  return
-                }
-                setEditFood((prev) => ({ ...prev, priceDigits: value.replaceAll(/[^\d]/g, '').slice(0, 18) }))
-              }}
-              onKeyPress={(btn) => {
-                if (btn === '{shift}' || btn === '{lock}') {
-                  setEditKeyboardLayout((prev) => (prev === 'default' ? 'shift' : 'default'))
-                }
-              }}
-            />
-          </Paper>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, display: 'flex', gap: 1, flexDirection: { xs: 'column', sm: 'row' } }}>
           <Button
