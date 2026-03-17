@@ -13,6 +13,7 @@ import {
   Button,
   Card,
   CardActionArea,
+  Menu,
   Dialog,
   DialogActions,
   DialogContent,
@@ -33,7 +34,6 @@ import {
   Typography,
   Slide,
 } from '@mui/material'
-import { invoke } from '@tauri-apps/api/core'
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import Keyboard from 'react-simple-keyboard'
 import 'react-simple-keyboard/build/css/index.css'
@@ -48,6 +48,7 @@ type ApiProduct = {
   price: number
   image_path?: string | null
   category_id?: number | null
+  measure?: 'unit' | 'gram' | 'portion' | null
 }
 
 type ApiCategory = {
@@ -62,6 +63,7 @@ type UiProduct = {
   price: number
   imageSrc: string
   categoryId: string
+  measure: 'unit' | 'gram' | 'portion'
 }
 
 type CartLine = {
@@ -76,6 +78,15 @@ type Category = {
 }
 
 type NewFoodForm = {
+  name: string
+  priceDigits: string
+  imageFile: File | null
+  categoryId: string
+  measure: 'unit' | 'gram' | 'portion'
+}
+
+type EditFoodForm = {
+  id: number
   name: string
   priceDigits: string
   imageFile: File | null
@@ -164,6 +175,23 @@ export default function PosPage() {
   const [createCategoryOpen, setCreateCategoryOpen] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState('')
 
+  const [editOpen, setEditOpen] = useState(false)
+  const [editKeyboardInput, setEditKeyboardInput] = useState<'name' | 'priceDigits'>('name')
+  const [editKeyboardLayout, setEditKeyboardLayout] = useState<'default' | 'shift'>('default')
+  const [editFood, setEditFood] = useState<EditFoodForm>({
+    id: 0,
+    name: '',
+    priceDigits: '',
+    imageFile: null,
+    categoryId: 'uncategorized',
+    measure: 'unit',
+  })
+  const [editFoodPreviewUrl, setEditFoodPreviewUrl] = useState<string>('')
+
+  const [productMenu, setProductMenu] = useState<{ product: UiProduct; left: number; top: number } | null>(null)
+  const longPressTimerRef = useRef<number | null>(null)
+  const longPressFiredRef = useRef(false)
+
   const cartItemsRef = useRef<HTMLDivElement | null>(null)
 
   const cartLines = useMemo(() => Object.values(cart), [cart])
@@ -240,6 +268,26 @@ export default function PosPage() {
       const nextQty = existing ? existing.qty + 1 : 1
       return { ...prev, [String(product.id)]: { product, qty: nextQty } }
     })
+  }
+
+  function clearLongPressTimer() {
+    if (longPressTimerRef.current == null) return
+    window.clearTimeout(longPressTimerRef.current)
+    longPressTimerRef.current = null
+  }
+
+  function beginLongPress(product: UiProduct, left: number, top: number) {
+    clearLongPressTimer()
+    longPressFiredRef.current = false
+    longPressTimerRef.current = window.setTimeout(() => {
+      longPressFiredRef.current = true
+      setProductMenu({ product, left, top })
+      clearLongPressTimer()
+    }, 550)
+  }
+
+  function cancelLongPress() {
+    clearLongPressTimer()
   }
 
   function setQty(productId: number, qty: number) {
@@ -647,6 +695,26 @@ async function generateReceipt(orderData: {
     setCreateOpen(false)
   }
 
+  function closeEditFood() {
+    setEditOpen(false)
+  }
+
+  function openEditFood(product: UiProduct) {
+    setEditFood({
+      id: product.id,
+      name: product.name,
+      priceDigits: String(Math.round(product.price)),
+      imageFile: null,
+      categoryId: product.categoryId,
+      measure: product.measure,
+    })
+    if (editFoodPreviewUrl) URL.revokeObjectURL(editFoodPreviewUrl)
+    setEditFoodPreviewUrl(product.imageSrc)
+    setEditKeyboardInput('name')
+    setEditKeyboardLayout('default')
+    setEditOpen(true)
+  }
+
   function openCreateCategory() {
     setNewCategoryName('')
     setCreateCategoryOpen(true)
@@ -679,6 +747,12 @@ async function generateReceipt(orderData: {
     setNewFoodPreviewUrl(file ? URL.createObjectURL(file) : '')
   }
 
+  function onPickEditImage(file: File | null) {
+    setEditFood((prev) => ({ ...prev, imageFile: file }))
+    if (editFoodPreviewUrl) URL.revokeObjectURL(editFoodPreviewUrl)
+    setEditFoodPreviewUrl(file ? URL.createObjectURL(file) : editFoodPreviewUrl)
+  }
+
   async function createFood() {
     const name = newFood.name.trim()
     const price = Number(newFood.priceDigits)
@@ -701,11 +775,65 @@ async function generateReceipt(orderData: {
     const imageSrc = newFoodPreviewUrl || toImageSrc(created)
     const createdCategoryId = created.category_id ? String(created.category_id) : 'uncategorized'
     setMenuProducts((prev) => {
-      const next: UiProduct = { id: created.id, name: created.name, price: created.price, imageSrc, categoryId: createdCategoryId }
+      const next: UiProduct = {
+        id: created.id,
+        name: created.name,
+        price: created.price,
+        imageSrc,
+        categoryId: createdCategoryId,
+        measure: created.measure ?? newFood.measure,
+      }
       if (selectedCategoryId !== 'all' && createdCategoryId !== selectedCategoryId) return prev
       return [next, ...prev]
     })
     setCreateOpen(false)
+  }
+
+  async function updateFood() {
+    const name = editFood.name.trim()
+    const price = Number(editFood.priceDigits)
+    if (!name || !Number.isFinite(price) || price <= 0) return
+
+    const categoryId = editFood.categoryId === 'uncategorized' ? 0 : Number(editFood.categoryId)
+    if (editFood.categoryId !== 'uncategorized' && !Number.isFinite(categoryId)) return
+
+    const form = new FormData()
+    form.append('name', name)
+    form.append('price', editFood.priceDigits)
+    form.append('category_id', String(categoryId))
+    form.append('measure', editFood.measure)
+    if (editFood.imageFile) form.append('image', editFood.imageFile)
+
+    const res = await fetch(`${API_URL}/products/${editFood.id}`, { method: 'PUT', body: form })
+    if (!res.ok) return
+    const updated = (await res.json()) as ApiProduct
+
+    const updatedCategoryId = updated.category_id ? String(updated.category_id) : 'uncategorized'
+    const imageSrc = editFood.imageFile ? editFoodPreviewUrl : toImageSrc(updated)
+
+    setMenuProducts((prev) => {
+      const idx = prev.findIndex((p) => p.id === updated.id)
+      if (idx === -1) return prev
+
+      if (selectedCategoryId !== 'all' && updatedCategoryId !== selectedCategoryId) {
+        const next = [...prev]
+        next.splice(idx, 1)
+        return next
+      }
+
+      const next = [...prev]
+      next[idx] = {
+        ...next[idx],
+        name: updated.name,
+        price: updated.price,
+        imageSrc,
+        categoryId: updatedCategoryId,
+        measure: updated.measure ?? next[idx].measure,
+      }
+      return next
+    })
+
+    setEditOpen(false)
   }
 
   useEffect(() => {
@@ -755,6 +883,7 @@ async function generateReceipt(orderData: {
           price: p.price,
           imageSrc: toImageSrc(p),
           categoryId: p.category_id ? String(p.category_id) : 'uncategorized',
+          measure: p.measure ?? 'unit',
         })),
       )
     }
@@ -770,6 +899,12 @@ async function generateReceipt(orderData: {
       if (newFoodPreviewUrl) URL.revokeObjectURL(newFoodPreviewUrl)
     }
   }, [newFoodPreviewUrl])
+
+  useEffect(() => {
+    return () => {
+      if (editFoodPreviewUrl) URL.revokeObjectURL(editFoodPreviewUrl)
+    }
+  }, [editFoodPreviewUrl])
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
@@ -958,7 +1093,29 @@ async function generateReceipt(orderData: {
               >
                 {visibleProducts.map((p) => (
                   <Card key={p.id} variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
-                    <CardActionArea onClick={() => addToCart(p)} sx={{ height: '100%' }}>
+                    <CardActionArea
+                      onClick={(e) => {
+                        if (longPressFiredRef.current) {
+                          longPressFiredRef.current = false
+                          e.preventDefault()
+                          e.stopPropagation()
+                          return
+                        }
+                        addToCart(p)
+                      }}
+                      onMouseDown={(e) => beginLongPress(p, e.clientX, e.clientY)}
+                      onMouseUp={cancelLongPress}
+                      onMouseLeave={cancelLongPress}
+                      onTouchStart={(e) => {
+                        const t = e.touches[0]
+                        if (!t) return
+                        beginLongPress(p, t.clientX, t.clientY)
+                      }}
+                      onTouchEnd={cancelLongPress}
+                      onTouchCancel={cancelLongPress}
+                      onTouchMove={cancelLongPress}
+                      sx={{ height: '100%' }}
+                    >
                       <Box
                         sx={{
                           position: 'relative',
@@ -1405,6 +1562,187 @@ async function generateReceipt(orderData: {
         </DialogActions>
       </Dialog>
 
+      <Dialog
+        open={editOpen}
+        onClose={closeEditFood}
+        fullWidth
+        maxWidth={false}
+        PaperProps={{
+          sx: {
+            width: { xs: 'calc(100% - 32px)', sm: '780px' },
+            height: { xs: 'calc(100dvh - 32px)', sm: '90dvh' },
+            maxHeight: { xs: 'calc(100dvh - 32px)', sm: 920 },
+          },
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 1000 }}>Edit product</DialogTitle>
+        <DialogContent sx={{ pt: 1, display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', gap: 2 }}>
+          <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+            <Stack gap={2} sx={{ mt: 1 }}>
+              <TextField
+                label="Name"
+                value={editFood.name}
+                onFocus={() => setEditKeyboardInput('name')}
+                onChange={(e) => setEditFood((prev) => ({ ...prev, name: e.target.value }))}
+                fullWidth
+              />
+
+              <Stack direction={{ xs: 'column', sm: 'row' }} gap={2}>
+                <TextField
+                  label="Price"
+                  value={formatIntegerForInput(editFood.priceDigits)}
+                  onFocus={() => setEditKeyboardInput('priceDigits')}
+                  onChange={(e) =>
+                    setEditFood((prev) => ({
+                      ...prev,
+                      priceDigits: e.target.value.replaceAll(/[^\d]/g, '').slice(0, 18),
+                    }))
+                  }
+                  inputMode="numeric"
+                  sx={{ flex: 1 }}
+                />
+
+                <FormControl sx={{ flex: 1 }}>
+                  <InputLabel id="edit-food-measure-label">Measure</InputLabel>
+                  <Select
+                    labelId="edit-food-measure-label"
+                    label="Measure"
+                    value={editFood.measure}
+                    onChange={(e) =>
+                      setEditFood((prev) => ({
+                        ...prev,
+                        measure: e.target.value as EditFoodForm['measure'],
+                      }))
+                    }
+                  >
+                    <MenuItem value="unit">Unit</MenuItem>
+                    <MenuItem value="gram">Gram</MenuItem>
+                    <MenuItem value="portion">Portion</MenuItem>
+                  </Select>
+                </FormControl>
+
+                <FormControl sx={{ flex: 1 }}>
+                  <InputLabel id="edit-food-category-label">Category</InputLabel>
+                  <Select
+                    labelId="edit-food-category-label"
+                    label="Category"
+                    value={editFood.categoryId}
+                    onChange={(e) => setEditFood((prev) => ({ ...prev, categoryId: String(e.target.value) }))}
+                  >
+                    {menuCategories
+                      .filter((c) => c.id !== 'all')
+                      .map((c) => (
+                        <MenuItem key={c.id} value={c.id}>
+                          {c.label}
+                        </MenuItem>
+                      ))}
+                  </Select>
+                </FormControl>
+              </Stack>
+
+              <Paper variant="outlined" sx={{ borderRadius: 2, p: 2, display: 'grid', gap: 1 }}>
+                <Typography sx={{ fontWeight: 900 }}>Image upload</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Upload a photo for the menu card background.
+                </Typography>
+
+                <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ sm: 'center' }} gap={2}>
+                  <Button component="label" variant="outlined">
+                    Choose image
+                    <input
+                      hidden
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => onPickEditImage(e.target.files?.[0] ?? null)}
+                    />
+                  </Button>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                    {editFood.imageFile ? editFood.imageFile.name : 'No file selected'}
+                  </Typography>
+                </Stack>
+
+                <Box
+                  sx={{
+                    mt: 1,
+                    height: 160,
+                    borderRadius: 2,
+                    border: '1px dashed',
+                    borderColor: 'divider',
+                    overflow: 'hidden',
+                    bgcolor: 'background.default',
+                    display: 'grid',
+                    placeItems: 'center',
+                    backgroundImage: editFoodPreviewUrl ? `url("${editFoodPreviewUrl}")` : 'none',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }}
+                >
+                  {!editFoodPreviewUrl && (
+                    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 800 }}>
+                      Image preview
+                    </Typography>
+                  )}
+                </Box>
+              </Paper>
+            </Stack>
+          </Box>
+
+          <Paper
+            variant="outlined"
+            sx={{
+              borderRadius: 2,
+              p: 1.5,
+              overflowX: 'auto',
+              '& .simple-keyboard': {
+                transform: 'scale(1.4)',
+                transformOrigin: 'top left',
+                width: 'calc(100% / 1.4)',
+              },
+            }}
+          >
+            <Keyboard
+              input={{ name: editFood.name, priceDigits: editFood.priceDigits }}
+              inputName={editKeyboardInput}
+              layoutName={editKeyboardLayout}
+              onChange={(value) => {
+                if (editKeyboardInput === 'name') {
+                  setEditFood((prev) => ({ ...prev, name: value }))
+                  return
+                }
+                setEditFood((prev) => ({ ...prev, priceDigits: value.replaceAll(/[^\d]/g, '').slice(0, 18) }))
+              }}
+              onKeyPress={(btn) => {
+                if (btn === '{shift}' || btn === '{lock}') {
+                  setEditKeyboardLayout((prev) => (prev === 'default' ? 'shift' : 'default'))
+                }
+              }}
+            />
+          </Paper>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, display: 'flex', gap: 1, flexDirection: { xs: 'column', sm: 'row' } }}>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={closeEditFood}
+            fullWidth
+            size="large"
+            sx={{ py: 1.6, fontSize: 16, fontWeight: 900 }}
+          >
+            Cancel
+          </Button>
+          <Button
+            color="success"
+            variant="contained"
+            onClick={updateFood}
+            fullWidth
+            size="large"
+            sx={{ py: 1.6, fontSize: 16, fontWeight: 900 }}
+          >
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <Dialog open={createCategoryOpen} onClose={closeCreateCategory} fullWidth maxWidth="xs">
         <DialogTitle sx={{ fontWeight: 1000 }}>Create category</DialogTitle>
         <DialogContent sx={{ pt: 1 }}>
@@ -1426,6 +1764,25 @@ async function generateReceipt(orderData: {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Menu
+        open={!!productMenu}
+        onClose={() => setProductMenu(null)}
+        anchorReference="anchorPosition"
+        anchorPosition={productMenu ? { left: productMenu.left, top: productMenu.top } : undefined}
+      >
+        <MenuItem
+          onClick={() => {
+            if (!productMenu) return
+            const target = productMenu.product
+            setProductMenu(null)
+            openEditFood(target)
+          }}
+        >
+          Edit
+        </MenuItem>
+        <MenuItem onClick={() => setProductMenu(null)}>Cancel</MenuItem>
+      </Menu>
 
     </Box>
   )
