@@ -58,7 +58,7 @@ export default function PosProductsGrid({
       }}
     >
       {visibleProducts.map((product) => (
-        <Card key={product.id} variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
+        <Card key={product.id} variant="outlined" sx={{ borderRadius: 1, overflow: 'hidden' }}>
           <CardActionArea
             onClick={(e) => {
               if (longPressFiredRef.current) {

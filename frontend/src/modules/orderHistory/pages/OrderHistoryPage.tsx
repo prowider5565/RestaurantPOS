@@ -1,223 +1,15 @@
-import CloseIcon from '@mui/icons-material/Close'
-import FastfoodIcon from '@mui/icons-material/Fastfood'
-import HistoryIcon from '@mui/icons-material/History'
-import LocalCafeIcon from '@mui/icons-material/LocalCafe'
 import LogoutIcon from '@mui/icons-material/Logout'
 import SettingsIcon from '@mui/icons-material/Settings'
 import UploadFileIcon from '@mui/icons-material/UploadFile'
-import {
-  Box,
-  Button,
-  Chip,
-  Dialog,
-  DialogContent,
-  Divider,
-  IconButton,
-  List,
-  ListItem,
-  ListItemText,
-  Paper,
-  Stack,
-  Pagination,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Tooltip,
-  Typography,
-} from '@mui/material'
-import { useEffect, useMemo, useState } from 'react'
+import { Box, Button, IconButton, Stack, Tooltip } from '@mui/material'
 
-import { API_URL } from '../../../config/env'
 import { logout } from '../../../shared/auth'
-import DateRangeFilterCard, { type DateRangePreset } from '../../../shared/components/DateRangeFilterCard'
-import { formatMoney } from '../../../shared/utils/formatters'
+import DateRangeFilterCard from '../../../shared/components/DateRangeFilterCard'
 import Navbar, { type NavItemId } from '../../../shared/components/Navbar'
-
-function toYmd(d: Date) {
-  const yyyy = d.getFullYear()
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  return `${yyyy}-${mm}-${dd}`
-}
-
-type ApiOrderItemRef = { product_id: number; quantity: number }
-type ApiProductSummary = {
-  id: number
-  name: string
-  price: number
-  image_path?: string | null
-}
-type ApiOrderItemDetail = { product: ApiProductSummary; quantity: number }
-type ApiOrderRow = {
-  id: number
-  total_price: number
-  discount_amount?: number | null
-  status: 'Pending' | 'Completed'
-  created_at: string
-  items: ApiOrderItemRef[]
-  user?: { id: number; username: string; position?: string | null }
-}
-type ApiOrderDetail = Omit<ApiOrderRow, 'items'> & { items: ApiOrderItemDetail[] }
-type ApiPage<T> = { items: T[]; total: number; page: number; size: number; pages: number }
-type ApiHistoryOverview = { total_orders: number; total_sum: number; total_net_sum: number; total_discount_sum: number }
-type ApiOrderHistoryResponse = { overview: ApiHistoryOverview; page: ApiPage<ApiOrderRow> }
-
-function formatCreated(createdAtIso: string) {
-  const d = new Date(createdAtIso)
-  if (Number.isNaN(d.getTime())) return createdAtIso
-  const yyyy = d.getFullYear()
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  const hh = String(d.getHours()).padStart(2, '0')
-  const min = String(d.getMinutes()).padStart(2, '0')
-  return `${yyyy}-${mm}-${dd} ${hh}:${min}`
-}
-
-function countFoodTypes(items: ApiOrderItemRef[]) {
-  return new Set(items.map((i) => i.product_id)).size
-}
-
-function PayTypeChip({ status }: { status: ApiOrderRow['status'] }) {
-  if (status === 'Pending') return <Chip label="Kutilmoqda" color="warning" size="small" />
-  return <Chip label="To'langan" color="success" size="small" />
-}
-
-function toImageSrc(raw?: string | null) {
-  if (!raw) return '/mock-images/photo_1_2026-03-11_22-51-02.jpg'
-
-  const trimmed = raw.trim()
-  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed
-
-  const normalized = trimmed.replaceAll('\\', '/')
-
-  const mediaMarker = '/media/'
-  const mediaIdx = normalized.lastIndexOf(mediaMarker)
-  if (mediaIdx !== -1) {
-    const tail = normalized.slice(mediaIdx)
-    return `${API_URL}${tail}`
-  }
-
-  const productsMarker = '/products/'
-  const productsIdx = normalized.lastIndexOf(productsMarker)
-  if (productsIdx !== -1) {
-    const filename = normalized.slice(productsIdx + productsMarker.length)
-    return `${API_URL}/media/products/${filename}`
-  }
-
-  const filename = normalized.split('/').filter(Boolean).at(-1)
-  if (filename) return `${API_URL}/media/products/${filename}`
-
-  return '/mock-images/photo_1_2026-03-11_22-51-02.jpg'
-}
-
-function DetailsDialog({
-  open,
-  onClose,
-  orderId,
-}: {
-  open: boolean
-  onClose: () => void
-  orderId: number | null
-}) {
-  const [order, setOrder] = useState<ApiOrderDetail | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    async function load() {
-      if (!open || !orderId) return
-      setOrder(null)
-      const res = await fetch(`${API_URL}/orders/${orderId}`)
-      if (!res.ok) return
-      const data = (await res.json()) as ApiOrderDetail
-      if (cancelled) return
-      setOrder(data)
-    }
-    load()
-    return () => {
-      cancelled = true
-    }
-  }, [open, orderId])
-
-  if (!open) return null
-
-  const total = order?.total_price ?? 0
-  const discountAmount = Math.max(0, Number(order?.discount_amount ?? 0) || 0)
-  const discountedTotal = Math.max(0, Math.round(total) - Math.round(discountAmount))
-
-  return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 2, py: 1.5 }}>
-        <Box>
-          <Typography sx={{ fontWeight: 1000 }}>
-            {order ? `Buyurtma #${order.id}` : 'Buyurtma'}
-          </Typography>
-          {order && (
-            <Typography variant="body2" color="text.secondary">
-              ID {order.id} • {formatCreated(order.created_at)}
-            </Typography>
-          )}
-        </Box>
-        <IconButton onClick={onClose} aria-label="Yopish">
-          <CloseIcon />
-        </IconButton>
-      </Stack>
-
-      <Divider />
-
-      <DialogContent sx={{ pt: 2 }}>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-          {order && <PayTypeChip status={order.status} />}
-          {discountAmount > 0 ? (
-            <Stack alignItems="flex-end" spacing={0} sx={{ lineHeight: 1.15 }}>
-              <Typography sx={{ fontWeight: 900, textDecoration: 'line-through', color: 'text.secondary' }}>
-                {formatMoney(total)}
-              </Typography>
-              <Typography sx={{ fontWeight: 1000 }}>{formatMoney(discountedTotal)}</Typography>
-            </Stack>
-          ) : (
-            <Typography sx={{ fontWeight: 1000 }}>Jami: {formatMoney(total)}</Typography>
-          )}
-        </Stack>
-
-        <Paper variant="outlined" sx={{ borderRadius: 2 }}>
-          <List dense disablePadding>
-            {(order?.items ?? []).map((i) => {
-              const lineTotal = i.product.price * i.quantity
-              return (
-                <ListItem key={`${order?.id ?? 'o'}-${i.product.id}`} divider sx={{ py: 1.25 }}>
-                  <Box
-                    component="img"
-                    src={toImageSrc(i.product.image_path ?? null)}
-                    alt={i.product.name}
-                    sx={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 999,
-                      border: '1px solid',
-                      borderColor: 'divider',
-                      objectFit: 'cover',
-                      bgcolor: 'background.paper',
-                      mr: 1.5,
-                      flex: '0 0 auto',
-                    }}
-                  />
-                  <ListItemText
-                    primary={<Typography sx={{ fontWeight: 900 }}>{i.product.name}</Typography>}
-                    secondary={`× ${i.quantity} • ${formatMoney(i.product.price)}`}
-                  />
-                  <Typography sx={{ fontWeight: 1000 }}>{formatMoney(lineTotal)}</Typography>
-                </ListItem>
-              )
-            })}
-          </List>
-        </Paper>
-      </DialogContent>
-    </Dialog>
-  )
-}
+import OrderDetailsDialog from '../components/OrderDetailsDialog'
+import OrderHistorySummary from '../components/OrderHistorySummary'
+import OrderHistoryTable from '../components/OrderHistoryTable'
+import { useOrderHistoryPage } from '../hooks/useOrderHistoryPage'
 
 export default function OrderHistoryPage({
   active,
@@ -228,83 +20,7 @@ export default function OrderHistoryPage({
   onNavigate: (next: NavItemId | 'settings') => void
   showUsers?: boolean
 }) {
-  const [search, setSearch] = useState('')
-  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null)
-  const [preset, setPreset] = useState<DateRangePreset>('daily')
-  const [fromDate, setFromDate] = useState<string>(toYmd(new Date()))
-  const [toDate, setToDate] = useState<string>(toYmd(new Date()))
-  const [page, setPage] = useState(1)
-  const [size] = useState(12)
-  const [history, setHistory] = useState<ApiOrderHistoryResponse | null>(null)
-  const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    let cancelled = false
-
-    async function loadHistory() {
-      setLoading(true)
-      try {
-        const params = new URLSearchParams()
-        params.set('page', String(page))
-        params.set('size', String(size))
-        if (fromDate) params.set('from_date', fromDate)
-        if (toDate) params.set('to_date', toDate)
-
-        const res = await fetch(`${API_URL}/orders/history?${params.toString()}`)
-        if (!res.ok) return
-        const data = (await res.json()) as ApiOrderHistoryResponse
-        if (cancelled) return
-        setHistory(data)
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }
-
-    loadHistory()
-    return () => {
-      cancelled = true
-    }
-  }, [fromDate, page, size, toDate])
-
-  const rows = useMemo(() => {
-    const items = history?.page.items ?? []
-    const q = search.trim().toLowerCase()
-    if (!q) return items
-    return items.filter((o) => String(o.id).includes(q))
-  }, [history?.page.items, search])
-
-  function exportToExcelCsv() {
-    const header = ['ID', 'Foydalanuvchi', 'Lavozim', 'Taom turlari', 'Ichimlik turlari', "To'lov holati", 'Jami summa', 'Sana']
-    const lines = rows.map((o) => {
-      const foodTypes = countFoodTypes(o.items)
-      const drinkTypes = 0
-      const payTypeLabel = o.status === 'Pending' ? 'Kutilmoqda' : "To'langan"
-      const total = o.total_price
-      const username = o.user?.username ?? '-'
-      const position = o.user?.position ?? '-'
-      return [
-        o.id,
-        username,
-        position,
-        foodTypes,
-        drinkTypes,
-        payTypeLabel,
-        total.toFixed(2),
-        formatCreated(o.created_at),
-      ]
-        .map((cell) => `"${String(cell).replaceAll('"', '""')}"`)
-        .join(',')
-    })
-
-    const csv = [header.join(','), ...lines].join('\n')
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `order-history-${toYmd(new Date())}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
+  const historyPage = useOrderHistoryPage()
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
@@ -312,8 +28,8 @@ export default function OrderHistoryPage({
         active={active}
         onNavigate={onNavigate}
         showUsers={showUsers}
-        searchValue={search}
-        onSearchChange={setSearch}
+        searchValue={historyPage.search}
+        onSearchChange={historyPage.setSearch}
         searchPlaceholder="Buyurtma qidirish..."
         settingsAction={
           <Tooltip title="Sozlamalar" placement="bottom">
@@ -368,185 +84,42 @@ export default function OrderHistoryPage({
       >
         <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2} flexWrap="wrap">
           <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap">
-            <Button variant="outlined" startIcon={<UploadFileIcon />} onClick={exportToExcelCsv} disabled={rows.length === 0}>
+            <Button
+              variant="outlined"
+              startIcon={<UploadFileIcon />}
+              onClick={historyPage.exportToExcelCsv}
+              disabled={historyPage.rows.length === 0}
+            >
               Excelga eksport qilish
             </Button>
           </Stack>
 
           <DateRangeFilterCard
-            preset={preset}
-            fromDate={fromDate}
-            toDate={toDate}
-            onPresetChange={(next) => {
-              setPreset(next)
-              setPage(1)
-            }}
-            onDateRangeChange={(nextFromDate, nextToDate) => {
-              setFromDate(nextFromDate)
-              setToDate(nextToDate)
-              setPage(1)
-            }}
+            preset={historyPage.preset}
+            fromDate={historyPage.fromDate}
+            toDate={historyPage.toDate}
+            onPresetChange={historyPage.changePreset}
+            onDateRangeChange={historyPage.changeDateRange}
           />
         </Stack>
 
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
-            gap: 1.5,
-          }}
-        >
-          <Paper variant="outlined" sx={{ borderRadius: 3, p: 2 }}>
-            <Typography sx={{ fontWeight: 900, color: 'text.secondary', fontSize: 13 }}>Jami buyurtmalar</Typography>
-            <Typography sx={{ fontWeight: 1100, fontSize: 28, mt: 0.25 }}>{history?.overview.total_orders ?? 0}</Typography>
-          </Paper>
+        <OrderHistorySummary overview={historyPage.history?.overview} />
 
-          <Paper variant="outlined" sx={{ borderRadius: 3, p: 2 }}>
-            <Typography sx={{ fontWeight: 900, color: 'text.secondary', fontSize: 13 }}>Jami daromad</Typography>
-            <Stack spacing={0} sx={{ mt: 0.25, lineHeight: 1.1 }}>
-              <Typography sx={{ fontWeight: 900, textDecoration: 'line-through', color: 'text.secondary' }}>
-                {formatMoney(history?.overview.total_sum ?? 0)}
-              </Typography>
-              <Typography sx={{ fontWeight: 1100, fontSize: 24 }}>{formatMoney(history?.overview.total_net_sum ?? 0)}</Typography>
-            </Stack>
-          </Paper>
-
-          <Paper variant="outlined" sx={{ borderRadius: 3, p: 2 }}>
-            <Typography sx={{ fontWeight: 900, color: 'text.secondary', fontSize: 13 }}>Jami chegirma</Typography>
-            <Typography sx={{ fontWeight: 1100, fontSize: 28, mt: 0.25 }}>
-              {formatMoney(history?.overview.total_discount_sum ?? 0)}
-            </Typography>
-          </Paper>
-        </Box>
-
-        {!loading && rows.length === 0 ? (
-          <Paper
-            variant="outlined"
-            sx={{
-              borderRadius: 3,
-              flex: 1,
-              display: 'grid',
-              placeItems: 'center',
-            }}
-          >
-            <Stack alignItems="center" spacing={1}>
-              <HistoryIcon sx={{ fontSize: 64, color: 'text.secondary' }} />
-              <Typography sx={{ fontWeight: 1000 }}>Buyurtmalar tarixi yo'q</Typography>
-              <Typography variant="body2" color="text.secondary">
-                Sana oralig'ini o'zgartiring yoki qidirib ko'ring.
-              </Typography>
-            </Stack>
-          </Paper>
-        ) : (
-          <TableContainer
-            component={Paper}
-            variant="outlined"
-            sx={{ borderRadius: 3, flex: 1, overflow: 'auto' }}
-          >
-            <Table
-              size="small"
-              stickyHeader
-              sx={{
-                '& .MuiTableCell-root': {
-                  fontSize: '1.3em',
-                  py: 1.1,
-                },
-              }}
-            >
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 900 }} align="right">
-                    ID
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 900 }}>Foydalanuvchi</TableCell>
-                  <TableCell sx={{ fontWeight: 900 }}>Lavozim</TableCell>
-                  <TableCell sx={{ fontWeight: 900 }}>Turlar</TableCell>
-                  <TableCell sx={{ fontWeight: 900 }} align="right">
-                    Jami
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 900 }}>Sana</TableCell>
-                  <TableCell sx={{ fontWeight: 900 }} align="right">
-                    Amallar
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {rows.map((o) => {
-                  const total = o.total_price
-                  const discountAmount = Math.max(0, Number(o.discount_amount ?? 0) || 0)
-                  const discountedTotal = Math.max(0, Math.round(total) - Math.round(discountAmount))
-                  const foodTypes = countFoodTypes(o.items)
-                  const drinkTypes = 0
-                  const username = o.user?.username ?? '-'
-                  const position = o.user?.position ?? '-'
-                  return (
-                    <TableRow key={o.id} hover>
-                      <TableCell align="right" sx={{ fontWeight: 900 }}>
-                        {o.id}
-                      </TableCell>
-                      <TableCell>{username}</TableCell>
-                      <TableCell>{position}</TableCell>
-                      <TableCell>
-                        <Stack direction="row" alignItems="center" gap={1.5}>
-                          <Stack direction="row" alignItems="center" gap={0.5}>
-                            <FastfoodIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-                            <Typography sx={{ fontWeight: 1000 }}>{foodTypes}</Typography>
-                          </Stack>
-                          <Stack direction="row" alignItems="center" gap={0.5}>
-                            <LocalCafeIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-                            <Typography sx={{ fontWeight: 1000 }}>{drinkTypes}</Typography>
-                          </Stack>
-                        </Stack>
-                      </TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 1000 }}>
-                        {discountAmount > 0 ? (
-                          <Stack alignItems="flex-end" spacing={0} sx={{ lineHeight: 1.1 }}>
-                            <Typography sx={{ fontWeight: 900, textDecoration: 'line-through', color: 'text.secondary' }}>
-                              {formatMoney(total)}
-                            </Typography>
-                            <Typography sx={{ fontWeight: 1100 }}>{formatMoney(discountedTotal)}</Typography>
-                          </Stack>
-                        ) : (
-                          formatMoney(total)
-                        )}
-                      </TableCell>
-                      <TableCell>{formatCreated(o.created_at)}</TableCell>
-                      <TableCell align="right">
-                        <Button variant="outlined" onClick={() => setSelectedOrderId(o.id)}>
-                          Tafsilotlar
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-
-        {history?.page.pages && history.page.pages > 1 && (
-          <Stack direction="row" justifyContent="flex-end">
-            <Pagination
-              color="primary"
-              size="large"
-              page={page}
-              count={history.page.pages}
-              onChange={(_, next) => setPage(next)}
-              showFirstButton
-              showLastButton
-              sx={{
-                '& .MuiPaginationItem-root': {
-                  fontSize: '1.4em',
-                  minWidth: 45,
-                  height: 45,
-                },
-              }}
-            />
-          </Stack>
-        )}
+        <OrderHistoryTable
+          loading={historyPage.loading}
+          rows={historyPage.rows}
+          page={historyPage.page}
+          totalPages={historyPage.history?.page.pages ?? 0}
+          onPageChange={historyPage.setPage}
+          onOpenDetails={historyPage.setSelectedOrderId}
+        />
       </Box>
 
-      <DetailsDialog open={Boolean(selectedOrderId)} onClose={() => setSelectedOrderId(null)} orderId={selectedOrderId} />
+      <OrderDetailsDialog
+        open={Boolean(historyPage.selectedOrderId)}
+        orderId={historyPage.selectedOrderId}
+        onClose={() => historyPage.setSelectedOrderId(null)}
+      />
     </Box>
   )
 }

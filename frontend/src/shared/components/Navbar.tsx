@@ -83,7 +83,7 @@ export default function Navbar({
               sx={{
                 fontWeight: 900,
                 fontSize: 14,
-                borderRadius: 2,
+                borderRadius: 0.5,
                 minWidth: 0,
                 px: { xs: 0.9, sm: 1.4 },
                 py: 0.7,
