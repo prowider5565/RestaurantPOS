@@ -17,8 +17,8 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { id: 'menu', label: 'Menyu', icon: <RestaurantMenuIcon /> },
-  { id: 'users', label: 'Foydalanuvchilar', icon: <PeopleIcon /> },
-  { id: 'order_history', label: "Buyurtmalar tarixi", icon: <HistoryIcon /> },
+  { id: 'users', label: 'Xodimlar', icon: <PeopleIcon /> },
+  { id: 'order_history', label: "Tarix", icon: <HistoryIcon /> },
   { id: 'cash_desk', label: 'Kassa', icon: <AttachMoneyIcon /> },
   { id: 'statistics', label: 'Statistika', icon: <BarChartIcon /> },
 ]
@@ -82,15 +82,21 @@ export default function Navbar({
               onClick={() => onNavigate(item.id)}
               sx={{
                 fontWeight: 900,
-                fontSize: 14 / 1.4,
+                fontSize: 14,
                 borderRadius: 2,
                 minWidth: 0,
                 px: { xs: 0.9, sm: 1.4 },
                 py: 0.7,
                 textTransform: 'none',
                 whiteSpace: 'nowrap',
+                bgcolor: item.id === active ? 'primary.main' : 'transparent',
+                color: item.id === active ? 'common.white' : 'inherit',
+                '&:hover': {
+                  bgcolor: item.id === active ? 'primary.dark' : 'action.hover',
+                },
                 '& .MuiButton-startIcon': {
                   mr: 0.6,
+                  color: item.id === active ? 'common.white' : 'inherit',
                   '& > *:first-of-type': {
                     fontSize: 18,
                   },
@@ -116,8 +122,14 @@ export default function Navbar({
                 py: 0.7,
                 textTransform: 'none',
                 whiteSpace: 'nowrap',
+                bgcolor: statisticsItem.id === active ? 'primary.main' : 'transparent',
+                color: statisticsItem.id === active ? 'common.white' : 'inherit',
+                '&:hover': {
+                  bgcolor: statisticsItem.id === active ? 'primary.dark' : 'action.hover',
+                },
                 '& .MuiButton-startIcon': {
                   mr: 0.6,
+                  color: statisticsItem.id === active ? 'common.white' : 'inherit',
                   '& > *:first-of-type': {
                     fontSize: 18,
                   },

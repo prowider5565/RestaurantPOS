@@ -997,14 +997,18 @@ async function generateReceipt(orderData: {
             >
               <Box
                 sx={{
-                  mb: 2,
+                  mb: 1.25,
                   overflowX: 'auto',
-                  pb: 0.5,
+                  pb: 0.25,
                   display: 'flex',
-                  gap: 2,
+                  gap: 1,
                   alignItems: 'flex-start',
                   WebkitOverflowScrolling: 'touch',
                   flex: '0 0 auto',
+                  scrollbarWidth: 'none',
+                  '&::-webkit-scrollbar': {
+                    display: 'none',
+                  },
                 }}
               >
                 {menuCategories.map((c) => {
@@ -1018,10 +1022,10 @@ async function generateReceipt(orderData: {
                         cursor: 'pointer',
                         userSelect: 'none',
                         flex: '0 0 auto',
-                        minWidth: 132,
-                        minHeight: 44,
-                        px: 2,
-                        py: 1,
+                        minWidth: 108,
+                        minHeight: 36,
+                        px: 1.5,
+                        py: 0.65,
                         borderRadius: 2,
                         display: 'flex',
                         alignItems: 'center',
@@ -1037,6 +1041,7 @@ async function generateReceipt(orderData: {
                         sx={{
                           fontWeight: selected ? 1000 : 800,
                           lineHeight: 1.2,
+                          fontSize: 13,
                           textAlign: 'center',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',

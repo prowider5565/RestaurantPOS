@@ -276,7 +276,7 @@ export default function UsersPage({
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
       <Navbar
-        title="Foydalanuvchilar"
+        title="Parhez Plyus"
         active={active}
         onNavigate={onNavigate}
         showUsers={showUsers}
