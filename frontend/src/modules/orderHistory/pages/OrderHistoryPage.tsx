@@ -337,8 +337,8 @@ export default function OrderHistoryPage({
               aria-label="Sozlamalar"
               onClick={() => onNavigate('settings')}
               sx={{
-                width: 48,
-                height: 48,
+                width: 36,
+                height: 36,
                 borderRadius: 999,
                 border: '1px solid',
                 borderColor: 'divider',
@@ -354,8 +354,8 @@ export default function OrderHistoryPage({
               aria-label="Chiqish"
               onClick={() => logout()}
               sx={{
-                width: 48,
-                height: 48,
+                width: 36,
+                height: 36,
                 borderRadius: 999,
                 border: '1px solid',
                 borderColor: 'divider',

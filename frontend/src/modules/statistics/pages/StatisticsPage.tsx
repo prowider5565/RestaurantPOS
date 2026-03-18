@@ -105,7 +105,7 @@ export default function StatisticsPage({
             <IconButton
               aria-label="Sozlamalar"
               onClick={() => onNavigate('settings')}
-              sx={{ width: 48, height: 48, borderRadius: 999, border: '1px solid', borderColor: 'divider' }}
+              sx={{ width: 36, height: 36, borderRadius: 999, border: '1px solid', borderColor: 'divider' }}
             >
               <SettingsIcon />
             </IconButton>
@@ -113,7 +113,22 @@ export default function StatisticsPage({
         }
         rightActions={
           <Tooltip title="Chiqish" placement="bottom">
-            <IconButton aria-label="Chiqish" onClick={logout}>
+            <IconButton
+              aria-label="Chiqish"
+              onClick={logout}
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: 999,
+                border: '1px solid',
+                borderColor: 'divider',
+                '&:hover': {
+                  borderColor: 'error.main',
+                  color: 'error.main',
+                  bgcolor: 'rgba(211, 47, 47, 0.06)',
+                },
+              }}
+            >
               <LogoutIcon />
             </IconButton>
           </Tooltip>

@@ -287,8 +287,8 @@ export default function UsersPage({
               aria-label="Chiqish"
               onClick={() => logout()}
               sx={{
-                width: 48,
-                height: 48,
+                width: 36,
+                height: 36,
                 borderRadius: 999,
                 border: '1px solid',
                 borderColor: 'divider',
@@ -311,7 +311,7 @@ export default function UsersPage({
             <IconButton
               aria-label="Sozlamalar"
               onClick={() => onNavigate('settings')}
-              sx={{ width: 48, height: 48, borderRadius: 999, border: '1px solid', borderColor: 'divider' }}
+              sx={{ width: 36, height: 36, borderRadius: 999, border: '1px solid', borderColor: 'divider' }}
             >
               <SettingsIcon />
             </IconButton>
@@ -353,7 +353,7 @@ export default function UsersPage({
               stickyHeader
               sx={{
                 '& .MuiTableCell-root': {
-                  fontSize: '1.3em',
+                  fontSize: '0.9em',
                   py: 1.1,
                 },
               }}
@@ -382,13 +382,13 @@ export default function UsersPage({
                     </TableCell>
                     <TableCell align="right">
                       <Stack direction="row" gap={1} justifyContent="flex-end">
-                        <Button variant="outlined" size="large" sx={{ minWidth: 120 }} onClick={() => openEdit(u)}>
+                        <Button variant="outlined" size="small" sx={{ minWidth: 120 }} onClick={() => openEdit(u)}>
                           Tahrirlash
                         </Button>
                         <Button
                           variant="contained"
                           color={u.is_active === false ? 'success' : 'error'}
-                          size="large"
+                          size="small"
                           sx={{ minWidth: 140 }}
                           onClick={() => openDeactivate(u)}
                         >
@@ -484,17 +484,25 @@ export default function UsersPage({
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, display: 'flex', gap: 1, flexDirection: { xs: 'column', sm: 'row' } }}>
-          <Button
-            color="error"
-            variant="contained"
-            onClick={closeCreate}
-            fullWidth
-            size="large"
-            sx={{ py: 1.6, fontSize: 16, fontWeight: 900 }}
-            disabled={createSaving}
-          >
-            Bekor qilish
-          </Button>
+        <Button
+          variant="contained"
+          onClick={closeCreate}
+          fullWidth
+          size="large"
+          sx={{
+            py: 1.6,
+            fontSize: 16,
+            fontWeight: 900,
+            bgcolor: 'grey.500',
+            color: 'white',
+            '&:hover': {
+              bgcolor: 'grey.600',
+            },
+          }}
+          disabled={createSaving}
+        >
+          Bekor qilish
+        </Button>
           <Button
             color="success"
             variant="contained"

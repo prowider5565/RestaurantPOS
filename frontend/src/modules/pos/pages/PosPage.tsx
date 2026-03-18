@@ -1088,9 +1088,9 @@ async function generateReceipt(orderData: {
                       gridTemplateColumns: {
                         xs: '1fr',
                         sm: 'repeat(2, 1fr)',
-                        md: 'repeat(5, minmax(0, 1fr))',
-                        lg: 'repeat(5, minmax(0, 1fr))',
-                        xl: 'repeat(5, minmax(0, 1fr))',
+                        md: 'repeat(4, minmax(0, 1fr))',
+                        lg: 'repeat(4, minmax(0, 1fr))',
+                        xl: 'repeat(4, minmax(0, 1fr))',
                       },
                       gap: { xs: 2, md: 1.25 },
                     }}

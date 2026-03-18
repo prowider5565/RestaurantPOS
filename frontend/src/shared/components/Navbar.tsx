@@ -63,7 +63,7 @@ export default function Navbar({
       <Toolbar
         sx={{
           gap: 1.4,
-          minHeight: { xs: 43, sm: 51 },
+          minHeight: { xs: 43, sm: 60 },
           px: { xs: 1.5, sm: 2 },
         }}
       >

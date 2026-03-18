@@ -3,7 +3,7 @@ import SettingsIcon from '@mui/icons-material/Settings'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
 import { invoke } from '@tauri-apps/api/core'
-import { Alert, Box, Button, Divider, IconButton, Paper, Stack, TextField, Typography } from '@mui/material'
+import { Alert, Box, Button, Divider, IconButton, Paper, Stack, TextField, Tooltip, Typography } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
@@ -135,25 +135,43 @@ export default function SettingsPage({
         onNavigate={onNavigate}
         showUsers={showUsers}
         settingsAction={
-          <Button
-            variant="outlined"
-            startIcon={<SettingsIcon />}
-            onClick={() => onNavigate('settings')}
-            sx={{ borderRadius: 3, px: 1.5 }}
-          >
-            Sozlamalar
-          </Button>
+          <Tooltip title="Sozlamalar" placement="bottom">
+            <IconButton
+              aria-label="Sozlamalar"
+              onClick={() => onNavigate('settings')}
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: 999,
+                border: '1px solid',
+                borderColor: 'divider',
+              }}
+            >
+              <SettingsIcon />
+            </IconButton>
+          </Tooltip>
         }
         rightActions={
-          <Button
-            variant="outlined"
-            color="error"
-            startIcon={<LogoutIcon />}
-            onClick={() => logout()}
-            sx={{ borderRadius: 3, px: 1.5 }}
-          >
-            Chiqish
-          </Button>
+          <Tooltip title="Chiqish" placement="bottom">
+            <IconButton
+              aria-label="Chiqish"
+              onClick={() => logout()}
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: 999,
+                border: '1px solid',
+                borderColor: 'divider',
+                '&:hover': {
+                  borderColor: 'error.main',
+                  color: 'error.main',
+                  bgcolor: 'rgba(211, 47, 47, 0.06)',
+                },
+              }}
+            >
+              <LogoutIcon />
+            </IconButton>
+          </Tooltip>
         }
       />
 
