@@ -102,7 +102,11 @@ export default function StatisticsPage({
         showUsers={showUsers}
         settingsAction={
           <Tooltip title="Sozlamalar" placement="bottom">
-            <IconButton aria-label="Sozlamalar" onClick={() => onNavigate('settings')}>
+            <IconButton
+              aria-label="Sozlamalar"
+              onClick={() => onNavigate('settings')}
+              sx={{ width: 48, height: 48, borderRadius: 999, border: '1px solid', borderColor: 'divider' }}
+            >
               <SettingsIcon />
             </IconButton>
           </Tooltip>

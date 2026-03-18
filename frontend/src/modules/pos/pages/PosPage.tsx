@@ -893,63 +893,73 @@ async function generateReceipt(orderData: {
   }, [editFoodPreviewUrl])
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
-      <Navbar
-        title="Parhez Plyus"
-        active={active}
-        onNavigate={onNavigate}
-        showUsers={showUsers}
-        onAdd={() => setCreateOpen(true)}
-        rightActions={
-          <Tooltip title="Chiqish" placement="bottom">
-            <IconButton
-              aria-label="Chiqish"
-              onClick={() => logout()}
-              sx={{
-                width: 48,
-                height: 48,
-                borderRadius: 999,
-                border: '1px solid',
-                borderColor: 'divider',
-                '&:hover': {
-                  borderColor: 'error.main',
-                  color: 'error.main',
-                  bgcolor: 'rgba(211, 47, 47, 0.06)',
-                },
-              }}
-            >
-              <LogoutIcon />
-            </IconButton>
-          </Tooltip>
-        }
-        searchValue={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Mahsulot qidirish..."
-        settingsAction={
-          <Tooltip title="Sozlamalar" placement="bottom">
-            <IconButton
-              aria-label="Sozlamalar"
-              onClick={() => onNavigate('settings')}
-              sx={{
-                width: 48,
-                height: 48,
-                borderRadius: 999,
-                border: '1px solid',
-                borderColor: 'divider',
-              }}
-            >
-              <SettingsIcon />
-            </IconButton>
-          </Tooltip>
-        }
-      />
-
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', overflow: 'auto' }}>
       <Box
         sx={{
-          p: 2,
-          pb: 12,
+          transform: 'scale(0.67)',
+          transformOrigin: 'top left',
+          width: '149.2537%',
+          minHeight: '149.2537vh',
           display: 'flex',
           flexDirection: 'column',
+        }}
+      >
+        <Navbar
+          title="Parhez Plyus"
+          active={active}
+          onNavigate={onNavigate}
+          showUsers={showUsers}
+          onAdd={() => setCreateOpen(true)}
+          rightActions={
+            <Tooltip title="Chiqish" placement="bottom">
+              <IconButton
+                aria-label="Chiqish"
+                onClick={() => logout()}
+                sx={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 999,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  '&:hover': {
+                    borderColor: 'error.main',
+                    color: 'error.main',
+                    bgcolor: 'rgba(211, 47, 47, 0.06)',
+                  },
+                }}
+              >
+                <LogoutIcon />
+              </IconButton>
+            </Tooltip>
+          }
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Mahsulot qidirish..."
+          settingsAction={
+            <Tooltip title="Sozlamalar" placement="bottom">
+              <IconButton
+                aria-label="Sozlamalar"
+                onClick={() => onNavigate('settings')}
+                sx={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 999,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                }}
+              >
+                <SettingsIcon />
+              </IconButton>
+            </Tooltip>
+          }
+        />
+
+        <Box
+          sx={{
+            p: 2,
+            pb: 12,
+            display: 'flex',
+            flexDirection: 'column',
           minHeight: 0,
           height: { xs: 'calc(100dvh - 56px)', sm: 'calc(100dvh - 64px)' },
         }}
@@ -1669,25 +1679,26 @@ async function generateReceipt(orderData: {
         </DialogActions>
       </Dialog>
 
-      <Menu
-        open={!!productMenu}
-        onClose={() => setProductMenu(null)}
-        anchorReference="anchorPosition"
-        anchorPosition={productMenu ? { left: productMenu.left, top: productMenu.top } : undefined}
-      >
-        <MenuItem
-          onClick={() => {
-            if (!productMenu) return
-            const target = productMenu.product
-            setProductMenu(null)
-            openEditFood(target)
-          }}
+        <Menu
+          open={!!productMenu}
+          onClose={() => setProductMenu(null)}
+          anchorReference="anchorPosition"
+          anchorPosition={productMenu ? { left: productMenu.left, top: productMenu.top } : undefined}
         >
-          Tahrirlash
-        </MenuItem>
-        <MenuItem onClick={() => setProductMenu(null)}>Bekor qilish</MenuItem>
-      </Menu>
+          <MenuItem
+            onClick={() => {
+              if (!productMenu) return
+              const target = productMenu.product
+              setProductMenu(null)
+              openEditFood(target)
+            }}
+          >
+            Tahrirlash
+          </MenuItem>
+          <MenuItem onClick={() => setProductMenu(null)}>Bekor qilish</MenuItem>
+        </Menu>
 
+      </Box>
     </Box>
   )
 }
