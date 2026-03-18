@@ -115,7 +115,7 @@ export default function Navbar({
               onClick={() => onNavigate(statisticsItem.id)}
               sx={{
                 fontWeight: 900,
-                fontSize: 14 / 1.4,
+                fontSize: 14,
                 borderRadius: 2,
                 minWidth: 0,
                 px: { xs: 0.9, sm: 1.4 },

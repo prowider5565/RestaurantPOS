@@ -25,16 +25,14 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
   Tooltip,
-  ToggleButton,
-  ToggleButtonGroup,
   Typography,
 } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
 import { logout } from '../../../shared/auth'
+import DateRangeFilterCard, { type DateRangePreset } from '../../../shared/components/DateRangeFilterCard'
 import { formatMoney } from '../../../shared/utils/formatters'
 import Navbar, { type NavItemId } from '../../../shared/components/Navbar'
 
@@ -232,7 +230,7 @@ export default function OrderHistoryPage({
 }) {
   const [search, setSearch] = useState('')
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null)
-  const [preset, setPreset] = useState<'daily' | 'weekly' | 'monthly' | null>('daily')
+  const [preset, setPreset] = useState<DateRangePreset>('daily')
   const [fromDate, setFromDate] = useState<string>(toYmd(new Date()))
   const [toDate, setToDate] = useState<string>(toYmd(new Date()))
   const [page, setPage] = useState(1)
@@ -275,19 +273,6 @@ export default function OrderHistoryPage({
     return items.filter((o) => String(o.id).includes(q))
   }, [history?.page.items, search])
 
-  function applyPreset(next: 'daily' | 'weekly' | 'monthly' | null) {
-    setPreset(next)
-    if (!next) return
-    const end = new Date()
-    const start = new Date()
-    if (next === 'daily') start.setDate(end.getDate())
-    if (next === 'weekly') start.setDate(end.getDate() - 6)
-    if (next === 'monthly') start.setDate(end.getDate() - 29)
-    setFromDate(toYmd(start))
-    setToDate(toYmd(end))
-    setPage(1)
-  }
-
   function exportToExcelCsv() {
     const header = ['ID', 'Foydalanuvchi', 'Lavozim', 'Taom turlari', 'Ichimlik turlari', "To'lov holati", 'Jami summa', 'Sana']
     const lines = rows.map((o) => {
@@ -324,7 +309,6 @@ export default function OrderHistoryPage({
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       <Navbar
-        title="Parhez Plyus"
         active={active}
         onNavigate={onNavigate}
         showUsers={showUsers}
@@ -389,44 +373,20 @@ export default function OrderHistoryPage({
             </Button>
           </Stack>
 
-          <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap" justifyContent="flex-end">
-            <ToggleButtonGroup
-              exclusive
-              value={preset}
-              onChange={(_, next) => applyPreset(next)}
-              size="small"
-              aria-label="Sana oraliqlari"
-            >
-              <ToggleButton value="daily">Kunlik</ToggleButton>
-              <ToggleButton value="weekly">Haftalik</ToggleButton>
-              <ToggleButton value="monthly">Oylik</ToggleButton>
-            </ToggleButtonGroup>
-
-            <TextField
-              size="small"
-              type="date"
-              label="Boshlanish"
-              value={fromDate}
-              onChange={(e) => {
-                setPreset(null)
-                setFromDate(e.target.value)
-                setPage(1)
-              }}
-              InputLabelProps={{ shrink: true }}
-            />
-            <TextField
-              size="small"
-              type="date"
-              label="Tugash"
-              value={toDate}
-              onChange={(e) => {
-                setPreset(null)
-                setToDate(e.target.value)
-                setPage(1)
-              }}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Stack>
+          <DateRangeFilterCard
+            preset={preset}
+            fromDate={fromDate}
+            toDate={toDate}
+            onPresetChange={(next) => {
+              setPreset(next)
+              setPage(1)
+            }}
+            onDateRangeChange={(nextFromDate, nextToDate) => {
+              setFromDate(nextFromDate)
+              setToDate(nextToDate)
+              setPage(1)
+            }}
+          />
         </Stack>
 
         <Box

@@ -21,6 +21,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
 import { getAuthHeaders, logout } from '../../../shared/auth'
+import DateRangeFilterCard, { type DateRangePreset } from '../../../shared/components/DateRangeFilterCard'
 import Navbar, { type NavItemId } from '../../../shared/components/Navbar'
 import { formatMoney } from '../../../shared/utils/formatters'
 
@@ -36,6 +37,13 @@ type ApiOrderRow = {
 type ApiPage<T> = { items: T[]; total: number; page: number; size: number; pages: number }
 type ApiHistoryOverview = { total_orders: number; total_sum: number }
 type ApiOrderHistoryResponse = { overview: ApiHistoryOverview; page: ApiPage<ApiOrderRow> }
+
+function toYmd(d: Date) {
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
 
 function formatCreated(createdAtIso: string) {
   const d = new Date(createdAtIso)
@@ -57,10 +65,14 @@ export default function StatisticsPage({
   onNavigate: (next: NavItemId | 'settings') => void
   showUsers?: boolean
 }) {
+  const today = useMemo(() => toYmd(new Date()), [])
   const [stats, setStats] = useState<ApiOrderHistoryResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
   const [size] = useState(12)
+  const [preset, setPreset] = useState<DateRangePreset>('daily')
+  const [fromDate, setFromDate] = useState(today)
+  const [toDate, setToDate] = useState(today)
 
   useEffect(() => {
     let cancelled = false
@@ -71,6 +83,8 @@ export default function StatisticsPage({
         const params = new URLSearchParams()
         params.set('page', String(page))
         params.set('size', String(size))
+        if (fromDate) params.set('from_date', fromDate)
+        if (toDate) params.set('to_date', toDate)
         const res = await fetch(`${API_URL}/orders/my-history?${params.toString()}`, {
           headers: getAuthHeaders(),
         })
@@ -87,7 +101,7 @@ export default function StatisticsPage({
     return () => {
       cancelled = true
     }
-  }, [page, size])
+  }, [fromDate, page, size, toDate])
 
   const rows = useMemo(() => stats?.page.items ?? [], [stats])
   const pages = stats?.page.pages ?? 1
@@ -96,42 +110,41 @@ export default function StatisticsPage({
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
       <Navbar
-        title="Parhez Plyus"
         active={active}
         onNavigate={onNavigate}
         showUsers={showUsers}
-        settingsAction={
-          <Tooltip title="Sozlamalar" placement="bottom">
-            <IconButton
-              aria-label="Sozlamalar"
-              onClick={() => onNavigate('settings')}
-              sx={{ width: 36, height: 36, borderRadius: 999, border: '1px solid', borderColor: 'divider' }}
-            >
-              <SettingsIcon />
-            </IconButton>
-          </Tooltip>
-        }
         rightActions={
-          <Tooltip title="Chiqish" placement="bottom">
-            <IconButton
-              aria-label="Chiqish"
-              onClick={logout}
-              sx={{
-                width: 36,
-                height: 36,
-                borderRadius: 999,
-                border: '1px solid',
-                borderColor: 'divider',
-                '&:hover': {
-                  borderColor: 'error.main',
-                  color: 'error.main',
-                  bgcolor: 'rgba(211, 47, 47, 0.06)',
-                },
-              }}
-            >
-              <LogoutIcon />
-            </IconButton>
-          </Tooltip>
+          <Stack direction="row" alignItems="center" spacing={0.75}>
+            <Tooltip title="Sozlamalar" placement="bottom">
+              <IconButton
+                aria-label="Sozlamalar"
+                onClick={() => onNavigate('settings')}
+                sx={{ width: 36, height: 36, borderRadius: 999, border: '1px solid', borderColor: 'divider' }}
+              >
+                <SettingsIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Chiqish" placement="bottom">
+              <IconButton
+                aria-label="Chiqish"
+                onClick={logout}
+                sx={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 999,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  '&:hover': {
+                    borderColor: 'error.main',
+                    color: 'error.main',
+                    bgcolor: 'rgba(211, 47, 47, 0.06)',
+                  },
+                }}
+              >
+                <LogoutIcon />
+              </IconButton>
+            </Tooltip>
+          </Stack>
         }
       />
 
@@ -147,6 +160,23 @@ export default function StatisticsPage({
           overflow: 'hidden',
         }}
       >
+        <Box sx={{ mb: 2 }}>
+          <DateRangeFilterCard
+            preset={preset}
+            fromDate={fromDate}
+            toDate={toDate}
+            onPresetChange={(next) => {
+              setPreset(next)
+              setPage(1)
+            }}
+            onDateRangeChange={(nextFromDate, nextToDate) => {
+              setFromDate(nextFromDate)
+              setToDate(nextToDate)
+              setPage(1)
+            }}
+          />
+        </Box>
+
         <Box
           sx={{
             display: 'grid',

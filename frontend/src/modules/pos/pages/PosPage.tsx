@@ -909,7 +909,6 @@ async function generateReceipt(orderData: {
         }}
       >
         <Navbar
-          title="Parhez Plyus"
           active={active}
           onNavigate={onNavigate}
           showUsers={showUsers}
@@ -1144,7 +1143,7 @@ async function generateReceipt(orderData: {
                               <Typography sx={{ fontWeight: 900, fontSize: 16, lineHeight: 1.1 }} noWrap>
                                 {p.name}
                               </Typography>
-                              <Typography sx={{ opacity: 0.95, fontWeight: 900, fontSize: 28, lineHeight: 1.05 }}>
+                              <Typography sx={{ opacity: 0.95, fontWeight: 900, fontSize: 24, lineHeight: 1.05 }}>
                                 {formatMoney(p.price)}
                               </Typography>
                             </Box>
