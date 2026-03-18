@@ -893,15 +893,14 @@ async function generateReceipt(orderData: {
   }, [editFoodPreviewUrl])
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', overflow: 'auto' }}>
+    <Box sx={{ height: '100vh', bgcolor: 'background.default', overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
       <Box
         sx={{
-          transform: 'scale(0.67)',
-          transformOrigin: 'top left',
-          width: '149.2537%',
-          minHeight: '149.2537vh',
+          width: '100%',
           display: 'flex',
           flexDirection: 'column',
+          flex: 1,
+          minHeight: 0,
         }}
       >
         <Navbar
@@ -957,13 +956,14 @@ async function generateReceipt(orderData: {
         <Box
           sx={{
             p: 2,
-            pb: 12,
+            pb: { xs: 12, md: 0 },
             display: 'flex',
             flexDirection: 'column',
-          minHeight: 0,
-          height: { xs: 'calc(100dvh - 56px)', sm: 'calc(100dvh - 64px)' },
-        }}
-      >
+            flex: 1,
+            minHeight: 0,
+            height: { xs: 'calc(100vh - 56px)', sm: 'calc(100vh - 64px)' },
+          }}
+        >
         <Box
           sx={{
             mb: 2,
@@ -1023,22 +1023,23 @@ async function generateReceipt(orderData: {
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', lg: '1fr 380px' },
+            gridTemplateColumns: { xs: '1fr', md: '1fr 360px', lg: '1fr 380px' },
+            gridAutoRows: { xs: 'auto', md: '1fr' },
             gap: 2,
-            alignItems: { xs: 'start', lg: 'stretch' },
+            alignItems: 'stretch',
             flex: 1,
             minHeight: 0,
-            height: { xs: 'auto', lg: '100%' },
-            overflow: { xs: 'visible', lg: 'hidden' },
+            height: '100%',
+            overflow: { xs: 'visible', md: 'hidden' },
           }}
         >
-          <Box sx={{ minHeight: 0, height: { lg: '100%' }, overflow: { xs: 'visible', lg: 'auto' }, pr: { lg: 1 } }}>
+          <Box sx={{ minHeight: 0, height: { md: '100%' }, overflow: { xs: 'visible', md: 'auto' }, pr: { md: 1 } }}>
             {visibleProducts.length === 0 ? (
               <Paper
                 variant="outlined"
                 sx={{
                   borderRadius: 3,
-                  height: { lg: '100%' },
+                  height: { md: '100%' },
                   minHeight: { xs: 320, lg: '100%' },
                   display: 'grid',
                   placeItems: 'center',
@@ -1137,9 +1138,9 @@ async function generateReceipt(orderData: {
             variant="outlined"
             sx={{
               position: 'relative',
-              borderRadius: 3,
+              borderRadius: 0,
               p: 2,
-              height: { xs: 'fit-content', md: '100%' },
+              height: '100%',
               display: 'flex',
               flexDirection: 'column',
               minHeight: 0,
@@ -1702,3 +1703,4 @@ async function generateReceipt(orderData: {
     </Box>
   )
 }
+
