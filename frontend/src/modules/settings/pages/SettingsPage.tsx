@@ -1,21 +1,14 @@
+import LogoutIcon from '@mui/icons-material/Logout'
+import SettingsIcon from '@mui/icons-material/Settings'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
 import { invoke } from '@tauri-apps/api/core'
-import {
-  Alert,
-  Box,
-  Button,
-  Divider,
-  IconButton,
-  Paper,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material'
+import { Alert, Box, Button, Divider, IconButton, Paper, Stack, TextField, Typography } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
-import { getAuthHeaders } from '../../../shared/auth'
+import { getAuthHeaders, logout } from '../../../shared/auth'
+import Navbar, { type NavItemId } from '../../../shared/components/Navbar'
 
 type Me = {
   id: number
@@ -27,7 +20,13 @@ type Me = {
 const PROGRAM_NAME_STORAGE_KEY = 'programName'
 const DEFAULT_PROGRAM_NAME = 'Restoran Cheki'
 
-export default function SettingsPage() {
+export default function SettingsPage({
+  onNavigate,
+  showUsers,
+}: {
+  onNavigate: (next: NavItemId | 'settings') => void
+  showUsers?: boolean
+}) {
   const [me, setMe] = useState<Me | null>(null)
   const [username, setUsername] = useState('')
 
@@ -67,6 +66,13 @@ export default function SettingsPage() {
     }
   }, [])
 
+  const saveDisabled = useMemo(() => {
+    const passwordMismatch = Boolean(password || passwordConfirm) && password !== passwordConfirm
+    const unchangedProgram = programName.trim() === savedProgramName.trim()
+    const unchangedUser = me ? username.trim() === (me.username ?? '') : true
+    return saving || passwordMismatch || (unchangedProgram && unchangedUser && !password)
+  }, [password, passwordConfirm, programName, savedProgramName, saving, username, me])
+
   async function getMyIp() {
     setIpLoading(true)
     try {
@@ -79,32 +85,11 @@ export default function SettingsPage() {
     }
   }
 
-  const saveDisabled = useMemo(() => {
-    if (saving) return true
-
-    const next = username.trim()
-    const usernameChanged = Boolean(me) && next !== me!.username
-
-    const wantsPasswordChange = Boolean(password) || Boolean(passwordConfirm)
-    if (wantsPasswordChange && (!password || !passwordConfirm)) return true
-    if (wantsPasswordChange && password !== passwordConfirm) return true
-
-    const nextProgramName = programName.trim() || DEFAULT_PROGRAM_NAME
-    const programNameChanged = nextProgramName !== savedProgramName
-
-    if (programNameChanged) return false
-    if (usernameChanged) return false
-    if (wantsPasswordChange) return false
-    return true
-  }, [me, password, passwordConfirm, programName, savedProgramName, saving, username])
-
-  const save = async (e: React.FormEvent) => {
+  async function save(e: React.FormEvent) {
     e.preventDefault()
     if (saveDisabled) return
-
     setSaving(true)
     setStatus(null)
-
     try {
       const nextProgramName = programName.trim() || DEFAULT_PROGRAM_NAME
       if (nextProgramName !== savedProgramName) {
@@ -143,82 +128,97 @@ export default function SettingsPage() {
   }
 
   return (
-    <Box sx={{ p: 3, display: 'grid', placeItems: 'center' }}>
-      <Paper sx={{ width: '100%', maxWidth: 520, p: 2 }}>
-        <Stack spacing={1} component="form" onSubmit={save}>
-          <Typography sx={{ fontWeight: 900, textAlign: 'center' }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
+      <Navbar
+        title="Sozlamalar"
+        active="menu"
+        onNavigate={onNavigate}
+        showUsers={showUsers}
+        settingsAction={
+          <Button
+            variant="outlined"
+            startIcon={<SettingsIcon />}
+            onClick={() => onNavigate('settings')}
+            sx={{ borderRadius: 3, px: 1.5 }}
+          >
             Sozlamalar
-          </Typography>
-
-          <Divider />
-
-          {status && <Alert severity={status.kind === 'ok' ? 'success' : 'error'}>{status.msg}</Alert>}
-
-          <TextField
-            label="Dastur nomi"
-            value={programName}
-            onChange={(e) => setProgramName(e.target.value)}
-            fullWidth
-          />
-
-          <TextField
-            label="Foydalanuvchi nomi"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            fullWidth
-          />
-
-          <Divider sx={{ my: 1 }} />
-
-          <Typography sx={{ fontWeight: 900 }}>Tarmoq</Typography>
-
-          <Stack direction="row" spacing={1.5} alignItems="center">
-            <Button variant="outlined" onClick={getMyIp} disabled={ipLoading}>
-              {ipLoading ? 'Yuklanmoqda…' : 'IP olish'}
-            </Button>
-
-            <Typography variant="body2">
-              {ipAddress ?? '—'}
-            </Typography>
-          </Stack>
-
-          <Divider />
-
-          <TextField
-            label="Parol"
-            type={showPassword ? 'text' : 'password'}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            fullWidth
-            InputProps={{
-              endAdornment: (
-                <IconButton onClick={() => setShowPassword((v) => !v)}>
-                  {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                </IconButton>
-              ),
-            }}
-          />
-
-          <TextField
-            label="Tasdiqlash"
-            type={showPasswordConfirm ? 'text' : 'password'}
-            value={passwordConfirm}
-            onChange={(e) => setPasswordConfirm(e.target.value)}
-            fullWidth
-            InputProps={{
-              endAdornment: (
-                <IconButton onClick={() => setShowPasswordConfirm((v) => !v)}>
-                  {showPasswordConfirm ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                </IconButton>
-              ),
-            }}
-          />
-
-          <Button type="submit" disabled={saveDisabled}>
-            Saqlash
           </Button>
-        </Stack>
-      </Paper>
+        }
+        rightActions={
+          <Button
+            variant="outlined"
+            color="error"
+            startIcon={<LogoutIcon />}
+            onClick={() => logout()}
+            sx={{ borderRadius: 3, px: 1.5 }}
+          >
+            Chiqish
+          </Button>
+        }
+      />
+
+      <Box sx={{ p: 3, display: 'grid', placeItems: 'center', flex: 1 }}>
+        <Paper sx={{ width: '100%', maxWidth: 520, p: 2 }}>
+          <Stack spacing={1} component="form" onSubmit={save}>
+            <Typography sx={{ fontWeight: 900, textAlign: 'center' }}>Sozlamalar</Typography>
+
+            <Divider />
+
+            {status && <Alert severity={status.kind === 'ok' ? 'success' : 'error'}>{status.msg}</Alert>}
+
+            <TextField label="Dastur nomi" value={programName} onChange={(e) => setProgramName(e.target.value)} fullWidth />
+
+            <TextField label="Foydalanuvchi nomi" value={username} onChange={(e) => setUsername(e.target.value)} fullWidth />
+
+            <Divider sx={{ my: 1 }} />
+
+            <Typography sx={{ fontWeight: 900 }}>Tarmoq</Typography>
+
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <Button variant="outlined" onClick={getMyIp} disabled={ipLoading}>
+                {ipLoading ? 'Yuklanmoqda…' : 'IP olish'}
+              </Button>
+              <Typography variant="body2">{ipAddress ?? '—'}</Typography>
+            </Stack>
+
+            <Divider />
+
+            <TextField
+              label="Parol"
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              fullWidth
+              InputProps={{
+                endAdornment: (
+                  <IconButton onClick={() => setShowPassword((v) => !v)}>
+                    {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                  </IconButton>
+                ),
+              }}
+            />
+
+            <TextField
+              label="Tasdiqlash"
+              type={showPasswordConfirm ? 'text' : 'password'}
+              value={passwordConfirm}
+              onChange={(e) => setPasswordConfirm(e.target.value)}
+              fullWidth
+              InputProps={{
+                endAdornment: (
+                  <IconButton onClick={() => setShowPasswordConfirm((v) => !v)}>
+                    {showPasswordConfirm ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                  </IconButton>
+                ),
+              }}
+            />
+
+            <Button type="submit" disabled={saveDisabled}>
+              Saqlash
+            </Button>
+          </Stack>
+        </Paper>
+      </Box>
     </Box>
   )
 }

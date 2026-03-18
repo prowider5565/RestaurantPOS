@@ -5,10 +5,7 @@ import LocalCafeIcon from '@mui/icons-material/LocalCafe'
 import LogoutIcon from '@mui/icons-material/Logout'
 import SettingsIcon from '@mui/icons-material/Settings'
 import UploadFileIcon from '@mui/icons-material/UploadFile'
-import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu'
-import SearchIcon from '@mui/icons-material/Search'
 import {
-  AppBar,
   Box,
   Button,
   Chip,
@@ -16,7 +13,6 @@ import {
   DialogContent,
   Divider,
   IconButton,
-  InputAdornment,
   List,
   ListItem,
   ListItemText,
@@ -33,17 +29,14 @@ import {
   Tooltip,
   ToggleButton,
   ToggleButtonGroup,
-  Toolbar,
   Typography,
 } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
 import { logout } from '../../../shared/auth'
-
-function formatMoney(value: number) {
-  return `${new Intl.NumberFormat('uz-UZ').format(Math.round(value))} so'm`
-}
+import { formatMoney } from '../../../shared/utils/formatters'
+import Navbar, { type NavItemId } from '../../../shared/components/Navbar'
 
 function toYmd(d: Date) {
   const yyyy = d.getFullYear()
@@ -228,7 +221,15 @@ function DetailsDialog({
   )
 }
 
-export default function OrderHistoryPage() {
+export default function OrderHistoryPage({
+  active,
+  onNavigate,
+  showUsers,
+}: {
+  active: NavItemId
+  onNavigate: (next: NavItemId | 'settings') => void
+  showUsers?: boolean
+}) {
   const [search, setSearch] = useState('')
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null)
   const [preset, setPreset] = useState<'daily' | 'weekly' | 'monthly' | null>('daily')
@@ -322,70 +323,54 @@ export default function OrderHistoryPage() {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-      <AppBar position="sticky" color="inherit" elevation={0} sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
-        <Toolbar sx={{ gap: 2 }}>
-          <Stack direction="row" alignItems="center" gap={1} sx={{ minWidth: 220 }}>
-            <RestaurantMenuIcon color="primary" />
-            <Typography variant="h6" sx={{ fontWeight: 900 }}>
-              Parhez Plyus
-            </Typography>
-          </Stack>
-
-          <TextField
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            size="small"
-            placeholder="Buyurtma qidirish..."
-            fullWidth
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ color: 'text.secondary' }} />
-                </InputAdornment>
-              ),
-            }}
-          />
-
-          <Stack direction="row" alignItems="center" gap={1}>
-            <Tooltip title="Sozlamalar" placement="bottom">
-              <IconButton
-                aria-label="Sozlamalar"
-                onClick={() => window.dispatchEvent(new CustomEvent('app:navigate', { detail: 'settings' }))}
-                sx={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 999,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                }}
-              >
-                <SettingsIcon />
-              </IconButton>
-            </Tooltip>
-
-            <Tooltip title="Chiqish" placement="bottom">
-              <IconButton
-                aria-label="Chiqish"
-                onClick={() => logout()}
-                sx={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 999,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  '&:hover': {
-                    borderColor: 'error.main',
-                    color: 'error.main',
-                    bgcolor: 'rgba(211, 47, 47, 0.06)',
-                  },
-                }}
-              >
-                <LogoutIcon />
-              </IconButton>
-            </Tooltip>
-          </Stack>
-        </Toolbar>
-      </AppBar>
+      <Navbar
+        title="Parhez Plyus"
+        active={active}
+        onNavigate={onNavigate}
+        showUsers={showUsers}
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buyurtma qidirish..."
+        settingsAction={
+          <Tooltip title="Sozlamalar" placement="bottom">
+            <IconButton
+              aria-label="Sozlamalar"
+              onClick={() => onNavigate('settings')}
+              sx={{
+                width: 48,
+                height: 48,
+                borderRadius: 999,
+                border: '1px solid',
+                borderColor: 'divider',
+              }}
+            >
+              <SettingsIcon />
+            </IconButton>
+          </Tooltip>
+        }
+        rightActions={
+          <Tooltip title="Chiqish" placement="bottom">
+            <IconButton
+              aria-label="Chiqish"
+              onClick={() => logout()}
+              sx={{
+                width: 48,
+                height: 48,
+                borderRadius: 999,
+                border: '1px solid',
+                borderColor: 'divider',
+                '&:hover': {
+                  borderColor: 'error.main',
+                  color: 'error.main',
+                  bgcolor: 'rgba(211, 47, 47, 0.06)',
+                },
+              }}
+            >
+              <LogoutIcon />
+            </IconButton>
+          </Tooltip>
+        }
+      />
 
       <Box
         sx={{

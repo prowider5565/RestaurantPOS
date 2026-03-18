@@ -1,11 +1,8 @@
 import LogoutIcon from '@mui/icons-material/Logout'
-import RefreshIcon from '@mui/icons-material/Refresh'
-import SearchIcon from '@mui/icons-material/Search'
 import SettingsIcon from '@mui/icons-material/Settings'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
 import {
-  AppBar,
   Alert,
   Box,
   Button,
@@ -27,7 +24,6 @@ import {
   TableHead,
   TableRow,
   TextField,
-  Toolbar,
   Tooltip,
   Typography,
 } from '@mui/material'
@@ -35,6 +31,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
 import { getAuthHeaders, logout } from '../../../shared/auth'
+import Navbar, { type NavItemId } from '../../../shared/components/Navbar'
 
 type ApiUser = {
   id: number
@@ -51,7 +48,15 @@ type CreateUserForm = {
   position: string
 }
 
-export default function UsersPage() {
+export default function UsersPage({
+  active,
+  onNavigate,
+  showUsers,
+}: {
+  active: NavItemId
+  onNavigate: (next: NavItemId | 'settings') => void
+  showUsers?: boolean
+}) {
   const [rows, setRows] = useState<ApiUser[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -111,8 +116,6 @@ export default function UsersPage() {
     const handler = () => {
       setCreateError(null)
       setCreateSaving(false)
-      setCreateLayout('default')
-      setCreateInputName('username')
       setCreateForm({ username: '', password: '', confirmPassword: '', position: '' })
       setCreateOpen(true)
     }
@@ -271,53 +274,21 @@ export default function UsersPage() {
   }, [search])
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-      <AppBar position="sticky" color="transparent" elevation={0}>
-        <Toolbar sx={{ gap: 1 }}>
-          <Typography sx={{ fontWeight: 1100, fontSize: 20, flex: 1 }}>Foydalanuvchilar</Typography>
-
-          <TextField
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            size="small"
-            placeholder="Foydalanuvchi qidirish..."
-            sx={{ maxWidth: 520, flex: 1 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ color: 'text.secondary' }} />
-                </InputAdornment>
-              ),
-            }}
-          />
-
-          <Tooltip title="Yangilash" placement="bottom">
-            <IconButton
-              aria-label="Yangilash"
-              onClick={load}
-              sx={{ width: 52, height: 52, borderRadius: 999, border: '1px solid', borderColor: 'divider' }}
-            >
-              <RefreshIcon />
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip title="Sozlamalar" placement="bottom">
-            <IconButton
-              aria-label="Sozlamalar"
-              onClick={() => window.dispatchEvent(new CustomEvent('app:navigate', { detail: 'settings' }))}
-              sx={{ width: 52, height: 52, borderRadius: 999, border: '1px solid', borderColor: 'divider' }}
-            >
-              <SettingsIcon />
-            </IconButton>
-          </Tooltip>
-
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
+      <Navbar
+        title="Foydalanuvchilar"
+        active={active}
+        onNavigate={onNavigate}
+        showUsers={showUsers}
+        onAdd={() => setCreateOpen(true)}
+        rightActions={
           <Tooltip title="Chiqish" placement="bottom">
             <IconButton
               aria-label="Chiqish"
               onClick={() => logout()}
               sx={{
-                width: 52,
-                height: 52,
+                width: 48,
+                height: 48,
                 borderRadius: 999,
                 border: '1px solid',
                 borderColor: 'divider',
@@ -331,8 +302,22 @@ export default function UsersPage() {
               <LogoutIcon />
             </IconButton>
           </Tooltip>
-        </Toolbar>
-      </AppBar>
+        }
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Foydalanuvchi qidirish..."
+        settingsAction={
+          <Tooltip title="Sozlamalar" placement="bottom">
+            <IconButton
+              aria-label="Sozlamalar"
+              onClick={() => onNavigate('settings')}
+              sx={{ width: 48, height: 48, borderRadius: 999, border: '1px solid', borderColor: 'divider' }}
+            >
+              <SettingsIcon />
+            </IconButton>
+          </Tooltip>
+        }
+      />
 
       <Box
         sx={{
@@ -457,37 +442,37 @@ export default function UsersPage() {
         <DialogContent sx={{ pt: 1, display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', gap: 2 }}>
           <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
             <Stack gap={2} sx={{ mt: 1 }}>
-            {createError ? <Alert severity="error">{createError}</Alert> : null}
+              {createError ? <Alert severity="error">{createError}</Alert> : null}
 
-            <TextField
-              label="Foydalanuvchi nomi"
-              value={createForm.username}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, username: e.target.value }))}
-              fullWidth
-            />
-
-            <Stack direction={{ xs: 'column', sm: 'row' }} gap={2}>
               <TextField
-                label="Parol"
-                type="password"
-                value={createForm.password}
-                onChange={(e) => setCreateForm((prev) => ({ ...prev, password: e.target.value }))}
+                label="Foydalanuvchi nomi"
+                value={createForm.username}
+                onChange={(e) => setCreateForm((prev) => ({ ...prev, username: e.target.value }))}
                 fullWidth
               />
-              <TextField
-                label="Parolni tasdiqlash"
-                type="password"
-                value={createForm.confirmPassword}
-                onChange={(e) => setCreateForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
-                error={Boolean(createForm.confirmPassword) && createForm.password !== createForm.confirmPassword}
-                helperText={
-                  Boolean(createForm.confirmPassword) && createForm.password !== createForm.confirmPassword
-                    ? 'Parollar mos emas'
-                    : ' '
-                }
-                fullWidth
-              />
-            </Stack>
+
+              <Stack direction={{ xs: 'column', sm: 'row' }} gap={2}>
+                <TextField
+                  label="Parol"
+                  type="password"
+                  value={createForm.password}
+                  onChange={(e) => setCreateForm((prev) => ({ ...prev, password: e.target.value }))}
+                  fullWidth
+                />
+                <TextField
+                  label="Parolni tasdiqlash"
+                  type="password"
+                  value={createForm.confirmPassword}
+                  onChange={(e) => setCreateForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+                  error={Boolean(createForm.confirmPassword) && createForm.password !== createForm.confirmPassword}
+                  helperText={
+                    Boolean(createForm.confirmPassword) && createForm.password !== createForm.confirmPassword
+                      ? 'Parollar mos emas'
+                      : ' '
+                  }
+                  fullWidth
+                />
+              </Stack>
 
               <TextField
                 label="Lavozim"
@@ -497,7 +482,6 @@ export default function UsersPage() {
               />
             </Stack>
           </Box>
-
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, display: 'flex', gap: 1, flexDirection: { xs: 'column', sm: 'row' } }}>
           <Button
@@ -533,12 +517,7 @@ export default function UsersPage() {
               <Alert severity={saveStatus.kind === 'ok' ? 'success' : 'error'}>{saveStatus.msg}</Alert>
             ) : null}
 
-            <TextField
-              label="Foydalanuvchi nomi"
-              value={editUsername}
-              onChange={(e) => setEditUsername(e.target.value)}
-              fullWidth
-            />
+            <TextField label="Foydalanuvchi nomi" value={editUsername} onChange={(e) => setEditUsername(e.target.value)} fullWidth />
 
             <TextField
               label="Yangi parol"
@@ -567,9 +546,7 @@ export default function UsersPage() {
               value={editPasswordConfirm}
               onChange={(e) => setEditPasswordConfirm(e.target.value)}
               error={Boolean(editPasswordConfirm) && editPassword !== editPasswordConfirm}
-              helperText={
-                Boolean(editPasswordConfirm) && editPassword !== editPasswordConfirm ? 'Parollar mos emas' : ' '
-              }
+              helperText={Boolean(editPasswordConfirm) && editPassword !== editPasswordConfirm ? 'Parollar mos emas' : ' '}
               fullWidth
               InputProps={{
                 endAdornment: (
@@ -619,11 +596,7 @@ export default function UsersPage() {
         </DialogTitle>
         <DialogContent sx={{ pt: 1 }}>
           <Stack gap={2} sx={{ mt: 1 }}>
-            {deactivateStatus ? (
-              <Alert severity={deactivateStatus.kind === 'ok' ? 'success' : 'error'}>
-                {deactivateStatus.msg}
-              </Alert>
-            ) : null}
+            {deactivateStatus ? <Alert severity={deactivateStatus.kind === 'ok' ? 'success' : 'error'}>{deactivateStatus.msg}</Alert> : null}
             <Typography variant="body2" color="text.secondary">
               {deactivateUser
                 ? `${deactivateNextActive ? 'Faollashtirish' : 'Faolsizlantirish'} "${deactivateUser.username}"?`

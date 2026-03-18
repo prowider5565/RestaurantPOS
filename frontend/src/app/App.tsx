@@ -3,19 +3,21 @@ import { useEffect, useState } from 'react'
 
 import AuthGate from './AuthGate'
 import { useAuth } from '../shared/authContext'
-import BottomDock, { type DockItemId } from '../shared/components/layout/BottomDock'
 import OrderHistoryPage from '../modules/orderHistory/pages/OrderHistoryPage'
 import PosPage from '../modules/pos/pages/PosPage'
 import SettingsPage from '../modules/settings/pages/SettingsPage'
 import UsersPage from '../modules/users/pages/UsersPage'
 import CashDeskPage from '../modules/cashDesk/pages/CashDeskPage'
 import StatisticsPage from '../modules/statistics/pages/StatisticsPage'
+import { type NavItemId } from '../shared/components/Navbar'
+
+type AppRoute = NavItemId | 'settings'
 
 function AppShell() {
   const { me } = useAuth()
   const isAdmin = me?.is_admin === true || me?.is_admin === 1
 
-  const [active, setActive] = useState<DockItemId | 'settings'>('menu')
+  const [active, setActive] = useState<AppRoute>('menu')
 
   useEffect(() => {
     const onNavigate = (e: Event) => {
@@ -37,18 +39,12 @@ function AppShell() {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-      {active === 'menu' && <PosPage />}
-      {active === 'order_history' && <OrderHistoryPage />}
-      {active === 'cash_desk' && <CashDeskPage />}
-      {active === 'statistics' && <StatisticsPage />}
-      {active === 'users' && isAdmin && <UsersPage />}
-      {active === 'settings' && <SettingsPage />}
-
-      {active !== 'settings' ? (
-        <BottomDock active={active} onChange={setActive} showUsers={isAdmin} />
-      ) : (
-        <BottomDock active="menu" onChange={setActive} showUsers={isAdmin} />
-      )}
+      {active === 'menu' && <PosPage active="menu" onNavigate={setActive} showUsers={isAdmin} />}
+      {active === 'order_history' && <OrderHistoryPage active="order_history" onNavigate={setActive} showUsers={isAdmin} />}
+      {active === 'cash_desk' && <CashDeskPage active="cash_desk" onNavigate={setActive} showUsers={isAdmin} />}
+      {active === 'statistics' && <StatisticsPage active="statistics" onNavigate={setActive} showUsers={isAdmin} />}
+      {active === 'users' && isAdmin && <UsersPage active="users" onNavigate={setActive} showUsers={isAdmin} />}
+      {active === 'settings' && <SettingsPage onNavigate={setActive} showUsers={isAdmin} />}
     </Box>
   )
 }

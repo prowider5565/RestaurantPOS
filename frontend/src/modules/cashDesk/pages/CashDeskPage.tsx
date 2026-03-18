@@ -1,10 +1,8 @@
 import LogoutIcon from '@mui/icons-material/Logout'
-import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu'
 import SettingsIcon from '@mui/icons-material/Settings'
 import UploadFileIcon from '@mui/icons-material/UploadFile'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import {
-    AppBar,
     Box,
     Button,
     Card,
@@ -24,7 +22,6 @@ import {
     TableHead,
     TableRow,
     TextField,
-    Toolbar,
     ToggleButton,
     ToggleButtonGroup,
     Tooltip,
@@ -35,6 +32,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { API_URL } from '../../../config/env'
 import { getAuthHeaders, logout } from '../../../shared/auth'
 import { useAuth } from '../../../shared/authContext'
+import { formatMoney } from '../../../shared/utils/formatters'
+import Navbar, { type NavItemId } from '../../../shared/components/Navbar'
 
 type ApiUser = {
     id: number
@@ -71,7 +70,15 @@ function toYmd(d: Date) {
     return `${yyyy}-${mm}-${dd}`
 }
 
-export default function CashDeskPage() {
+export default function CashDeskPage({
+    active,
+    onNavigate,
+    showUsers,
+}: {
+    active: NavItemId
+    onNavigate: (next: NavItemId | 'settings') => void
+    showUsers?: boolean
+}) {
     const { me } = useAuth()
     const isAdmin = me?.is_admin === true || me?.is_admin === 1
 
@@ -94,10 +101,6 @@ export default function CashDeskPage() {
     const [deleteTarget, setDeleteTarget] = useState<ApiCashDeskTransaction | null>(null)
     const [deleting, setDeleting] = useState(false)
     const [deleteError, setDeleteError] = useState<string | null>(null)
-
-    function formatMoney(value: number) {
-        return `${new Intl.NumberFormat('uz-UZ').format(Math.round(value))} so'm`
-    }
 
     function applyPreset(next: 'daily' | 'weekly' | 'monthly' | null) {
         setPreset(next)
@@ -259,25 +262,20 @@ export default function CashDeskPage() {
 
     return (
         <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
-            <AppBar position="sticky" color="inherit" elevation={0} sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
-                <Toolbar sx={{ gap: 2 }}>
-                    <Stack direction="row" alignItems="center" gap={1} sx={{ minWidth: 220 }}>
-                        <RestaurantMenuIcon color="primary" />
-                        <Typography variant="h6" sx={{ fontWeight: 900 }}>
-                            Parhez Plyus
-                        </Typography>
-                    </Stack>
-
-                    <Box sx={{ flex: 1 }} />
-
-                    <Stack direction="row" alignItems="center" gap={1}>
+            <Navbar
+                title="Parhez Plyus"
+                active={active}
+                onNavigate={onNavigate}
+                showUsers={showUsers}
+                rightActions={
+                    <Stack direction="row" alignItems="center" spacing={1}>
                         <Tooltip title="Sozlamalar" placement="bottom">
                             <IconButton
                                 aria-label="Sozlamalar"
-                                onClick={() => window.dispatchEvent(new CustomEvent('app:navigate', { detail: 'settings' }))}
+                                onClick={() => onNavigate('settings')}
                                 sx={{
-                                    width: 52,
-                                    height: 52,
+                                    width: 48,
+                                    height: 48,
                                     borderRadius: 999,
                                     border: '1px solid',
                                     borderColor: 'divider',
@@ -286,14 +284,13 @@ export default function CashDeskPage() {
                                 <SettingsIcon />
                             </IconButton>
                         </Tooltip>
-
                         <Tooltip title="Chiqish" placement="bottom">
                             <IconButton
                                 aria-label="Chiqish"
                                 onClick={() => logout()}
                                 sx={{
-                                    width: 52,
-                                    height: 52,
+                                    width: 48,
+                                    height: 48,
                                     borderRadius: 999,
                                     border: '1px solid',
                                     borderColor: 'divider',
@@ -308,8 +305,8 @@ export default function CashDeskPage() {
                             </IconButton>
                         </Tooltip>
                     </Stack>
-                </Toolbar>
-            </AppBar>
+                }
+            />
 
             <Box
                 sx={{

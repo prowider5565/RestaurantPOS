@@ -1,9 +1,6 @@
 import LogoutIcon from '@mui/icons-material/Logout'
-import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu'
 import SettingsIcon from '@mui/icons-material/Settings'
-import BarChartIcon from '@mui/icons-material/BarChart'
 import {
-  AppBar,
   Box,
   Card,
   Divider,
@@ -17,7 +14,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Toolbar,
   Tooltip,
   Typography,
 } from '@mui/material'
@@ -25,6 +21,8 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
 import { getAuthHeaders, logout } from '../../../shared/auth'
+import Navbar, { type NavItemId } from '../../../shared/components/Navbar'
+import { formatMoney } from '../../../shared/utils/formatters'
 
 type ApiUserSummary = { id: number; username: string; position?: string | null }
 type ApiOrderItemRef = { product_id: number; quantity: number }
@@ -39,10 +37,6 @@ type ApiPage<T> = { items: T[]; total: number; page: number; size: number; pages
 type ApiHistoryOverview = { total_orders: number; total_sum: number }
 type ApiOrderHistoryResponse = { overview: ApiHistoryOverview; page: ApiPage<ApiOrderRow> }
 
-function formatMoney(value: number) {
-  return `${new Intl.NumberFormat('uz-UZ').format(Math.round(value))} so'm`
-}
-
 function formatCreated(createdAtIso: string) {
   const d = new Date(createdAtIso)
   if (Number.isNaN(d.getTime())) return createdAtIso
@@ -54,7 +48,15 @@ function formatCreated(createdAtIso: string) {
   return `${yyyy}-${mm}-${dd} ${hh}:${min}`
 }
 
-export default function StatisticsPage() {
+export default function StatisticsPage({
+  active,
+  onNavigate,
+  showUsers,
+}: {
+  active: NavItemId
+  onNavigate: (next: NavItemId | 'settings') => void
+  showUsers?: boolean
+}) {
   const [stats, setStats] = useState<ApiOrderHistoryResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
@@ -93,39 +95,26 @@ export default function StatisticsPage() {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
-      <AppBar position="sticky" color="inherit" elevation={0} sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
-        <Toolbar sx={{ gap: 2 }}>
-          <Stack direction="row" alignItems="center" gap={1} sx={{ minWidth: 220 }}>
-            <RestaurantMenuIcon color="primary" />
-            <Typography variant="h6" sx={{ fontWeight: 900 }}>
-              Parhez Plyus
-            </Typography>
-          </Stack>
-
-          <Stack direction="row" alignItems="center" gap={1} sx={{ color: 'text.secondary' }}>
-            <BarChartIcon />
-            <Typography sx={{ fontWeight: 900 }}>Statistika</Typography>
-          </Stack>
-
-          <Box sx={{ flex: 1 }} />
-
-          <Stack direction="row" alignItems="center" gap={1}>
-            <Tooltip title="Sozlamalar" placement="bottom">
-              <IconButton
-                aria-label="Sozlamalar"
-                onClick={() => window.dispatchEvent(new CustomEvent('app:navigate', { detail: 'settings' }))}
-              >
-                <SettingsIcon />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Chiqish" placement="bottom">
-              <IconButton aria-label="Chiqish" onClick={logout}>
-                <LogoutIcon />
-              </IconButton>
-            </Tooltip>
-          </Stack>
-        </Toolbar>
-      </AppBar>
+      <Navbar
+        title="Parhez Plyus"
+        active={active}
+        onNavigate={onNavigate}
+        showUsers={showUsers}
+        settingsAction={
+          <Tooltip title="Sozlamalar" placement="bottom">
+            <IconButton aria-label="Sozlamalar" onClick={() => onNavigate('settings')}>
+              <SettingsIcon />
+            </IconButton>
+          </Tooltip>
+        }
+        rightActions={
+          <Tooltip title="Chiqish" placement="bottom">
+            <IconButton aria-label="Chiqish" onClick={logout}>
+              <LogoutIcon />
+            </IconButton>
+          </Tooltip>
+        }
+      />
 
       <Box
         sx={{

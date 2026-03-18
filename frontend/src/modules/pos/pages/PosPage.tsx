@@ -8,7 +8,6 @@ import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu'
 import SearchIcon from '@mui/icons-material/Search'
 import SettingsIcon from '@mui/icons-material/Settings'
 import {
-  AppBar,
   Box,
   Button,
   Card,
@@ -38,6 +37,8 @@ import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
 import { getCurrentUser, logout } from '../../../shared/auth'
+import { formatMoney } from '../../../shared/utils/formatters'
+import Navbar, { type NavItemId } from '../../../shared/components/Navbar'
 
 type ApiProduct = {
   id: number
@@ -89,10 +90,6 @@ type EditFoodForm = {
   imageFile: File | null
   categoryId: string
   measure: 'unit' | 'gram' | 'portion'
-}
-
-function formatMoney(value: number) {
-  return `${new Intl.NumberFormat('uz-UZ').format(Math.round(value))} so'm`
 }
 
 function formatIntegerForInput(digits: string) {
@@ -150,7 +147,15 @@ function toCategoryImageSrc(apiCategory: ApiCategory) {
   return `${API_URL}/${normalized}`
 }
 
-export default function PosPage() {
+export default function PosPage({
+  active,
+  onNavigate,
+  showUsers,
+}: {
+  active: NavItemId
+  onNavigate: (next: NavItemId | 'settings') => void
+  showUsers?: boolean
+}) {
   const [search, setSearch] = useState('')
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all')
   const [cart, setCart] = useState<Record<string, CartLine>>({})
@@ -889,70 +894,55 @@ async function generateReceipt(orderData: {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
-      <AppBar position="sticky" color="inherit" elevation={0} sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
-        <Toolbar sx={{ gap: 2 }}>
-          <Stack direction="row" alignItems="center" gap={1} sx={{ minWidth: 220 }}>
-            <RestaurantMenuIcon color="primary" />
-            <Typography variant="h6" sx={{ fontWeight: 900 }}>
-              Parhez Plyus
-            </Typography>
-          </Stack>
-
-          <TextField
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            size="small"
-            placeholder="Mahsulot qidirish..."
-            fullWidth
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ color: 'text.secondary' }} />
-                </InputAdornment>
-              ),
-            }}
-          />
-
-          <Stack direction="row" alignItems="center" gap={1}>
-            <Tooltip title="Sozlamalar" placement="bottom">
-              <IconButton
-                aria-label="Sozlamalar"
-                onClick={() => window.dispatchEvent(new CustomEvent('app:navigate', { detail: 'settings' }))}
-                sx={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 999,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                }}
-              >
-                <SettingsIcon />
-              </IconButton>
-            </Tooltip>
-
-            <Tooltip title="Chiqish" placement="bottom">
-              <IconButton
-                aria-label="Chiqish"
-                onClick={() => logout()}
-                sx={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 999,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  '&:hover': {
-                    borderColor: 'error.main',
-                    color: 'error.main',
-                    bgcolor: 'rgba(211, 47, 47, 0.06)',
-                  },
-                }}
-              >
-                <LogoutIcon />
-              </IconButton>
-            </Tooltip>
-          </Stack>
-        </Toolbar>
-      </AppBar>
+      <Navbar
+        title="Parhez Plyus"
+        active={active}
+        onNavigate={onNavigate}
+        showUsers={showUsers}
+        onAdd={() => setCreateOpen(true)}
+        rightActions={
+          <Tooltip title="Chiqish" placement="bottom">
+            <IconButton
+              aria-label="Chiqish"
+              onClick={() => logout()}
+              sx={{
+                width: 48,
+                height: 48,
+                borderRadius: 999,
+                border: '1px solid',
+                borderColor: 'divider',
+                '&:hover': {
+                  borderColor: 'error.main',
+                  color: 'error.main',
+                  bgcolor: 'rgba(211, 47, 47, 0.06)',
+                },
+              }}
+            >
+              <LogoutIcon />
+            </IconButton>
+          </Tooltip>
+        }
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Mahsulot qidirish..."
+        settingsAction={
+          <Tooltip title="Sozlamalar" placement="bottom">
+            <IconButton
+              aria-label="Sozlamalar"
+              onClick={() => onNavigate('settings')}
+              sx={{
+                width: 48,
+                height: 48,
+                borderRadius: 999,
+                border: '1px solid',
+                borderColor: 'divider',
+              }}
+            >
+              <SettingsIcon />
+            </IconButton>
+          </Tooltip>
+        }
+      />
 
       <Box
         sx={{
