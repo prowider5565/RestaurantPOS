@@ -5,7 +5,6 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import LogoutIcon from '@mui/icons-material/Logout'
 import RemoveIcon from '@mui/icons-material/Remove'
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu'
-import SearchIcon from '@mui/icons-material/Search'
 import SettingsIcon from '@mui/icons-material/Settings'
 import {
   Box,
@@ -20,7 +19,6 @@ import {
   Divider,
   FormControl,
   IconButton,
-  InputAdornment,
   InputLabel,
   List,
   MenuItem,
@@ -28,7 +26,6 @@ import {
   Select,
   Stack,
   TextField,
-  Toolbar,
   Tooltip,
   Typography,
   Slide,
@@ -955,247 +952,263 @@ async function generateReceipt(orderData: {
 
         <Box
           sx={{
-            p: 2,
-            pb: { xs: 12, md: 0 },
+            pl: 2,
+            pr: { xs: 2, md: 0 },
+            pt: 0,
+            pb: 0,
             display: 'flex',
             flexDirection: 'column',
             flex: 1,
             minHeight: 0,
-            height: { xs: 'calc(100vh - 56px)', sm: 'calc(100vh - 64px)' },
+            height: { xs: 'calc(100vh - 61px)', sm: 'calc(100vh - 73px)' },
           }}
         >
-        <Box
-          sx={{
-            mb: 2,
-            overflowX: 'auto',
-            pb: 0.5,
-            display: 'flex',
-            gap: 2,
-            alignItems: 'flex-start',
-            WebkitOverflowScrolling: 'touch',
-          }}
-        >
-          {menuCategories.map((c) => {
-            const selected = c.id === selectedCategoryId
-            return (
-              <Box
-                key={c.id}
-                onClick={() => setSelectedCategoryId(c.id)}
-                sx={{
-                  cursor: 'pointer',
-                  userSelect: 'none',
-                  flex: '0 0 auto',
-                  width: 92,
-                  textAlign: 'center',
-                }}
-              >
-                <Box
-                  component="img"
-                  alt={c.label}
-                  src={c.imageSrc}
-                  onError={(e) => {
-                    if (e.currentTarget.src.endsWith(DEFAULT_CATEGORY_IMAGE_SRC)) return
-                    e.currentTarget.src = DEFAULT_CATEGORY_IMAGE_SRC
-                  }}
-                  sx={{
-                    width: 80,
-                    height: 80,
-                    mx: 'auto',
-                    borderRadius: 999,
-                    objectFit: 'cover',
-                    border: '3px solid',
-                    borderColor: selected ? 'primary.main' : 'divider',
-                    boxShadow: selected ? 2 : 0,
-                  }}
-                />
-                <Typography
-                  variant="body2"
-                  sx={{ mt: 0.75, fontWeight: selected ? 1000 : 800, lineHeight: 1.1 }}
-                  noWrap
-                >
-                  {c.label}
-                </Typography>
-              </Box>
-            )
-          })}
-        </Box>
-
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: '1fr 360px', lg: '1fr 380px' },
-            gridAutoRows: { xs: 'auto', md: '1fr' },
-            gap: 2,
-            alignItems: 'stretch',
-            flex: 1,
-            minHeight: 0,
-            height: '100%',
-            overflow: { xs: 'visible', md: 'hidden' },
-          }}
-        >
-          <Box sx={{ minHeight: 0, height: { md: '100%' }, overflow: { xs: 'visible', md: 'auto' }, pr: { md: 1 } }}>
-            {visibleProducts.length === 0 ? (
-              <Paper
-                variant="outlined"
-                sx={{
-                  borderRadius: 3,
-                  height: { md: '100%' },
-                  minHeight: { xs: 320, lg: '100%' },
-                  display: 'grid',
-                  placeItems: 'center',
-                  textAlign: 'center',
-                  color: 'text.secondary',
-                  p: 4,
-                  bgcolor: 'background.paper',
-                }}
-              >
-                <Stack spacing={1} alignItems="center">
-                  <RestaurantMenuIcon sx={{ fontSize: 64, color: 'primary.main' }} />
-                  <Typography sx={{ fontWeight: 1000, color: 'text.primary', fontSize: 20 }}>
-                    Hali mahsulot yo'q
-                  </Typography>
-                  <Typography variant="body2">
-                    Pastki paneldagi <b>+</b> tugmasi orqali taom va ichimlik qo'shing.
-                  </Typography>
-                </Stack>
-              </Paper>
-            ) : (
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: {
-                    xs: '1fr',
-                    sm: 'repeat(2, 1fr)',
-                    md: 'repeat(3, 1fr)',
-                    lg: 'repeat(4, 1fr)',
-                    xl: 'repeat(5, 1fr)',
-                  },
-                  gap: 2,
-                }}
-              >
-                {visibleProducts.map((p) => (
-                  <Card key={p.id} variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
-                    <CardActionArea
-                      onClick={(e) => {
-                        if (longPressFiredRef.current) {
-                          longPressFiredRef.current = false
-                          e.preventDefault()
-                          e.stopPropagation()
-                          return
-                        }
-                        addToCart(p)
-                      }}
-                      onMouseDown={(e) => beginLongPress(p, e.clientX, e.clientY)}
-                      onMouseUp={cancelLongPress}
-                      onMouseLeave={cancelLongPress}
-                      onTouchStart={(e) => {
-                        const t = e.touches[0]
-                        if (!t) return
-                        beginLongPress(p, t.clientX, t.clientY)
-                      }}
-                      onTouchEnd={cancelLongPress}
-                      onTouchCancel={cancelLongPress}
-                      onTouchMove={cancelLongPress}
-                      sx={{ height: '100%' }}
-                    >
-                      <Box
-                        sx={{
-                          position: 'relative',
-                          height: 150,
-                          backgroundImage: `url("${p.imageSrc}")`,
-                          backgroundSize: 'cover',
-                          backgroundPosition: 'center',
-                        }}
-                        role="img"
-                        aria-label={p.name}
-                      >
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            inset: 0,
-                            background:
-                              'linear-gradient(180deg, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0.55) 100%)',
-                          }}
-                        />
-
-                        <Box sx={{ position: 'absolute', left: 12, right: 12, bottom: 12, color: 'common.white' }}>
-                          <Typography sx={{ fontWeight: 900, fontSize: 24, lineHeight: 1.1 }} noWrap>
-                            {p.name}
-                          </Typography>
-                          <Typography sx={{ opacity: 0.95, fontWeight: 900, fontSize: 42, lineHeight: 1.05 }}>
-                            {formatMoney(p.price)}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </CardActionArea>
-                  </Card>
-                ))}
-              </Box>
-            )}
-          </Box>
-
-          <Paper
-            variant="outlined"
+          <Box
             sx={{
-              position: 'relative',
-              borderRadius: 0,
-              p: 2,
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1fr) 360px', lg: 'minmax(0, 1fr) 380px' },
+              gap: 2,
+              alignItems: 'stretch',
+              flex: 1,
               minHeight: 0,
+              height: '100%',
               overflow: 'hidden',
             }}
           >
-            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
-              <Typography sx={{ fontWeight: 900 }}>Savat</Typography>
-              <IconButton aria-label="Buyurtmani tozalash" onClick={clearCart} disabled={cartCount === 0}>
-                <CloseIcon />
-              </IconButton>
-            </Stack>
-
-            <Divider sx={{ my: 1 }} />
-
-            <Box ref={cartItemsRef} sx={{ flex: 1, minHeight: 0, overflow: 'visible', position: 'relative' }}>
-              <Slide
-                in={isEditingTotal}
-                direction="up"
-                container={cartItemsRef.current}
-                mountOnEnter
-                unmountOnExit
-                timeout={180}
+            <Box
+              sx={{
+                minHeight: 0,
+                height: '100%',
+                overflow: { xs: 'visible', md: 'hidden' },
+                pr: { md: 1 },
+                pt: 2,
+                pb: { xs: 12, md: 0 },
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <Box
+                sx={{
+                  mb: 2,
+                  overflowX: 'auto',
+                  pb: 0.5,
+                  display: 'flex',
+                  gap: 2,
+                  alignItems: 'flex-start',
+                  WebkitOverflowScrolling: 'touch',
+                  flex: '0 0 auto',
+                }}
               >
-                <Box sx={{ position: 'absolute', left: 0, right: 0, top: 0, zIndex: 5 }}>
+                {menuCategories.map((c) => {
+                  const selected = c.id === selectedCategoryId
+                  return (
+                    <Paper
+                      key={c.id}
+                      onClick={() => setSelectedCategoryId(c.id)}
+                      variant="outlined"
+                      sx={{
+                        cursor: 'pointer',
+                        userSelect: 'none',
+                        flex: '0 0 auto',
+                        minWidth: 132,
+                        minHeight: 44,
+                        px: 2,
+                        py: 1,
+                        borderRadius: 2,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderColor: selected ? 'primary.main' : 'divider',
+                        boxShadow: 'none',
+                        bgcolor: selected ? 'rgba(255, 152, 0, 0.08)' : 'background.paper',
+                        transition: 'border-color 140ms ease, background-color 140ms ease',
+                      }}
+                    >
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: selected ? 1000 : 800,
+                          lineHeight: 1.2,
+                          textAlign: 'center',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {c.label}
+                      </Typography>
+                    </Paper>
+                  )
+                })}
+              </Box>
+
+              <Box sx={{ minHeight: 0, flex: 1, overflow: { xs: 'visible', md: 'auto' } }}>
+                {visibleProducts.length === 0 ? (
                   <Paper
                     variant="outlined"
                     sx={{
-                      mb: 1.25,
-                      p: 1.25,
-                      borderRadius: 2,
+                      borderRadius: 3,
+                      height: { md: '100%' },
+                      minHeight: { xs: 320, lg: '100%' },
+                      display: 'grid',
+                      placeItems: 'center',
+                      textAlign: 'center',
+                      color: 'text.secondary',
+                      p: 4,
                       bgcolor: 'background.paper',
-                      boxShadow: '0 14px 30px rgba(0,0,0,0.08)',
                     }}
-                    onClick={(e) => e.stopPropagation()}
-                    onMouseDown={(e) => e.stopPropagation()}
                   >
-                    <Typography sx={{ fontWeight: 1000, fontSize: 24, lineHeight: 1.1, textAlign: 'center' }}>
-                      {formatIntegerForInput(discountDigits) || '0'}
-                    </Typography>
-                    <Typography sx={{ fontWeight: 700, color: 'text.secondary', fontSize: 12, mt: 0.5, textAlign: 'center' }}>
-                      Chegirmali summa
-                    </Typography>
-                    <TextField
-                      value={discountDigits}
-                      onChange={(e) => setDiscountDigits(e.target.value.replaceAll(/[^\d]/g, '').slice(0, 18))}
-                      inputMode="numeric"
-                      fullWidth
-                      size="small"
-                      sx={{ mt: 1 }}
-                    />
+                    <Stack spacing={1} alignItems="center">
+                      <RestaurantMenuIcon sx={{ fontSize: 64, color: 'primary.main' }} />
+                      <Typography sx={{ fontWeight: 1000, color: 'text.primary', fontSize: 20 }}>
+                        Hali mahsulot yo'q
+                      </Typography>
+                      <Typography variant="body2">
+                        Pastki paneldagi <b>+</b> tugmasi orqali taom va ichimlik qo'shing.
+                      </Typography>
+                    </Stack>
                   </Paper>
-                </Box>
-              </Slide>
-              <List dense disablePadding sx={{ height: '100%', overflow: 'auto' }}>
+                ) : (
+                  <Box
+                    sx={{
+                      display: 'grid',
+                      gridTemplateColumns: {
+                        xs: '1fr',
+                        sm: 'repeat(2, 1fr)',
+                        md: 'repeat(5, minmax(0, 1fr))',
+                        lg: 'repeat(5, minmax(0, 1fr))',
+                        xl: 'repeat(5, minmax(0, 1fr))',
+                      },
+                      gap: { xs: 2, md: 1.25 },
+                    }}
+                  >
+                    {visibleProducts.map((p) => (
+                      <Card key={p.id} variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
+                        <CardActionArea
+                          onClick={(e) => {
+                            if (longPressFiredRef.current) {
+                              longPressFiredRef.current = false
+                              e.preventDefault()
+                              e.stopPropagation()
+                              return
+                            }
+                            addToCart(p)
+                          }}
+                          onMouseDown={(e) => beginLongPress(p, e.clientX, e.clientY)}
+                          onMouseUp={cancelLongPress}
+                          onMouseLeave={cancelLongPress}
+                          onTouchStart={(e) => {
+                            const t = e.touches[0]
+                            if (!t) return
+                            beginLongPress(p, t.clientX, t.clientY)
+                          }}
+                          onTouchEnd={cancelLongPress}
+                          onTouchCancel={cancelLongPress}
+                          onTouchMove={cancelLongPress}
+                          sx={{ height: '100%' }}
+                        >
+                          <Box
+                            sx={{
+                              position: 'relative',
+                              height: 100,
+                              backgroundImage: `url("${p.imageSrc}")`,
+                              backgroundSize: 'cover',
+                              backgroundPosition: 'center',
+                            }}
+                            role="img"
+                            aria-label={p.name}
+                          >
+                            <Box
+                              sx={{
+                                position: 'absolute',
+                                inset: 0,
+                                background:
+                                  'linear-gradient(180deg, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0.55) 100%)',
+                              }}
+                            />
+
+                            <Box sx={{ position: 'absolute', left: 8, right: 8, bottom: 8, color: 'common.white' }}>
+                              <Typography sx={{ fontWeight: 900, fontSize: 16, lineHeight: 1.1 }} noWrap>
+                                {p.name}
+                              </Typography>
+                              <Typography sx={{ opacity: 0.95, fontWeight: 900, fontSize: 28, lineHeight: 1.05 }}>
+                                {formatMoney(p.price)}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </CardActionArea>
+                      </Card>
+                    ))}
+                  </Box>
+                )}
+              </Box>
+            </Box>
+
+            <Paper
+              variant="outlined"
+              sx={{
+                position: 'relative',
+                borderRadius: 0,
+                p: 2,
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                minHeight: 0,
+                overflow: 'hidden',
+                alignSelf: 'stretch',
+              }}
+            >
+              <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+                <Typography sx={{ fontWeight: 900 }}>Savat</Typography>
+                <IconButton aria-label="Buyurtmani tozalash" onClick={clearCart} disabled={cartCount === 0}>
+                  <CloseIcon />
+                </IconButton>
+              </Stack>
+
+              <Divider sx={{ my: 1 }} />
+
+              <Box ref={cartItemsRef} sx={{ flex: 1, minHeight: 0, overflow: 'visible', position: 'relative' }}>
+                <Slide
+                  in={isEditingTotal}
+                  direction="up"
+                  container={cartItemsRef.current}
+                  mountOnEnter
+                  unmountOnExit
+                  timeout={180}
+                >
+                  <Box sx={{ position: 'absolute', left: 0, right: 0, top: 0, zIndex: 5 }}>
+                    <Paper
+                      variant="outlined"
+                      sx={{
+                        mb: 1.25,
+                        p: 1.25,
+                        borderRadius: 2,
+                        bgcolor: 'background.paper',
+                        boxShadow: '0 14px 30px rgba(0,0,0,0.08)',
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      onMouseDown={(e) => e.stopPropagation()}
+                    >
+                      <Typography sx={{ fontWeight: 1000, fontSize: 24, lineHeight: 1.1, textAlign: 'center' }}>
+                        {formatIntegerForInput(discountDigits) || '0'}
+                      </Typography>
+                      <Typography
+                        sx={{ fontWeight: 700, color: 'text.secondary', fontSize: 12, mt: 0.5, textAlign: 'center' }}
+                      >
+                        Chegirmali summa
+                      </Typography>
+                      <TextField
+                        value={discountDigits}
+                        onChange={(e) => setDiscountDigits(e.target.value.replaceAll(/[^\d]/g, '').slice(0, 18))}
+                        inputMode="numeric"
+                        fullWidth
+                        size="small"
+                        sx={{ mt: 1 }}
+                      />
+                    </Paper>
+                  </Box>
+                </Slide>
+                <List dense disablePadding sx={{ height: '100%', overflow: 'auto' }}>
                 {cartLines.length === 0 ? (
                   <Box sx={{ py: 6, textAlign: 'center', color: 'text.secondary' }}>
                     <Typography sx={{ fontWeight: 700 }}>Hali mahsulot yo'q</Typography>
@@ -1280,69 +1293,69 @@ async function generateReceipt(orderData: {
                     </SwipeToDeleteRow>
                   ))
                 )}
-              </List>
-            </Box>
+                </List>
+              </Box>
 
-            <Divider sx={{ my: 1.5 }} />
+              <Divider sx={{ my: 1.5 }} />
 
-            <Stack sx={{ mb: 2, mt: 'auto' }}>
-              <Stack direction="row" justifyContent="space-between" alignItems="baseline">
-                <Typography sx={{ fontWeight: 1000, fontSize: 22 }}>Jami</Typography>
-                <Typography
-                  onClick={toggleEditTotal}
-                  sx={{
-                    fontWeight: 1100,
-                    fontSize: 28,
-                    cursor: cartCount === 0 ? 'default' : 'pointer',
-                    userSelect: 'none',
-                    transition: 'color 140ms ease',
-                    ...(cartCount === 0
-                      ? {}
-                      : {
-                          '&:hover': {
-                            color: 'primary.main',
-                          },
-                        }),
-                  }}
-                >
-                  {formatMoney(discountedTotal)}
-                </Typography>
+              <Stack sx={{ mb: 2, mt: 'auto' }}>
+                <Stack direction="row" justifyContent="space-between" alignItems="baseline">
+                  <Typography sx={{ fontWeight: 1000, fontSize: 22 }}>Jami</Typography>
+                  <Typography
+                    onClick={toggleEditTotal}
+                    sx={{
+                      fontWeight: 1100,
+                      fontSize: 28,
+                      cursor: cartCount === 0 ? 'default' : 'pointer',
+                      userSelect: 'none',
+                      transition: 'color 140ms ease',
+                      ...(cartCount === 0
+                        ? {}
+                        : {
+                            '&:hover': {
+                              color: 'primary.main',
+                            },
+                          }),
+                    }}
+                  >
+                    {formatMoney(discountedTotal)}
+                  </Typography>
+                </Stack>
               </Stack>
-            </Stack>
 
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: '1fr 1fr' },
-                gap: 1,
-              }}
-            >
-              <Button
-                color="success"
-                variant="contained"
-                disabled={cartCount === 0 || isPlacingOrder}
-                onClick={() => placeOrder()}
-                startIcon={<CheckCircleOutlineIcon />}
-                sx={{ py: 2.2, borderRadius: 2, fontSize: 18 }}
-                fullWidth
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: '1fr 1fr' },
+                  gap: 1,
+                }}
               >
-                Hozir to'lash
-              </Button>
-              <Button
-                color="error"
-                variant="contained"
-                disabled={cartCount === 0 || isPlacingOrder}
-                onClick={clearCart}
-                startIcon={<CloseIcon />}
-                sx={{ py: 2.2, borderRadius: 2, fontSize: 18 }}
-                fullWidth
-              >
-                Bekor qilish
-              </Button>
-            </Box>
-          </Paper>
+                <Button
+                  color="success"
+                  variant="contained"
+                  disabled={cartCount === 0 || isPlacingOrder}
+                  onClick={() => placeOrder()}
+                  startIcon={<CheckCircleOutlineIcon />}
+                  sx={{ py: 2.2, borderRadius: 2, fontSize: 18 }}
+                  fullWidth
+                >
+                  Tayyor
+                </Button>
+                <Button
+                  color="error"
+                  variant="contained"
+                  disabled={cartCount === 0 || isPlacingOrder}
+                  onClick={clearCart}
+                  startIcon={<CloseIcon />}
+                  sx={{ py: 2.2, borderRadius: 2, fontSize: 18 }}
+                  fullWidth
+                >
+                  Bekor qilish
+                </Button>
+              </Box>
+            </Paper>
+          </Box>
         </Box>
-      </Box>
 
       <Dialog
         open={createOpen}
