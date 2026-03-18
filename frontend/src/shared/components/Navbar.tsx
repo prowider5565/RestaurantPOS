@@ -60,14 +60,20 @@ export default function Navbar({
         bgcolor: 'background.paper',
       }}
     >
-      <Toolbar sx={{ gap: 2, minHeight: { xs: 60, sm: 72 } }}>
+      <Toolbar
+        sx={{
+          gap: 1.4,
+          minHeight: { xs: 43, sm: 51 },
+          px: { xs: 1.5, sm: 2 },
+        }}
+      >
         {title ? (
-          <Typography variant="h6" sx={{ fontWeight: 900, whiteSpace: 'nowrap' }}>
+          <Typography sx={{ fontWeight: 900, whiteSpace: 'nowrap', fontSize: { xs: 24 / 1.4, sm: 28 / 1.4 } }}>
             {title}
           </Typography>
         ) : null}
 
-        <Stack direction="row" alignItems="center" spacing={1} sx={{ flex: 1, overflowX: 'auto' }}>
+        <Stack direction="row" alignItems="center" spacing={0.75} sx={{ flex: 1, overflowX: 'auto' }}>
           {itemsBeforeStats.map((item) => (
             <Button
               key={item.id}
@@ -76,11 +82,19 @@ export default function Navbar({
               onClick={() => onNavigate(item.id)}
               sx={{
                 fontWeight: 900,
-                borderRadius: 3,
-                px: { xs: 1.25, sm: 2 },
-                py: 1,
+                fontSize: 14 / 1.4,
+                borderRadius: 2,
+                minWidth: 0,
+                px: { xs: 0.9, sm: 1.4 },
+                py: 0.7,
                 textTransform: 'none',
                 whiteSpace: 'nowrap',
+                '& .MuiButton-startIcon': {
+                  mr: 0.6,
+                  '& > *:first-of-type': {
+                    fontSize: 18,
+                  },
+                },
               }}
             >
               {item.label}
@@ -95,11 +109,19 @@ export default function Navbar({
               onClick={() => onNavigate(statisticsItem.id)}
               sx={{
                 fontWeight: 900,
-                borderRadius: 3,
-                px: { xs: 1.25, sm: 2 },
-                py: 1,
+                fontSize: 14 / 1.4,
+                borderRadius: 2,
+                minWidth: 0,
+                px: { xs: 0.9, sm: 1.4 },
+                py: 0.7,
                 textTransform: 'none',
                 whiteSpace: 'nowrap',
+                '& .MuiButton-startIcon': {
+                  mr: 0.6,
+                  '& > *:first-of-type': {
+                    fontSize: 18,
+                  },
+                },
               }}
             >
               {statisticsItem.label}
@@ -113,14 +135,38 @@ export default function Navbar({
               size="small"
               placeholder={searchPlaceholder ?? 'Qidirish...'}
               fullWidth
-              sx={{ minWidth: 180, flex: 1 }}
+              sx={{
+                minWidth: 150,
+                flex: 1,
+                '& .MuiInputBase-root': {
+                  minHeight: { xs: 30, sm: 34 },
+                  fontSize: 14 / 1.4,
+                },
+                '& .MuiInputBase-input': {
+                  py: { xs: 0.55, sm: 0.7 },
+                },
+              }}
             />
           ) : null}
 
           {settingsAction}
         </Stack>
 
-        <Stack direction="row" alignItems="center" spacing={1}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          spacing={0.75}
+          sx={{
+            '& .MuiIconButton-root': {
+              width: 36,
+              height: 36,
+              p: 0.75,
+            },
+            '& .MuiSvgIcon-root': {
+              fontSize: 20,
+            },
+          }}
+        >
           {onAdd && (active === 'menu' || active === 'users') ? (
             <Tooltip
               title={active === 'users' ? "Yangi foydalanuvchi qo'shish" : "Yangi taom va ichimlik qo'shish"}

@@ -890,7 +890,15 @@ async function generateReceipt(orderData: {
   }, [editFoodPreviewUrl])
 
   return (
-    <Box sx={{ height: '100vh', bgcolor: 'background.default', overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
+    <Box
+      sx={{
+        height: '100dvh',
+        bgcolor: 'background.default',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
       <Box
         sx={{
           width: '100%',
@@ -912,8 +920,8 @@ async function generateReceipt(orderData: {
                 aria-label="Chiqish"
                 onClick={() => logout()}
                 sx={{
-                  width: 48,
-                  height: 48,
+                  width: 36,
+                  height: 36,
                   borderRadius: 999,
                   border: '1px solid',
                   borderColor: 'divider',
@@ -937,8 +945,8 @@ async function generateReceipt(orderData: {
                 aria-label="Sozlamalar"
                 onClick={() => onNavigate('settings')}
                 sx={{
-                  width: 48,
-                  height: 48,
+                  width: 36,
+                  height: 36,
                   borderRadius: 999,
                   border: '1px solid',
                   borderColor: 'divider',
@@ -960,13 +968,13 @@ async function generateReceipt(orderData: {
             flexDirection: 'column',
             flex: 1,
             minHeight: 0,
-            height: { xs: 'calc(100vh - 61px)', sm: 'calc(100vh - 73px)' },
+            overflow: 'hidden',
           }}
         >
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1fr) 360px', lg: 'minmax(0, 1fr) 380px' },
+              gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1fr) 276px', lg: 'minmax(0, 1fr) 292px' },
               gap: 2,
               alignItems: 'stretch',
               flex: 1,
@@ -1149,7 +1157,7 @@ async function generateReceipt(orderData: {
               sx={{
                 position: 'relative',
                 borderRadius: 0,
-                p: 2,
+                p: 1.5,
                 height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
@@ -1158,14 +1166,14 @@ async function generateReceipt(orderData: {
                 alignSelf: 'stretch',
               }}
             >
-              <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
-                <Typography sx={{ fontWeight: 900 }}>Savat</Typography>
+              <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 0.75 }}>
+                <Typography sx={{ fontWeight: 900, fontSize: 18 }}>Savat</Typography>
                 <IconButton aria-label="Buyurtmani tozalash" onClick={clearCart} disabled={cartCount === 0}>
                   <CloseIcon />
                 </IconButton>
               </Stack>
 
-              <Divider sx={{ my: 1 }} />
+              <Divider sx={{ my: 0.75 }} />
 
               <Box ref={cartItemsRef} sx={{ flex: 1, minHeight: 0, overflow: 'visible', position: 'relative' }}>
                 <Slide
@@ -1180,8 +1188,8 @@ async function generateReceipt(orderData: {
                     <Paper
                       variant="outlined"
                       sx={{
-                        mb: 1.25,
-                        p: 1.25,
+                        mb: 1,
+                        p: 1,
                         borderRadius: 2,
                         bgcolor: 'background.paper',
                         boxShadow: '0 14px 30px rgba(0,0,0,0.08)',
@@ -1189,11 +1197,11 @@ async function generateReceipt(orderData: {
                       onClick={(e) => e.stopPropagation()}
                       onMouseDown={(e) => e.stopPropagation()}
                     >
-                      <Typography sx={{ fontWeight: 1000, fontSize: 24, lineHeight: 1.1, textAlign: 'center' }}>
+                      <Typography sx={{ fontWeight: 1000, fontSize: 18, lineHeight: 1.1, textAlign: 'center' }}>
                         {formatIntegerForInput(discountDigits) || '0'}
                       </Typography>
                       <Typography
-                        sx={{ fontWeight: 700, color: 'text.secondary', fontSize: 12, mt: 0.5, textAlign: 'center' }}
+                        sx={{ fontWeight: 700, color: 'text.secondary', fontSize: 11, mt: 0.5, textAlign: 'center' }}
                       >
                         Chegirmali summa
                       </Typography>
@@ -1210,9 +1218,11 @@ async function generateReceipt(orderData: {
                 </Slide>
                 <List dense disablePadding sx={{ height: '100%', overflow: 'auto' }}>
                 {cartLines.length === 0 ? (
-                  <Box sx={{ py: 6, textAlign: 'center', color: 'text.secondary' }}>
-                    <Typography sx={{ fontWeight: 700 }}>Hali mahsulot yo'q</Typography>
-                    <Typography variant="body2">Buyurtmaga qo'shish uchun mahsulotni bosing.</Typography>
+                  <Box sx={{ py: 4.5, textAlign: 'center', color: 'text.secondary' }}>
+                    <Typography sx={{ fontWeight: 700, fontSize: 15 }}>Hali mahsulot yo'q</Typography>
+                    <Typography variant="body2" sx={{ fontSize: 12 }}>
+                      Buyurtmaga qo'shish uchun mahsulotni bosing.
+                    </Typography>
                   </Box>
                 ) : (
                   cartLines.map((line) => (
@@ -1220,10 +1230,10 @@ async function generateReceipt(orderData: {
                       <Box
                         sx={{
                           px: 0,
-                          py: 1.25,
+                          py: 0.9,
                           display: 'flex',
                           alignItems: 'center',
-                          gap: 1.25,
+                          gap: 0.9,
                         }}
                       >
                         <Box
@@ -1231,8 +1241,8 @@ async function generateReceipt(orderData: {
                           src={line.product.imageSrc}
                           alt={line.product.name}
                           sx={{
-                            width: 44,
-                            height: 44,
+                            width: 34,
+                            height: 34,
                             borderRadius: 999,
                             border: '1px solid',
                             borderColor: 'divider',
@@ -1248,10 +1258,10 @@ async function generateReceipt(orderData: {
                             minWidth: 0,
                           }}
                         >
-                          <Typography sx={{ fontWeight: 800 }} noWrap>
+                          <Typography sx={{ fontWeight: 800, fontSize: 14 }} noWrap>
                             {line.product.name}
                           </Typography>
-                          <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 800 }} noWrap>
+                          <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 800, fontSize: 12 }} noWrap>
                             {formatMoney(line.product.price * line.qty)}
                           </Typography>
                         </Box>
@@ -1262,8 +1272,8 @@ async function generateReceipt(orderData: {
                             aria-label="Miqdorni kamaytirish"
                             onClick={() => setQty(line.product.id, line.qty - 1)}
                             sx={{
-                              width: 44,
-                              height: 44,
+                              width: 34,
+                              height: 34,
                               borderRadius: 999,
                               bgcolor: 'action.hover',
                               '&:hover': { bgcolor: 'action.selected' },
@@ -1271,7 +1281,7 @@ async function generateReceipt(orderData: {
                           >
                             <RemoveIcon />
                           </IconButton>
-                          <Typography sx={{ width: 22, textAlign: 'center', fontWeight: 800 }}>
+                          <Typography sx={{ width: 18, textAlign: 'center', fontWeight: 800, fontSize: 14 }}>
                             {line.qty}
                           </Typography>
                           <IconButton
@@ -1279,8 +1289,8 @@ async function generateReceipt(orderData: {
                             aria-label="Miqdorni oshirish"
                             onClick={() => setQty(line.product.id, line.qty + 1)}
                             sx={{
-                              width: 44,
-                              height: 44,
+                              width: 34,
+                              height: 34,
                               borderRadius: 999,
                               bgcolor: 'action.hover',
                               '&:hover': { bgcolor: 'action.selected' },
@@ -1296,16 +1306,16 @@ async function generateReceipt(orderData: {
                 </List>
               </Box>
 
-              <Divider sx={{ my: 1.5 }} />
+              <Divider sx={{ my: 1 }} />
 
-              <Stack sx={{ mb: 2, mt: 'auto' }}>
+              <Stack sx={{ mb: 1.5, mt: 'auto' }}>
                 <Stack direction="row" justifyContent="space-between" alignItems="baseline">
-                  <Typography sx={{ fontWeight: 1000, fontSize: 22 }}>Jami</Typography>
+                  <Typography sx={{ fontWeight: 1000, fontSize: 17 }}>Jami</Typography>
                   <Typography
                     onClick={toggleEditTotal}
                     sx={{
                       fontWeight: 1100,
-                      fontSize: 28,
+                      fontSize: 22,
                       cursor: cartCount === 0 ? 'default' : 'pointer',
                       userSelect: 'none',
                       transition: 'color 140ms ease',
@@ -1327,7 +1337,7 @@ async function generateReceipt(orderData: {
                 sx={{
                   display: 'grid',
                   gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: '1fr 1fr' },
-                  gap: 1,
+                  gap: 0.75,
                 }}
               >
                 <Button
@@ -1336,7 +1346,7 @@ async function generateReceipt(orderData: {
                   disabled={cartCount === 0 || isPlacingOrder}
                   onClick={() => placeOrder()}
                   startIcon={<CheckCircleOutlineIcon />}
-                  sx={{ py: 2.2, borderRadius: 2, fontSize: 18 }}
+                  sx={{ py: 1.5, borderRadius: 2, fontSize: 14 }}
                   fullWidth
                 >
                   Tayyor
@@ -1347,7 +1357,7 @@ async function generateReceipt(orderData: {
                   disabled={cartCount === 0 || isPlacingOrder}
                   onClick={clearCart}
                   startIcon={<CloseIcon />}
-                  sx={{ py: 2.2, borderRadius: 2, fontSize: 18 }}
+                  sx={{ py: 1.5, borderRadius: 2, fontSize: 14 }}
                   fullWidth
                 >
                   Bekor qilish
