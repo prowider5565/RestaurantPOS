@@ -50,7 +50,7 @@ export function OrderHistoryTable({
           stickyHeader
           sx={{
             '& .MuiTableCell-root': {
-              fontSize: '1.3em',
+              fontSize: '0.7em',
               py: 1.1,
             },
           }}
@@ -60,7 +60,7 @@ export function OrderHistoryTable({
               <TableCell sx={{ fontWeight: 900 }} align="right">
                 ID
               </TableCell>
-              <TableCell sx={{ fontWeight: 900 }}>Foydalanuvchi</TableCell>
+              <TableCell sx={{ fontWeight: 900 }}>Xodim</TableCell>
               <TableCell sx={{ fontWeight: 900 }}>Lavozim</TableCell>
               <TableCell sx={{ fontWeight: 900 }}>Stol</TableCell>
               <TableCell sx={{ fontWeight: 900 }} align="right">
