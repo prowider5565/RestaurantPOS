@@ -49,7 +49,13 @@ export function useCashDeskPage() {
       setSummaryLoading(true)
       setSummaryError(null)
       try {
-        const response = await fetch(`${API_URL}/cash-desk/summary`)
+        const params = new URLSearchParams()
+        if (preset) params.set('preset', preset)
+        if (fromDate) params.set('from_date', fromDate)
+        if (toDate) params.set('to_date', toDate)
+
+        const summaryUrl = params.size ? `${API_URL}/cash-desk/summary?${params.toString()}` : `${API_URL}/cash-desk/summary`
+        const response = await fetch(summaryUrl)
         if (!response.ok) {
           throw new Error(await getResponseError(response, "Hisobotni yuklab bo'lmadi"))
         }
@@ -68,7 +74,7 @@ export function useCashDeskPage() {
     return () => {
       cancelled = true
     }
-  }, [reloadKey])
+  }, [fromDate, preset, reloadKey, toDate])
 
   useEffect(() => {
     let cancelled = false
@@ -78,6 +84,7 @@ export function useCashDeskPage() {
         const params = new URLSearchParams()
         params.set('page', String(page))
         params.set('size', String(size))
+        if (preset) params.set('preset', preset)
         if (fromDate) params.set('from_date', fromDate)
         if (toDate) params.set('to_date', toDate)
 
@@ -101,7 +108,7 @@ export function useCashDeskPage() {
     return () => {
       cancelled = true
     }
-  }, [fromDate, page, reloadKey, size, toDate])
+  }, [fromDate, page, preset, reloadKey, size, toDate])
 
   const createAmountInt = useMemo(() => {
     const numeric = Number(createAmount)

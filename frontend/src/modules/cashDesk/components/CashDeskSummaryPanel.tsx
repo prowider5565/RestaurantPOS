@@ -39,7 +39,7 @@ export default function CashDeskSummaryPanel({
         overflow: 'hidden',
       }}
     >
-      <Stack spacing={2}>
+      <Stack spacing={2} sx={{ flex: '0 0 auto' }}>
         <Box sx={{ textAlign: 'center', pb: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
           <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 1 }}>Joriy summa</Typography>
           <Typography sx={{ fontWeight: 1000, fontSize: 48, color: 'primary.main' }}>{formatInteger(summary.current_amount)}</Typography>
@@ -80,50 +80,59 @@ export default function CashDeskSummaryPanel({
         </Box>
       </Stack>
 
-      <TextField
-        label="Summani kiriting"
-        value={createAmount}
-        onChange={(e) => onCreateAmountChange(e.target.value.replaceAll(/[^\d]/g, '').slice(0, 18))}
-        inputMode="numeric"
-        fullWidth
-      />
-
       <Box
         sx={{
-          mt: 'auto',
-          pt: 2,
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: '1fr 1fr' },
-          gap: 1,
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          gap: 2,
         }}
       >
-        <Button
-          color="success"
-          variant="contained"
-          onClick={() => onCreateTransaction('in')}
-          sx={{ py: 2.2, borderRadius: 2, fontSize: 18 }}
+        <TextField
+          label="Summani kiriting"
+          value={createAmount}
+          onChange={(e) => onCreateAmountChange(e.target.value.replaceAll(/[^\d]/g, '').slice(0, 18))}
+          inputMode="numeric"
           fullWidth
-          disabled={creating || !createAmountInt}
-        >
-          + Daromad qo'shish
-        </Button>
-        <Button
-          color="error"
-          variant="contained"
-          onClick={() => onCreateTransaction('out')}
-          sx={{ py: 2.2, borderRadius: 2, fontSize: 18 }}
-          fullWidth
-          disabled={creating || !createAmountInt}
-        >
-          - Xarajat qo'shish
-        </Button>
-      </Box>
+        />
 
-      {createError ? (
-        <Paper variant="outlined" sx={{ borderRadius: 2, mt: 1.5, p: 1.25, borderColor: 'error.main', bgcolor: 'rgba(211, 47, 47, 0.06)' }}>
-          <Typography sx={{ fontWeight: 900, color: 'error.main', fontSize: 13 }}>{createError}</Typography>
-        </Paper>
-      ) : null}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: '1fr 1fr' },
+            gap: 1,
+          }}
+        >
+          <Button
+            color="success"
+            variant="contained"
+            onClick={() => onCreateTransaction('in')}
+            sx={{ py: 2.2, borderRadius: 2, fontSize: 18 }}
+            fullWidth
+            disabled={creating || !createAmountInt}
+          >
+            + Daromad qo'shish
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={() => onCreateTransaction('out')}
+            sx={{ py: 2.2, borderRadius: 2, fontSize: 18 }}
+            fullWidth
+            disabled={creating || !createAmountInt}
+          >
+            - Xarajat qo'shish
+          </Button>
+        </Box>
+
+        {createError ? (
+          <Paper variant="outlined" sx={{ borderRadius: 2, p: 1.25, borderColor: 'error.main', bgcolor: 'rgba(211, 47, 47, 0.06)' }}>
+            <Typography sx={{ fontWeight: 900, color: 'error.main', fontSize: 13 }}>{createError}</Typography>
+          </Paper>
+        ) : null}
+      </Box>
     </Card>
   )
 }
