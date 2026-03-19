@@ -8,6 +8,10 @@ import '../auth/login_page.dart';
 import '../auth/token_store.dart';
 import '../shared/backend_endpoint_store.dart';
 
+const _menuGridHorizontalPadding = 12.0;
+const _menuGridCrossAxisSpacing = 12.0;
+const _menuGridCrossAxisCount = 2;
+
 class UiProduct {
   const UiProduct({
     required this.id,
@@ -490,12 +494,13 @@ class _PosHomePageState extends State<PosHomePage> {
     );
   }
 
-  Widget _buildProductCard(UiProduct p) {
+  Widget _buildProductCard(UiProduct p, int imageCacheWidth) {
     final isSelected = (_cart[p.id]?.qty ?? 0) > 0;
     return _AnimatedProductCard(
       product: p,
       priceText: _formatMoneyInt(p.price.round()),
       isSelected: isSelected,
+      imageCacheWidth: imageCacheWidth,
       onTap: () => _addToCart(p),
     );
   }
@@ -509,16 +514,26 @@ class _PosHomePageState extends State<PosHomePage> {
               ? const Center(child: CircularProgressIndicator())
               : _visibleProducts.isEmpty
                   ? const Center(child: Text("Hali mahsulot yo'q"))
-                  : GridView.builder(
-                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: 1.1,
-                      ),
-                      itemCount: _visibleProducts.length,
-                      itemBuilder: (context, index) => _buildProductCard(_visibleProducts[index]),
+                  : LayoutBuilder(
+                      builder: (context, constraints) {
+                        final cardWidth =
+                            (constraints.maxWidth - (_menuGridHorizontalPadding * 2) - _menuGridCrossAxisSpacing) / _menuGridCrossAxisCount;
+                        final dpr = MediaQuery.of(context).devicePixelRatio;
+                        final imageCacheWidth = (cardWidth * dpr).round();
+
+                        return GridView.builder(
+                          padding: const EdgeInsets.fromLTRB(_menuGridHorizontalPadding, 0, _menuGridHorizontalPadding, 12),
+                          cacheExtent: 900,
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: _menuGridCrossAxisCount,
+                            crossAxisSpacing: _menuGridCrossAxisSpacing,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: 1.1,
+                          ),
+                          itemCount: _visibleProducts.length,
+                          itemBuilder: (context, index) => _buildProductCard(_visibleProducts[index], imageCacheWidth),
+                        );
+                      },
                     ),
         ),
       ],
@@ -1023,12 +1038,14 @@ class _AnimatedProductCard extends StatefulWidget {
     required this.product,
     required this.priceText,
     required this.isSelected,
+    required this.imageCacheWidth,
     required this.onTap,
   });
 
   final UiProduct product;
   final String priceText;
   final bool isSelected;
+  final int imageCacheWidth;
   final VoidCallback onTap;
 
   @override
@@ -1066,6 +1083,8 @@ class _AnimatedProductCardState extends State<_AnimatedProductCard> {
                 Image.network(
                   widget.product.imageUrl,
                   fit: BoxFit.cover,
+                  cacheWidth: widget.imageCacheWidth > 0 ? widget.imageCacheWidth : null,
+                  filterQuality: FilterQuality.low,
                   errorBuilder: (context, error, stackTrace) => const ColoredBox(color: Color(0xFFF2F2F2)),
                 )
               else
