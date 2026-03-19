@@ -64,6 +64,7 @@ export type NewOrderTableForm = {
 export type ReceiptOrderData = {
   id: number
   total_price: number
+  waitress_wage?: number | null
   discount_amount?: number | null
   created_at: string
   order_table?: { id: number; table_number: number; table_color: string } | null

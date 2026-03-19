@@ -44,6 +44,16 @@ export async function generateReceipt(orderData: ReceiptOrderData): Promise<stri
     return text.length > tableWidth ? text.slice(0, tableWidth) : text.padEnd(tableWidth)
   }
 
+  function buildSummaryLine(label: string, value: string) {
+    const contentWidth = tableWidth - 2
+    const combined = `${label}: ${value}`
+    if (combined.length <= contentWidth) {
+      return '|' + label.padEnd(contentWidth - value.length) + value + '|'
+    }
+
+    return '|' + combined.slice(0, contentWidth).padEnd(contentWidth) + '|'
+  }
+
   function pushRight(label: string, value: string) {
     if (!value) return
     const combined = `${label} ${value}`
@@ -103,11 +113,12 @@ export async function generateReceipt(orderData: ReceiptOrderData): Promise<stri
   lines.push(separator())
 
   const originalTotal = Math.round(orderData.total_price ?? totalAmount)
+  const waitressWage = Math.round(orderData.waitress_wage ?? originalTotal * 0.1)
   const discountAmount = Math.max(0, Number(orderData.discount_amount ?? 0) || 0)
-  const discountedTotal = Math.max(0, originalTotal - discountAmount)
+  const finalTotal = Math.max(0, originalTotal - discountAmount) + waitressWage
 
-  lines.push('|' + `Umumiy Summa: ${formatNumberPlain(originalTotal)} so'm`.padEnd(tableWidth - 2) + '|')
-  lines.push('|' + `Chegirmali Summa: ${formatNumberPlain(discountedTotal)} so'm`.padEnd(tableWidth - 2) + '|')
+  lines.push(buildSummaryLine('Jami summa:', `${formatNumberPlain(finalTotal)} so'm`))
+  lines.push(buildSummaryLine('Ofitsiant xizmati:', `${formatNumberPlain(waitressWage)} so'm`))
   lines.push(separator())
 
   const req = requisites || {}

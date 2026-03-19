@@ -89,20 +89,25 @@ export function usePosPage() {
 
   const cartLines = useMemo(() => Object.values(cart), [cart])
   const cartCount = useMemo(() => cartLines.reduce((sum, line) => sum + line.qty, 0), [cartLines])
-  const total = useMemo(() => cartLines.reduce((sum, line) => sum + line.qty * line.product.price, 0), [cartLines])
-  const totalInt = useMemo(() => Math.round(total), [total])
+  const subtotal = useMemo(() => cartLines.reduce((sum, line) => sum + line.qty * line.product.price, 0), [cartLines])
+  const subtotalInt = useMemo(() => Math.round(subtotal), [subtotal])
+  const waitressWage = useMemo(() => Math.round(subtotalInt * 0.1), [subtotalInt])
+  const totalWithWaitressWage = useMemo(() => subtotalInt + waitressWage, [subtotalInt, waitressWage])
+  const discountedSubtotal = useMemo(() => {
+    const raw = discountedTotalOverride ?? subtotalInt
+    if (!Number.isFinite(raw)) return subtotalInt
+    return Math.min(Math.max(Math.round(raw), 0), subtotalInt)
+  }, [discountedTotalOverride, subtotalInt])
 
   const discountedTotal = useMemo(() => {
     if (isEditingTotal) {
       const nextValue = discountDigits ? Number(discountDigits) : 0
-      if (!Number.isFinite(nextValue)) return totalInt
-      return Math.min(Math.max(Math.round(nextValue), 0), totalInt)
+      if (!Number.isFinite(nextValue)) return totalWithWaitressWage
+      return Math.min(Math.max(Math.round(nextValue), waitressWage), totalWithWaitressWage)
     }
 
-    const raw = discountedTotalOverride ?? totalInt
-    if (!Number.isFinite(raw)) return totalInt
-    return Math.min(Math.max(Math.round(raw), 0), totalInt)
-  }, [discountDigits, discountedTotalOverride, isEditingTotal, totalInt])
+    return discountedSubtotal + waitressWage
+  }, [discountDigits, discountedSubtotal, isEditingTotal, totalWithWaitressWage, waitressWage])
 
   function toggleEditTotal() {
     if (cartCount === 0) return
@@ -114,8 +119,11 @@ export function usePosPage() {
     }
 
     const nextValue = discountDigits ? Number(discountDigits) : 0
-    const nextTotal = Number.isFinite(nextValue) ? Math.min(Math.max(Math.round(nextValue), 0), totalInt) : totalInt
-    setDiscountedTotalOverride(nextTotal === totalInt ? null : nextTotal)
+    const nextTotal = Number.isFinite(nextValue)
+      ? Math.min(Math.max(Math.round(nextValue), waitressWage), totalWithWaitressWage)
+      : totalWithWaitressWage
+    const nextSubtotal = Math.min(Math.max(nextTotal - waitressWage, 0), subtotalInt)
+    setDiscountedTotalOverride(nextSubtotal === subtotalInt ? null : nextSubtotal)
     setIsEditingTotal(false)
   }
 
@@ -175,8 +183,8 @@ export function usePosPage() {
       if (!currentUser) return
 
       const payload = {
-        total: totalInt,
-        discounted_total: discountedTotal,
+        total: subtotalInt,
+        discounted_total: discountedSubtotal,
         user_id: currentUser.id,
         order_table_id: Number(selectedOrderTableId),
         items: cartLines.map((line) => ({ product: line.product.id, quantity: line.qty })),
@@ -514,6 +522,7 @@ export function usePosPage() {
     isEditingTotal,
     discountDigits,
     setDiscountDigits,
+    waitressWage,
     discountedTotal,
     toggleEditTotal,
     isPlacingOrder,

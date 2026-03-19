@@ -26,6 +26,7 @@ export default function PosCartPanel({
   cartItemsRef,
   isEditingTotal,
   discountDigits,
+  waitressWage,
   discountedTotal,
   isPlacingOrder,
   orderTables,
@@ -43,6 +44,7 @@ export default function PosCartPanel({
   cartItemsRef: MutableRefObject<HTMLDivElement | null>
   isEditingTotal: boolean
   discountDigits: string
+  waitressWage: number
   discountedTotal: number
   isPlacingOrder: boolean
   orderTables: ApiOrderTable[]
@@ -246,6 +248,11 @@ export default function PosCartPanel({
         ) : null}
 
         <Stack direction="row" justifyContent="space-between" alignItems="baseline">
+          <Typography sx={{ fontWeight: 900, fontSize: 14, color: 'text.secondary' }}>Ofitsiant xizmati</Typography>
+          <Typography sx={{ fontWeight: 1000, fontSize: 16, color: 'warning.dark' }}>{formatMoney(waitressWage)}</Typography>
+        </Stack>
+
+        <Stack direction="row" justifyContent="space-between" alignItems="baseline" sx={{ mt: 0.75 }}>
           <Typography sx={{ fontWeight: 1000, fontSize: 17 }}>Jami</Typography>
           {isEditingTotal ? (
             <TextField

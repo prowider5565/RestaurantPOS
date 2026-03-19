@@ -150,6 +150,7 @@ export default function PosPage({
               cartItemsRef={pos.cartItemsRef}
               isEditingTotal={pos.isEditingTotal}
               discountDigits={pos.discountDigits}
+              waitressWage={pos.waitressWage}
               discountedTotal={pos.discountedTotal}
               isPlacingOrder={pos.isPlacingOrder}
               orderTables={pos.orderTables}

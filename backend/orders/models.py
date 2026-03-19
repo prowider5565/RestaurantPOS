@@ -33,7 +33,7 @@ class Order(Base):
 
     @property
     def waitress_wage(self) -> float:
-        return float(self.total_price or 0.0) * 0.1
+        return float(self.total_price - self.discount_amount or 0.0) * 0.1
 
 
 class OrderTable(Base):
