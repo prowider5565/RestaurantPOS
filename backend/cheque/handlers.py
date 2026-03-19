@@ -1,14 +1,16 @@
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Response
 
-from users.dependencies import get_current_user
-from users.models import User
-from cheque.schemas import RequisiteSchema
-from cheque.helpers import get_requisite_data, print_cheque
+from cheque.helpers import generate_cheque_content, get_requisite_data, print_cheque
+from cheque.schemas import PrintChequeRequest, RequisiteSchema
 
 router = APIRouter(prefix="/cheque", tags=["printer"])
 
 @router.post("/print")
-async def print_cheque_handler(content: str):
+async def print_cheque_handler(payload: PrintChequeRequest):
+    content = generate_cheque_content(
+        order_data=payload.order_data,
+        program_name=payload.program_name,
+    )
     print_cheque(content)
     return Response(status_code=204)
 

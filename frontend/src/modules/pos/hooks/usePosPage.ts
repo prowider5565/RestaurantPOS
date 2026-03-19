@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { API_URL } from '../../../config/env'
 import { getCurrentUser } from '../../../shared/auth'
 import { compressProductImage } from '../imageCompression'
-import { generateReceipt, printReceipt } from '../receipt'
+import { printReceipt } from '../receipt'
 import type {
   ApiCategory,
   ApiOrderTable,
@@ -199,8 +199,7 @@ export function usePosPage() {
       if (!response.ok) return
 
       const orderData = await response.json()
-      const receiptContent = await generateReceipt(orderData)
-      await printReceipt(receiptContent)
+      await printReceipt(orderData)
       clearCart()
     } finally {
       setIsPlacingOrder(false)

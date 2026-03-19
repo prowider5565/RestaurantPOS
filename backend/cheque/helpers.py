@@ -1,6 +1,6 @@
 import win32print
 from config.settings import settings
-import sys
+from scripts.generator import generate_receipt
 
 
 def get_requisite_data():
@@ -33,4 +33,12 @@ def print_cheque(text=None):
     finally:
         win32print.ClosePrinter(h)
 
+
+def generate_cheque_content(order_data: dict, program_name: str) -> str:
+    requisites = get_requisite_data()
+    return generate_receipt(
+        order_data=order_data,
+        requisites=requisites,
+        program_name=program_name,
+    )
 
