@@ -42,6 +42,26 @@ class ApiProduct {
   }
 }
 
+class ApiOrderTable {
+  const ApiOrderTable({
+    required this.id,
+    required this.tableNumber,
+    required this.tableColor,
+  });
+
+  final int id;
+  final int tableNumber;
+  final String tableColor;
+
+  factory ApiOrderTable.fromJson(Map<String, dynamic> json) {
+    return ApiOrderTable(
+      id: (json['id'] as num).toInt(),
+      tableNumber: (json['table_number'] as num?)?.toInt() ?? 0,
+      tableColor: (json['table_color'] as String?) ?? '#FFE5B4',
+    );
+  }
+}
+
 class ApiMe {
   const ApiMe({required this.id, required this.username});
 
@@ -60,25 +80,34 @@ class ApiOrderRow {
   const ApiOrderRow({
     required this.id,
     required this.totalPrice,
-    required this.discountedTotal,
+    required this.waitressWage,
+    required this.discountAmount,
     required this.createdAt,
   });
 
   final int id;
   final double totalPrice;
-  final double discountedTotal;
+  final double waitressWage;
+  final double discountAmount;
   final String createdAt;
+
+  double get discountedTotal {
+    final discounted = totalPrice - discountAmount;
+    return discounted < 0 ? 0 : discounted;
+  }
+
+  double get finalTotal => discountedTotal + waitressWage;
 
   factory ApiOrderRow.fromJson(Map<String, dynamic> json) {
     final total = (json['total_price'] as num?)?.toDouble() ?? 0;
-
     final discount = (json['discount_amount'] as num?)?.toDouble() ?? 0;
-    final discounted = total - discount;
+    final waitressWage = (json['waitress_wage'] as num?)?.toDouble() ?? 0;
 
     return ApiOrderRow(
       id: (json['id'] as num).toInt(),
       totalPrice: total,
-      discountedTotal: discounted,
+      waitressWage: waitressWage,
+      discountAmount: discount,
       createdAt: (json['created_at'] as String?) ?? '',
     );
   }
@@ -88,15 +117,21 @@ class ApiOrderHistoryOverview {
   const ApiOrderHistoryOverview({
     required this.totalOrders,
     required this.totalSum,
+    required this.totalNetSum,
+    required this.totalDiscountSum,
   });
 
   final int totalOrders;
   final double totalSum;
+  final double totalNetSum;
+  final double totalDiscountSum;
 
   factory ApiOrderHistoryOverview.fromJson(Map<String, dynamic> json) {
     return ApiOrderHistoryOverview(
       totalOrders: (json['total_orders'] as num?)?.toInt() ?? 0,
       totalSum: (json['total_sum'] as num?)?.toDouble() ?? 0,
+      totalNetSum: (json['total_net_sum'] as num?)?.toDouble() ?? 0,
+      totalDiscountSum: (json['total_discount_sum'] as num?)?.toDouble() ?? 0,
     );
   }
 }
@@ -194,6 +229,18 @@ class PosApi {
         .toList();
   }
 
+  Future<List<ApiOrderTable>> fetchOrderTables() async {
+    final res = await _client.get(Uri.parse('$_baseUrl/orders/tables'));
+    if (res.statusCode < 200 || res.statusCode >= 300) return const [];
+
+    final raw = jsonDecode(res.body);
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((item) => ApiOrderTable.fromJson(Map<String, dynamic>.from(item)))
+        .toList();
+  }
+
   Future<ApiMe?> fetchMe({required String accessToken}) async {
     final res = await _client.get(
       Uri.parse('$_baseUrl/users/me'),
@@ -209,12 +256,14 @@ class PosApi {
     required int total,
     required int discountedTotal,
     required int userId,
+    required int orderTableId,
     required List<Map<String, dynamic>> items,
   }) async {
     final payload = {
       'total': total,
       'discounted_total': discountedTotal,
       'user_id': userId,
+      'order_table_id': orderTableId,
       'items': items,
     };
 

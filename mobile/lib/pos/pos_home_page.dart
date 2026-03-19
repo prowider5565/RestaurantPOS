@@ -58,6 +58,8 @@ class _PosHomePageState extends State<PosHomePage> {
 
   List<ApiCategory> _apiCategories = const [];
   List<UiProduct> _products = const [];
+  List<ApiOrderTable> _orderTables = const [];
+  int? _selectedOrderTableId;
 
   final Map<int, CartLine> _cart = {};
 
@@ -120,10 +122,17 @@ class _PosHomePageState extends State<PosHomePage> {
 
       final categories = await _api.fetchCategories();
       final products = await _api.fetchProducts(categoryId: _selectedCategoryId);
+      final orderTables = await _api.fetchOrderTables();
       if (!mounted) return;
       setState(() {
         _apiCategories = categories;
         _products = products.map(_toUiProduct).toList();
+        _orderTables = orderTables;
+        if (orderTables.isEmpty) {
+          _selectedOrderTableId = null;
+        } else if (_selectedOrderTableId == null || !orderTables.any((t) => t.id == _selectedOrderTableId)) {
+          _selectedOrderTableId = orderTables.first.id;
+        }
       });
     } finally {
       if (!mounted) return;
@@ -242,10 +251,17 @@ class _PosHomePageState extends State<PosHomePage> {
     try {
       final categories = await _api.fetchCategories();
       final products = await _api.fetchProducts(categoryId: _selectedCategoryId);
+      final orderTables = await _api.fetchOrderTables();
       if (!mounted) return;
       setState(() {
         _apiCategories = categories;
         _products = products.map(_toUiProduct).toList();
+        _orderTables = orderTables;
+        if (orderTables.isEmpty) {
+          _selectedOrderTableId = null;
+        } else if (_selectedOrderTableId == null || !orderTables.any((t) => t.id == _selectedOrderTableId)) {
+          _selectedOrderTableId = orderTables.first.id;
+        }
       });
     } finally {
       if (!mounted) return;
@@ -327,6 +343,13 @@ class _PosHomePageState extends State<PosHomePage> {
 
   Future<void> _placeOrder() async {
     if (_cart.isEmpty || _isPlacingOrder) return;
+    if (_selectedOrderTableId == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Buyurtma uchun stol tanlanishi shart.")),
+      );
+      return;
+    }
     if (_currentUserId == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -341,6 +364,7 @@ class _PosHomePageState extends State<PosHomePage> {
         total: _totalInt,
         discountedTotal: _discountedTotalInt,
         userId: _currentUserId!,
+        orderTableId: _selectedOrderTableId!,
         items: _cart.values.map((line) => {'product': line.product.id, 'quantity': line.qty}).toList(),
       );
 
@@ -602,6 +626,13 @@ class _PosHomePageState extends State<PosHomePage> {
 
   Widget _buildCartTab() {
     final lines = _cart.values.toList()..sort((a, b) => a.product.id.compareTo(b.product.id));
+    ApiOrderTable? selectedTable;
+    for (final table in _orderTables) {
+      if (table.id == _selectedOrderTableId) {
+        selectedTable = table;
+        break;
+      }
+    }
 
     return GestureDetector(
       onTap: () {
@@ -630,6 +661,69 @@ class _PosHomePageState extends State<PosHomePage> {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+            child: Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: const BorderSide(color: Color(0xFFE8E8E8))),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: DropdownButtonFormField<int>(
+                  value: _selectedOrderTableId,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Stol tanlang',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                  items: _orderTables
+                      .map(
+                        (table) => DropdownMenuItem<int>(
+                          value: table.id,
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 12,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: Color(_parseHexColor(table.tableColor)),
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(color: const Color(0x22000000)),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Stol ${table.tableNumber}',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontWeight: FontWeight.w700),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: _orderTables.isEmpty
+                      ? null
+                      : (value) {
+                          setState(() => _selectedOrderTableId = value);
+                        },
+                ),
+              ),
+            ),
+          ),
+          if (selectedTable == null)
+            const Padding(
+              padding: EdgeInsets.fromLTRB(12, 0, 12, 10),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Buyurtma uchun stol tanlanishi shart.",
+                  style: TextStyle(color: Colors.red, fontWeight: FontWeight.w700, fontSize: 12),
+                ),
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
             child: _buildDiscountBlock(),
           ),
           Padding(
@@ -638,7 +732,7 @@ class _PosHomePageState extends State<PosHomePage> {
               children: [
                 Expanded(
                   child: FilledButton(
-                    onPressed: (_cart.isEmpty || _isPlacingOrder) ? null : _placeOrder,
+                    onPressed: (_cart.isEmpty || _isPlacingOrder || _selectedOrderTableId == null) ? null : _placeOrder,
                     style: FilledButton.styleFrom(backgroundColor: Colors.green),
                     child: const Padding(
                       padding: EdgeInsets.symmetric(vertical: 14),
@@ -675,7 +769,14 @@ class _PosHomePageState extends State<PosHomePage> {
   }
 
   Widget _buildStatisticsTab() {
-    final overview = _statsOverview ?? const ApiOrderHistoryOverview(totalOrders: 0, totalSum: 0);
+    final overview = _statsOverview ??
+        const ApiOrderHistoryOverview(
+          totalOrders: 0,
+          totalSum: 0,
+          totalNetSum: 0,
+          totalDiscountSum: 0,
+        );
+    final totalWaitressWage = overview.totalSum * 0.1;
 
     return Column(
       children: [
@@ -692,15 +793,15 @@ class _PosHomePageState extends State<PosHomePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('Buyurtmalaringiz', style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.w800)),
+                  Text('Daromad', style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 6),
                   Text(
-                    _moneyFormat.format(overview.totalSum.round()),
+                    _moneyFormat.format(totalWaitressWage.round()),
                     textAlign: TextAlign.center,
                     style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 36, color: Colors.deepOrange),
                   ),
                   const SizedBox(height: 4),
-                  Text("jami so'm", textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade700)),
+                  Text("ofitsiant xizmati, jami so'm", textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade700)),
                   const SizedBox(height: 10),
                   Row(
                     children: [
@@ -722,7 +823,7 @@ class _PosHomePageState extends State<PosHomePage> {
                             Text('Jami summa', style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.w700)),
                             const SizedBox(height: 4),
                             Text(
-                              _formatMoneyInt(overview.totalSum.round()),
+                              _formatMoneyInt(overview.totalNetSum.round()),
                               style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
                             ),
                           ],
@@ -756,9 +857,19 @@ class _PosHomePageState extends State<PosHomePage> {
                       ),
                       child: ListTile(
                         title: Text('#${o.id}', style: const TextStyle(fontWeight: FontWeight.w900)),
-                        subtitle: Text(_formatCreated(o.createdAt)),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(_formatCreated(o.createdAt)),
+                            const SizedBox(height: 2),
+                            Text(
+                              "Chegirma: ${_formatMoneyInt(o.discountAmount.round())} • Xizmat: ${_formatMoneyInt(o.waitressWage.round())}",
+                              style: TextStyle(color: Colors.grey.shade700, fontSize: 12, fontWeight: FontWeight.w700),
+                            ),
+                          ],
+                        ),
                         trailing: Text(
-                          _formatMoneyInt(o.discountedTotal.round()),
+                          _formatMoneyInt(o.finalTotal.round()),
                           style: const TextStyle(fontWeight: FontWeight.w900),
                         ),
                       ),
@@ -892,6 +1003,17 @@ class _PosHomePageState extends State<PosHomePage> {
       ),
     );
   }
+}
+
+int _parseHexColor(String value) {
+  final hex = value.trim().replaceFirst('#', '');
+  if (hex.length == 6) {
+    return int.tryParse('FF$hex', radix: 16) ?? 0xFFFFE5B4;
+  }
+  if (hex.length == 8) {
+    return int.tryParse(hex, radix: 16) ?? 0xFFFFE5B4;
+  }
+  return 0xFFFFE5B4;
 }
 
 class _AnimatedProductCard extends StatefulWidget {
