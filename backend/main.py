@@ -7,13 +7,14 @@ from fastapi.concurrency import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi_pagination import add_pagination
+from sqlalchemy import inspect, text
 
 from config.database import Base, engine
 from config.settings import settings
 from cheque.handlers import router as printer_router
 from cash_desk.models import CashDesk  # noqa: F401
 from cash_desk.router import router as cash_desk_router
-from orders.models import Order, OrderItem  # noqa: F401
+from orders.models import Order, OrderItem, OrderTable  # noqa: F401
 from orders.router import router as orders_router
 from products.models import Product, ProductCategory  # noqa: F401
 from products.categories_router import router as product_categories_router
@@ -24,9 +25,23 @@ from config.database import SessionLocal
 from users.helpers import hash_password
 
 
+def sync_order_table_schema():
+    inspector = inspect(engine)
+    if not inspector.has_table("orders"):
+        return
+
+    columns = {column["name"] for column in inspector.get_columns("orders")}
+    if "order_table_id" in columns:
+        return
+
+    with engine.begin() as connection:
+        connection.execute(text("ALTER TABLE orders ADD COLUMN order_table_id INTEGER"))
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    sync_order_table_schema()
     db = SessionLocal()
 
     try:

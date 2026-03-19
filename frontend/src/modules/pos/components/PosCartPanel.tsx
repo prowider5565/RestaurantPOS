@@ -2,13 +2,24 @@ import AddIcon from '@mui/icons-material/Add'
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import CloseIcon from '@mui/icons-material/Close'
 import RemoveIcon from '@mui/icons-material/Remove'
-import { Box, Button, Divider, IconButton, List, Paper, Slide, Stack, TextField, Typography } from '@mui/material'
+import { Box, Button, Divider, FormControl, IconButton, List, MenuItem, Paper, Select, Slide, Stack, TextField, Tooltip, Typography } from '@mui/material'
 import type { MutableRefObject } from 'react'
 
 import { formatMoney } from '../../../shared/utils/formatters'
-import type { CartLine } from '../types'
+import type { ApiOrderTable, CartLine } from '../types'
 import { formatIntegerForInput } from '../utils'
 import SwipeToDeleteRow from './SwipeToDeleteRow'
+
+function getTableTextColor(color: string) {
+  const hex = color.replace('#', '')
+  if (hex.length !== 6) return '#1F2937'
+
+  const red = Number.parseInt(hex.slice(0, 2), 16)
+  const green = Number.parseInt(hex.slice(2, 4), 16)
+  const blue = Number.parseInt(hex.slice(4, 6), 16)
+  const brightness = red * 0.299 + green * 0.587 + blue * 0.114
+  return brightness > 186 ? '#1F2937' : '#FFFFFF'
+}
 
 export default function PosCartPanel({
   cartCount,
@@ -18,7 +29,11 @@ export default function PosCartPanel({
   discountDigits,
   discountedTotal,
   isPlacingOrder,
+  orderTables,
+  selectedOrderTableId,
   onClearCart,
+  onSelectOrderTable,
+  onOpenCreateTable,
   onSetQty,
   onToggleEditTotal,
   onDiscountDigitsChange,
@@ -31,12 +46,18 @@ export default function PosCartPanel({
   discountDigits: string
   discountedTotal: number
   isPlacingOrder: boolean
+  orderTables: ApiOrderTable[]
+  selectedOrderTableId: string
   onClearCart: () => void
+  onSelectOrderTable: (value: string) => void
+  onOpenCreateTable: () => void
   onSetQty: (productId: number, qty: number) => void
   onToggleEditTotal: () => void
   onDiscountDigitsChange: (value: string) => void
   onPlaceOrder: () => void
 }) {
+  const selectedTable = orderTables.find((table) => String(table.id) === selectedOrderTableId) ?? null
+
   return (
     <Paper
       variant="outlined"
@@ -188,6 +209,81 @@ export default function PosCartPanel({
       <Divider sx={{ my: 1 }} />
 
       <Stack sx={{ mb: 1.5, mt: 'auto' }}>
+        <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 1.25 }}>
+          <FormControl fullWidth size="small">
+            <Select
+              displayEmpty
+              value={selectedOrderTableId}
+              onChange={(e) => onSelectOrderTable(String(e.target.value))}
+              renderValue={() =>
+                selectedTable ? (
+                  <Box
+                    sx={{
+                      px: 1,
+                      py: 0.5,
+                      borderRadius: 1,
+                      bgcolor: selectedTable.table_color,
+                      color: getTableTextColor(selectedTable.table_color),
+                      fontWeight: 900,
+                    }}
+                  >
+                    Stol {selectedTable.table_number}
+                  </Box>
+                ) : (
+                  <Typography sx={{ color: 'text.secondary', fontWeight: 700, fontSize: 14 }}>
+                    Stol tanlang
+                  </Typography>
+                )
+              }
+              sx={{
+                '& .MuiSelect-select': {
+                  py: 1,
+                },
+              }}
+            >
+              {orderTables.map((table) => (
+                <MenuItem
+                  key={table.id}
+                  value={String(table.id)}
+                  sx={{
+                    bgcolor: table.table_color,
+                    color: getTableTextColor(table.table_color),
+                    fontWeight: 900,
+                    borderRadius: 1,
+                    mx: 0.5,
+                    my: 0.25,
+                  }}
+                >
+                  Stol {table.table_number}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <Tooltip title="Yangi stol qo'shish" placement="top">
+            <IconButton
+              aria-label="Yangi stol qo'shish"
+              onClick={onOpenCreateTable}
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: 2,
+                border: '1px solid',
+                borderColor: 'divider',
+                flex: '0 0 auto',
+              }}
+            >
+              <AddIcon />
+            </IconButton>
+          </Tooltip>
+        </Stack>
+
+        {!selectedOrderTableId ? (
+          <Typography sx={{ mb: 1, color: 'error.main', fontSize: 12, fontWeight: 700 }}>
+            Buyurtma uchun stol tanlanishi shart.
+          </Typography>
+        ) : null}
+
         <Stack direction="row" justifyContent="space-between" alignItems="baseline">
           <Typography sx={{ fontWeight: 1000, fontSize: 17 }}>Jami</Typography>
           <Typography
@@ -222,7 +318,7 @@ export default function PosCartPanel({
         <Button
           color="success"
           variant="contained"
-          disabled={cartCount === 0 || isPlacingOrder}
+          disabled={cartCount === 0 || isPlacingOrder || !selectedOrderTableId}
           onClick={onPlaceOrder}
           startIcon={<CheckCircleOutlineIcon />}
           sx={{ py: 1.5, borderRadius: 2, fontSize: 14 }}

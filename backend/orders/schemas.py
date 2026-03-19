@@ -19,6 +19,7 @@ class OrderCreate(BaseModel):
     total: float = Field(gt=0)
     discounted_total: float = Field(ge=0)
     user_id: int
+    order_table_id: int
     # status: OrderStatus = OrderStatus.PENDING
     items: list[OrderItemCreate] = Field(min_length=1)
 
@@ -48,6 +49,19 @@ class UserSummaryOut(BaseModel):
     position: str | None = None
 
 
+class OrderTableCreate(BaseModel):
+    table_number: int = Field(gt=0)
+    table_color: str = Field(min_length=1, max_length=50)
+
+
+class OrderTableOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    table_number: int
+    table_color: str
+
+
 class OrderItemDetailOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -64,6 +78,7 @@ class OrderOut(BaseModel):
     # status: OrderStatus
     created_at: datetime
     user: UserSummaryOut | None = None
+    order_table: OrderTableOut | None = None
     items: list[OrderItemDetailOut]
 
 

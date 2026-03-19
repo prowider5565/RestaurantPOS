@@ -8,8 +8,35 @@ from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
 
-from .models import Order, OrderItem
-from .schemas import OrderCreate, OrderHistoryOverviewOut, OrderHistoryResponseOut
+from .models import Order, OrderItem, OrderTable
+from .schemas import OrderCreate, OrderHistoryOverviewOut, OrderHistoryResponseOut, OrderTableCreate
+
+
+def list_order_tables(db: Session) -> list[OrderTable]:
+    return db.query(OrderTable).order_by(OrderTable.table_number.asc()).all()
+
+
+def create_order_table(db: Session, payload: OrderTableCreate) -> OrderTable:
+    table_color = payload.table_color.strip()
+    if not table_color:
+        raise HTTPException(status_code=400, detail="Table color is required")
+
+    existing = (
+        db.query(OrderTable)
+        .filter(OrderTable.table_number == payload.table_number)
+        .first()
+    )
+    if existing:
+        raise HTTPException(status_code=400, detail="Table number already exists")
+
+    order_table = OrderTable(
+        table_number=payload.table_number,
+        table_color=table_color,
+    )
+    db.add(order_table)
+    db.commit()
+    db.refresh(order_table)
+    return order_table
 
 
 def create_order(db: Session, payload: OrderCreate) -> tuple[Order, list[OrderItem]]:
@@ -23,11 +50,19 @@ def create_order(db: Session, payload: OrderCreate) -> tuple[Order, list[OrderIt
 
     discounted_total = max(0.0, min(payload.discounted_total, payload.total))
     discount_amount = int(max(0, round(payload.total - discounted_total)))
+    order_table = (
+        db.query(OrderTable)
+        .filter(OrderTable.id == payload.order_table_id)
+        .first()
+    )
+    if not order_table:
+        raise HTTPException(status_code=400, detail="Invalid order table id")
 
     order = Order(
         total_price=payload.total,
         discount_amount=discount_amount,
         user_id=payload.user_id,
+        order_table_id=payload.order_table_id,
         # status=payload.status,
     )
     db.add(order)
@@ -42,7 +77,7 @@ def create_order(db: Session, payload: OrderCreate) -> tuple[Order, list[OrderIt
     db.commit()
 
     # Refresh and eagerly load relationships
-    db.refresh(order, ["user", "items"])
+    db.refresh(order, ["user", "items", "order_table"])
     for item in items:
         db.refresh(item)
 
@@ -147,6 +182,7 @@ def get_order_or_404(db: Session, order_id: int) -> Order:
         .options(
             selectinload(Order.items).selectinload(OrderItem.product),
             selectinload(Order.user),
+            selectinload(Order.order_table),
         )
         .filter(Order.id == order_id)
         .first()

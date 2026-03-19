@@ -21,6 +21,7 @@ class Order(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     discount_amount = Column(Integer, nullable=True, default=0)
     user_id = Column(Integer, ForeignKey("users.id"))
+    order_table_id = Column(Integer, ForeignKey("order_tables.id"), nullable=False, index=True)
     items = relationship(
         "OrderItem",
         back_populates="order",
@@ -28,7 +29,17 @@ class Order(Base):
         cascade="all, delete-orphan",
     )
     user = relationship("User", back_populates="orders", lazy="selectin")
+    order_table = relationship("OrderTable", back_populates="orders", lazy="selectin")
 
+
+class OrderTable(Base):
+    __tablename__ = "order_tables"
+
+    id = Column(Integer, primary_key=True, index=True)
+    table_number = Column(Integer, nullable=False, unique=True, index=True)
+    table_color = Column(String(50), nullable=False)
+
+    orders = relationship("Order", back_populates="order_table")
 
 class OrderItem(Base):
     __tablename__ = "order_items"

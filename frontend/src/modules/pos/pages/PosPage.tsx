@@ -8,6 +8,7 @@ import PosCartPanel from '../components/PosCartPanel'
 import PosCategoryStrip from '../components/PosCategoryStrip'
 import PosFoodDialogs from '../components/PosFoodDialogs'
 import PosProductsGrid from '../components/PosProductsGrid'
+import PosTableDialog from '../components/PosTableDialog'
 import { usePosPage } from '../hooks/usePosPage'
 
 export default function PosPage({
@@ -151,7 +152,11 @@ export default function PosPage({
               discountDigits={pos.discountDigits}
               discountedTotal={pos.discountedTotal}
               isPlacingOrder={pos.isPlacingOrder}
+              orderTables={pos.orderTables}
+              selectedOrderTableId={pos.selectedOrderTableId}
               onClearCart={pos.clearCart}
+              onSelectOrderTable={pos.setSelectedOrderTableId}
+              onOpenCreateTable={pos.openCreateTable}
               onSetQty={pos.setQty}
               onToggleEditTotal={pos.toggleEditTotal}
               onDiscountDigitsChange={pos.setDiscountDigits}
@@ -185,6 +190,14 @@ export default function PosPage({
           productMenu={pos.productMenu}
           onCloseProductMenu={() => pos.setProductMenu(null)}
           onEditFromMenu={pos.openEditFood}
+        />
+
+        <PosTableDialog
+          open={pos.createTableOpen}
+          value={pos.newOrderTable}
+          onClose={pos.closeCreateTable}
+          onChange={pos.setNewOrderTable}
+          onSubmit={pos.createOrderTable}
         />
       </Box>
     </Box>
