@@ -1,16 +1,11 @@
 import CloseIcon from '@mui/icons-material/Close'
-import { Box, Chip, Dialog, DialogContent, Divider, IconButton, List, ListItem, ListItemText, Paper, Stack, Typography } from '@mui/material'
+import { Box, Dialog, DialogContent, Divider, IconButton, List, ListItem, ListItemText, Paper, Stack, Typography } from '@mui/material'
 import { useEffect, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
 import { formatMoney } from '../../../shared/utils/formatters'
 import type { ApiOrderDetail } from '../types'
-import { formatCreated, getOrderTotals, toOrderHistoryImageSrc } from '../utils'
-
-function OrderStatusChip({ status }: { status: ApiOrderDetail['status'] }) {
-  if (status === 'Pending') return <Chip label="Kutilmoqda" color="warning" size="small" />
-  return <Chip label="To'langan" color="success" size="small" />
-}
+import { formatCreated, getOrderTotals, getTableTextColor, toOrderHistoryImageSrc } from '../utils'
 
 export default function OrderDetailsDialog({
   open,
@@ -53,7 +48,7 @@ export default function OrderDetailsDialog({
           <Typography sx={{ fontWeight: 1000 }}>{order ? `Buyurtma #${order.id}` : 'Buyurtma'}</Typography>
           {order ? (
             <Typography variant="body2" color="text.secondary">
-              ID {order.id} • {formatCreated(order.created_at)}
+              ID {order.id} â€¢ {formatCreated(order.created_at)}
             </Typography>
           ) : null}
         </Box>
@@ -66,7 +61,24 @@ export default function OrderDetailsDialog({
 
       <DialogContent sx={{ pt: 2 }}>
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-          {order ? <OrderStatusChip status={order.status} /> : <Box />}
+          {order?.order_table ? (
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                px: 1.25,
+                py: 0.5,
+                borderRadius: 1.5,
+                bgcolor: order.order_table.table_color,
+                color: getTableTextColor(order.order_table.table_color),
+                fontWeight: 1000,
+              }}
+            >
+              Stol {order.order_table.table_number}
+            </Box>
+          ) : (
+            <Box />
+          )}
           {totals.discountAmount > 0 ? (
             <Stack alignItems="flex-end" spacing={0} sx={{ lineHeight: 1.15 }}>
               <Typography sx={{ fontWeight: 900, textDecoration: 'line-through', color: 'text.secondary' }}>
@@ -103,7 +115,7 @@ export default function OrderDetailsDialog({
                   />
                   <ListItemText
                     primary={<Typography sx={{ fontWeight: 900 }}>{item.product.name}</Typography>}
-                    secondary={`× ${item.quantity} • ${formatMoney(item.product.price)}`}
+                    secondary={`Ã— ${item.quantity} â€¢ ${formatMoney(item.product.price)}`}
                   />
                   <Typography sx={{ fontWeight: 1000 }}>{formatMoney(lineTotal)}</Typography>
                 </ListItem>

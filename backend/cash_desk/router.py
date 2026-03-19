@@ -116,7 +116,7 @@ def get_cash_desk_summary_api(
 ) -> CashDeskSummaryOut:
     start, end = resolve_date_range(preset, from_date, to_date)
 
-    order_total = float(
+    total_order_income = float(
         (
             db.query(func.coalesce(func.sum(Order.total_price), 0.0))
             .filter(Order.created_at >= start)
@@ -126,32 +126,46 @@ def get_cash_desk_summary_api(
         or 0.0
     )
 
-    misc_income = float(
-        (
-            db.query(func.coalesce(func.sum(CashDesk.amount), 0))
-            .filter(CashDesk.transaction_type == TransactionType.IN)
-            .filter(CashDesk.created_at >= start)
-            .filter(CashDesk.created_at <= end)
-            .scalar()
-        )
-        or 0.0
+    total_misc_income = float(
+        db.query(func.coalesce(func.sum(CashDesk.amount), 0))
+        .filter(CashDesk.transaction_type == TransactionType.IN)
+        .filter(CashDesk.created_at >= start)
+        .filter(CashDesk.created_at <= end)
+        .scalar() or 0.0
     )
 
-    expense = float(
-        (
-            db.query(func.coalesce(func.sum(CashDesk.amount), 0))
-            .filter(CashDesk.transaction_type == TransactionType.OUT)
-            .filter(CashDesk.created_at >= start)
-            .filter(CashDesk.created_at <= end)
-            .scalar()
-        )
-        or 0.0
+    total_expense = float(
+        db.query(func.coalesce(func.sum(CashDesk.amount), 0))
+        .filter(CashDesk.transaction_type == TransactionType.OUT)
+        .filter(CashDesk.created_at >= start)
+        .filter(CashDesk.created_at <= end)
+        .scalar() or 0.0
     )
 
-    current_amount = order_total + misc_income - expense
+    cumulative_order_income = float(
+        db.query(func.coalesce(func.sum(Order.total_price), 0.0))
+        .filter(Order.created_at <= end)
+        .scalar() or 0.0
+    )
+
+    cumulative_misc_income = float(
+        db.query(func.coalesce(func.sum(CashDesk.amount), 0))
+        .filter(CashDesk.transaction_type == TransactionType.IN)
+        .filter(CashDesk.created_at <= end)
+        .scalar() or 0.0
+    )
+
+    cumulative_expense = float(
+        db.query(func.coalesce(func.sum(CashDesk.amount), 0))
+        .filter(CashDesk.transaction_type == TransactionType.OUT)
+        .filter(CashDesk.created_at <= end)
+        .scalar() or 0.0
+    )
+
+    current_amount = cumulative_order_income + cumulative_misc_income - cumulative_expense
     return CashDeskSummaryOut(
         current_amount=current_amount,
-        total_order_income=order_total,
-        total_misc_income=misc_income,
-        total_expense=expense,
+        total_order_income=total_order_income,
+        total_misc_income=total_misc_income,
+        total_expense=total_expense,
     )

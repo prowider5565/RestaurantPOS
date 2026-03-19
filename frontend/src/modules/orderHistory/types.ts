@@ -15,14 +15,20 @@ export type ApiOrderItemDetail = {
   quantity: number
 }
 
+export type ApiOrderTable = {
+  id: number
+  table_number: number
+  table_color: string
+}
+
 export type ApiOrderRow = {
   id: number
   total_price: number
   discount_amount?: number | null
-  status: 'Pending' | 'Completed'
   created_at: string
   items: ApiOrderItemRef[]
   user?: { id: number; username: string; position?: string | null }
+  order_table?: ApiOrderTable | null
 }
 
 export type ApiOrderDetail = Omit<ApiOrderRow, 'items'> & {

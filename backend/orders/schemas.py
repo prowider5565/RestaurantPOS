@@ -91,6 +91,7 @@ class OrderHistoryRowOut(BaseModel):
     # status: OrderStatus
     created_at: datetime
     user: UserSummaryOut | None = None
+    order_table: OrderTableOut | None = None
     items: list[OrderItemOut]
 
 

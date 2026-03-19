@@ -41,11 +41,19 @@ export function useCashDeskPage() {
   const [deleteTarget, setDeleteTarget] = useState<ApiCashDeskTransaction | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const hasCompleteRange = preset !== null || (!!fromDate && !!toDate)
 
   useEffect(() => {
     let cancelled = false
 
     async function loadSummary() {
+      if (!hasCompleteRange) {
+        setSummary(null)
+        setSummaryError(null)
+        setSummaryLoading(false)
+        return
+      }
+
       setSummaryLoading(true)
       setSummaryError(null)
       try {
@@ -74,12 +82,17 @@ export function useCashDeskPage() {
     return () => {
       cancelled = true
     }
-  }, [fromDate, preset, reloadKey, toDate])
+  }, [fromDate, hasCompleteRange, preset, reloadKey, toDate])
 
   useEffect(() => {
     let cancelled = false
 
     async function loadTransactions() {
+      if (!hasCompleteRange) {
+        setTxPage(null)
+        return
+      }
+
       try {
         const params = new URLSearchParams()
         params.set('page', String(page))
@@ -108,7 +121,7 @@ export function useCashDeskPage() {
     return () => {
       cancelled = true
     }
-  }, [fromDate, page, preset, reloadKey, size, toDate])
+  }, [fromDate, hasCompleteRange, page, preset, reloadKey, size, toDate])
 
   const createAmountInt = useMemo(() => {
     const numeric = Number(createAmount)

@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { API_URL } from '../../../config/env'
 import type { DateRangePreset } from '../../../shared/components/DateRangeFilterCard'
 import type { ApiOrderHistoryResponse } from '../types'
-import { countFoodTypes, formatCreated, toYmd } from '../utils'
+import { formatCreated, toYmd } from '../utils'
 
 export function useOrderHistoryPage() {
   const [search, setSearch] = useState('')
@@ -15,11 +15,18 @@ export function useOrderHistoryPage() {
   const size = 12
   const [history, setHistory] = useState<ApiOrderHistoryResponse | null>(null)
   const [loading, setLoading] = useState(false)
+  const hasCompleteRange = preset !== null || (!!fromDate && !!toDate)
 
   useEffect(() => {
     let cancelled = false
 
     async function loadHistory() {
+      if (!hasCompleteRange) {
+        setHistory(null)
+        setLoading(false)
+        return
+      }
+
       setLoading(true)
       try {
         const params = new URLSearchParams()
@@ -42,7 +49,7 @@ export function useOrderHistoryPage() {
     return () => {
       cancelled = true
     }
-  }, [fromDate, page, size, toDate])
+  }, [fromDate, hasCompleteRange, page, size, toDate])
 
   const rows = useMemo(() => {
     const items = history?.page.items ?? []
@@ -52,22 +59,18 @@ export function useOrderHistoryPage() {
   }, [history?.page.items, search])
 
   function exportToExcelCsv() {
-    const header = ['ID', 'Foydalanuvchi', 'Lavozim', 'Taom turlari', 'Ichimlik turlari', "To'lov holati", 'Jami summa', 'Sana']
+    const header = ['ID', 'Foydalanuvchi', 'Lavozim', 'Stol', 'Jami summa', 'Sana']
     const lines = rows.map((order) => {
-      const foodTypes = countFoodTypes(order.items)
-      const drinkTypes = 0
-      const payTypeLabel = order.status === 'Pending' ? 'Kutilmoqda' : "To'langan"
       const total = order.total_price
       const username = order.user?.username ?? '-'
       const position = order.user?.position ?? '-'
+      const tableLabel = order.order_table ? `Stol ${order.order_table.table_number}` : '-'
 
       return [
         order.id,
         username,
         position,
-        foodTypes,
-        drinkTypes,
-        payTypeLabel,
+        tableLabel,
         total.toFixed(2),
         formatCreated(order.created_at),
       ]

@@ -1,11 +1,9 @@
-import FastfoodIcon from '@mui/icons-material/Fastfood'
 import HistoryIcon from '@mui/icons-material/History'
-import LocalCafeIcon from '@mui/icons-material/LocalCafe'
-import { Button, Pagination, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material'
+import { Box, Button, Pagination, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material'
 
 import { formatMoney } from '../../../shared/utils/formatters'
 import type { ApiOrderRow } from '../types'
-import { countFoodTypes, formatCreated, getOrderTotals } from '../utils'
+import { formatCreated, getOrderTotals, getTableTextColor } from '../utils'
 
 export function OrderHistoryTable({
   loading,
@@ -64,7 +62,7 @@ export function OrderHistoryTable({
               </TableCell>
               <TableCell sx={{ fontWeight: 900 }}>Foydalanuvchi</TableCell>
               <TableCell sx={{ fontWeight: 900 }}>Lavozim</TableCell>
-              <TableCell sx={{ fontWeight: 900 }}>Turlar</TableCell>
+              <TableCell sx={{ fontWeight: 900 }}>Stol</TableCell>
               <TableCell sx={{ fontWeight: 900 }} align="right">
                 Jami
               </TableCell>
@@ -77,10 +75,9 @@ export function OrderHistoryTable({
           <TableBody>
             {rows.map((order) => {
               const totals = getOrderTotals(order)
-              const foodTypes = countFoodTypes(order.items)
-              const drinkTypes = 0
               const username = order.user?.username ?? '-'
               const position = order.user?.position ?? '-'
+              const table = order.order_table
 
               return (
                 <TableRow key={order.id} hover>
@@ -90,16 +87,26 @@ export function OrderHistoryTable({
                   <TableCell>{username}</TableCell>
                   <TableCell>{position}</TableCell>
                   <TableCell>
-                    <Stack direction="row" alignItems="center" gap={1.5}>
-                      <Stack direction="row" alignItems="center" gap={0.5}>
-                        <FastfoodIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-                        <Typography sx={{ fontWeight: 1000 }}>{foodTypes}</Typography>
-                      </Stack>
-                      <Stack direction="row" alignItems="center" gap={0.5}>
-                        <LocalCafeIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-                        <Typography sx={{ fontWeight: 1000 }}>{drinkTypes}</Typography>
-                      </Stack>
-                    </Stack>
+                    {table ? (
+                      <Box
+                        sx={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          px: 1.25,
+                          py: 0.5,
+                          borderRadius: 1.5,
+                          bgcolor: table.table_color,
+                          color: getTableTextColor(table.table_color),
+                          fontWeight: 1000,
+                          minWidth: 76,
+                          justifyContent: 'center',
+                        }}
+                      >
+                        Stol {table.table_number}
+                      </Box>
+                    ) : (
+                      '-'
+                    )}
                   </TableCell>
                   <TableCell align="right" sx={{ fontWeight: 1000 }}>
                     {totals.discountAmount > 0 ? (

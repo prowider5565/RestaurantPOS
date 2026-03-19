@@ -73,11 +73,18 @@ export default function StatisticsPage({
   const [preset, setPreset] = useState<DateRangePreset>('daily')
   const [fromDate, setFromDate] = useState(today)
   const [toDate, setToDate] = useState(today)
+  const hasCompleteRange = preset !== null || (!!fromDate && !!toDate)
 
   useEffect(() => {
     let cancelled = false
 
     async function load() {
+      if (!hasCompleteRange) {
+        setStats(null)
+        setLoading(false)
+        return
+      }
+
       setLoading(true)
       try {
         const params = new URLSearchParams()
@@ -101,7 +108,7 @@ export default function StatisticsPage({
     return () => {
       cancelled = true
     }
-  }, [fromDate, page, size, toDate])
+  }, [fromDate, hasCompleteRange, page, size, toDate])
 
   const rows = useMemo(() => stats?.page.items ?? [], [stats])
   const pages = stats?.page.pages ?? 1

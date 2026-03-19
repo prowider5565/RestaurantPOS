@@ -117,7 +117,11 @@ def get_order_history(
     total_net_sum = float(net_sum_query.scalar() or 0.0)
 
     query = apply_filters(
-        db.query(Order).options(selectinload(Order.items), selectinload(Order.user))
+        db.query(Order).options(
+            selectinload(Order.items),
+            selectinload(Order.user),
+            selectinload(Order.order_table),
+        )
     ).order_by(Order.created_at.desc())
     page = paginate(db, query, params)
 
@@ -161,7 +165,11 @@ def get_my_order_history(
 
     query = (
         db.query(Order)
-        .options(selectinload(Order.items), selectinload(Order.user))
+        .options(
+            selectinload(Order.items),
+            selectinload(Order.user),
+            selectinload(Order.order_table),
+        )
         .filter(Order.user_id == user_id)
         .order_by(Order.created_at.desc())
     )
