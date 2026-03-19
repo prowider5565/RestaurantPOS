@@ -48,6 +48,9 @@ def generate_receipt(
     escpos_bold_off = "\x1bE\x00"
     escpos_double_size_on = "\x1d!\x11"
     escpos_default_size = "\x1d!\x00"
+    vertical = "\u2502"
+    horizontal = "\u2500"
+    strong_horizontal = "\u2550"
     table_width = 48
     id_width = 3
     name_width = 20
@@ -64,39 +67,57 @@ def generate_receipt(
 
     def build_row(cols: list[str]) -> str:
         return (
-            "|"
+            vertical
             + cols[0].ljust(id_width)
-            + "|"
+            + vertical
             + cols[1].ljust(name_width)
-            + "|"
+            + vertical
             + cols[2].ljust(qty_width)
-            + "|"
+            + vertical
             + cols[3].ljust(price_width)
-            + "|"
+            + vertical
             + cols[4].ljust(subtotal_width)
-            + "|"
+            + vertical
         )
 
     def format_number_plain(n: float) -> str:
         return str(round(n))
 
     def separator() -> str:
-        return "-" * table_width
+        return "\u251c" + (horizontal * (table_width - 2)) + "\u2524"
 
     def strong_separator() -> str:
-        return "=" * table_width
+        return "\u255e" + (strong_horizontal * (table_width - 2)) + "\u2561"
+
+    def table_separator() -> str:
+        return (
+            "\u251c"
+            + (horizontal * id_width)
+            + "\u253c"
+            + (horizontal * name_width)
+            + "\u253c"
+            + (horizontal * qty_width)
+            + "\u253c"
+            + (horizontal * price_width)
+            + "\u253c"
+            + (horizontal * subtotal_width)
+            + "\u2524"
+        )
 
     def safe_line(text: str) -> str:
         return (
             text[:table_width] if len(text) > table_width else text.ljust(table_width)
         )
 
+    def framed_line(text: str) -> str:
+        return vertical + center_text(text, table_width - 2) + vertical
+
     def build_summary_line(label: str, value: str) -> str:
         content_width = table_width - 2
         combined = f"{label}: {value}"
         if len(combined) <= content_width:
-            return "|" + label.ljust(content_width - len(value)) + value + "|"
-        return "|" + combined[:content_width].ljust(content_width) + "|"
+            return vertical + label.ljust(content_width - len(value)) + value + vertical
+        return vertical + combined[:content_width].ljust(content_width) + vertical
 
     def build_double_size_summary_line(label: str, value: str) -> str:
         effective_width = table_width // 2
@@ -128,7 +149,7 @@ def generate_receipt(
     lines.append(safe_line("Stol: ".ljust(table_width - len(table_number)-1) + f"#{table_number}"))
     lines.append("")
     lines.append(separator())
-    lines.append("|" + center_text(program_name, table_width - 2) + "|")
+    lines.append(framed_line(program_name))
     lines.append(separator())
 
     created_at = order_data.get("created_at")
@@ -140,11 +161,11 @@ def generate_receipt(
         except ValueError:
             date_str = ""
     if date_str:
-        lines.append("|" + center_text(date_str, table_width - 2) + "|")
+        lines.append(framed_line(date_str))
         lines.append(separator())
 
     lines.append(build_row(["ID", "Nomi", "Soni", "Narx", "Jami"]))
-    lines.append(separator())
+    lines.append(table_separator())
 
     total_amount = 0.0
     for item in items:
@@ -187,7 +208,7 @@ def generate_receipt(
             ]
         )
     )
-    lines.append(separator())
+    lines.append(table_separator())
 
     lines.append(strong_separator())
     lines.append(
