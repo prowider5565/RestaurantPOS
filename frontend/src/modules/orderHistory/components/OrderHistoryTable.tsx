@@ -64,6 +64,9 @@ export function OrderHistoryTable({
               <TableCell sx={{ fontWeight: 900 }}>Lavozim</TableCell>
               <TableCell sx={{ fontWeight: 900 }}>Stol</TableCell>
               <TableCell sx={{ fontWeight: 900 }} align="right">
+                Ofitsiant Xizmati
+              </TableCell>
+              <TableCell sx={{ fontWeight: 900 }} align="right">
                 Jami
               </TableCell>
               <TableCell sx={{ fontWeight: 900 }}>Sana</TableCell>
@@ -107,6 +110,9 @@ export function OrderHistoryTable({
                     ) : (
                       '-'
                     )}
+                  </TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 1000, color: 'warning.dark' }}>
+                    {formatMoney(order.waitress_wage)}
                   </TableCell>
                   <TableCell align="right" sx={{ fontWeight: 1000 }}>
                     {totals.discountAmount > 0 ? (

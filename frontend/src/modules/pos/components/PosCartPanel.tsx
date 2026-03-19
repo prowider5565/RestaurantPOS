@@ -2,12 +2,11 @@ import AddIcon from '@mui/icons-material/Add'
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import CloseIcon from '@mui/icons-material/Close'
 import RemoveIcon from '@mui/icons-material/Remove'
-import { Box, Button, Divider, FormControl, IconButton, List, MenuItem, Paper, Select, Slide, Stack, TextField, Tooltip, Typography } from '@mui/material'
+import { Box, Button, Divider, FormControl, IconButton, List, MenuItem, Paper, Select, Stack, TextField, Tooltip, Typography } from '@mui/material'
 import type { MutableRefObject } from 'react'
 
 import { formatMoney } from '../../../shared/utils/formatters'
 import type { ApiOrderTable, CartLine } from '../types'
-import { formatIntegerForInput } from '../utils'
 import SwipeToDeleteRow from './SwipeToDeleteRow'
 
 function getTableTextColor(color: string) {
@@ -83,44 +82,6 @@ export default function PosCartPanel({
       <Divider sx={{ my: 0.75 }} />
 
       <Box ref={cartItemsRef} sx={{ flex: 1, minHeight: 0, overflow: 'visible', position: 'relative' }}>
-        <Slide
-          in={isEditingTotal}
-          direction="up"
-          container={cartItemsRef.current}
-          mountOnEnter
-          unmountOnExit
-          timeout={180}
-        >
-          <Box sx={{ position: 'absolute', left: 0, right: 0, top: 0, zIndex: 5 }}>
-            <Paper
-              variant="outlined"
-              sx={{
-                mb: 1,
-                p: 1,
-                borderRadius: 2,
-                bgcolor: 'background.paper',
-                boxShadow: '0 14px 30px rgba(0,0,0,0.08)',
-              }}
-              onClick={(e) => e.stopPropagation()}
-              onMouseDown={(e) => e.stopPropagation()}
-            >
-              <Typography sx={{ fontWeight: 1000, fontSize: 18, lineHeight: 1.1, textAlign: 'center' }}>
-                {formatIntegerForInput(discountDigits) || '0'}
-              </Typography>
-              <Typography sx={{ fontWeight: 700, color: 'text.secondary', fontSize: 11, mt: 0.5, textAlign: 'center' }}>
-                Chegirmali summa
-              </Typography>
-              <TextField
-                value={discountDigits}
-                onChange={(e) => onDiscountDigitsChange(e.target.value.replaceAll(/[^\d]/g, '').slice(0, 18))}
-                inputMode="numeric"
-                fullWidth
-                size="small"
-                sx={{ mt: 1 }}
-              />
-            </Paper>
-          </Box>
-        </Slide>
         <List dense disablePadding sx={{ height: '100%', overflow: 'auto' }}>
           {cartLines.length === 0 ? (
             <Box sx={{ py: 4.5, textAlign: 'center', color: 'text.secondary' }}>
@@ -286,26 +247,52 @@ export default function PosCartPanel({
 
         <Stack direction="row" justifyContent="space-between" alignItems="baseline">
           <Typography sx={{ fontWeight: 1000, fontSize: 17 }}>Jami</Typography>
-          <Typography
-            onClick={onToggleEditTotal}
-            sx={{
-              fontWeight: 1100,
-              fontSize: 22,
-              cursor: cartCount === 0 ? 'default' : 'pointer',
-              userSelect: 'none',
-              transition: 'color 140ms ease',
-              ...(cartCount === 0
-                ? {}
-                : {
-                    '&:hover': {
-                      color: 'primary.main',
-                    },
-                  }),
-            }}
-          >
-            {formatMoney(discountedTotal)}
-          </Typography>
+          {isEditingTotal ? (
+            <TextField
+              value={discountDigits}
+              onChange={(e) => onDiscountDigitsChange(e.target.value.replaceAll(/[^\d]/g, '').slice(0, 18))}
+              onBlur={onToggleEditTotal}
+              autoFocus
+              inputMode="numeric"
+              size="small"
+              variant="standard"
+              sx={{
+                width: 132,
+                '& .MuiInputBase-input': {
+                  p: 0,
+                  textAlign: 'right',
+                  fontWeight: 1100,
+                  fontSize: 22,
+                },
+              }}
+            />
+          ) : (
+            <Typography
+              onClick={onToggleEditTotal}
+              sx={{
+                fontWeight: 1100,
+                fontSize: 22,
+                cursor: cartCount === 0 ? 'default' : 'pointer',
+                userSelect: 'none',
+                transition: 'color 140ms ease',
+                ...(cartCount === 0
+                  ? {}
+                  : {
+                      '&:hover': {
+                        color: 'primary.main',
+                      },
+                    }),
+              }}
+            >
+              {formatMoney(discountedTotal)}
+            </Typography>
+          )}
         </Stack>
+        {isEditingTotal ? (
+          <Typography sx={{ mt: 0.5, textAlign: 'right', color: 'text.secondary', fontSize: 11, fontWeight: 700 }}>
+            Chegirmali summa
+          </Typography>
+        ) : null}
       </Stack>
 
       <Box

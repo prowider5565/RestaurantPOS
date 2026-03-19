@@ -74,6 +74,7 @@ class OrderOut(BaseModel):
 
     id: int
     total_price: float
+    waitress_wage: float
     discount_amount: int | None = 0
     # status: OrderStatus
     created_at: datetime
@@ -87,6 +88,7 @@ class OrderHistoryRowOut(BaseModel):
 
     id: int
     total_price: float
+    waitress_wage: float
     discount_amount: int | None = 0
     # status: OrderStatus
     created_at: datetime

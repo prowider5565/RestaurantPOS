@@ -24,6 +24,7 @@ export type ApiOrderTable = {
 export type ApiOrderRow = {
   id: number
   total_price: number
+  waitress_wage: number
   discount_amount?: number | null
   created_at: string
   items: ApiOrderItemRef[]

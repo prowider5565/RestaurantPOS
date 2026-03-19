@@ -31,6 +31,10 @@ class Order(Base):
     user = relationship("User", back_populates="orders", lazy="selectin")
     order_table = relationship("OrderTable", back_populates="orders", lazy="selectin")
 
+    @property
+    def waitress_wage(self) -> float:
+        return float(self.total_price or 0.0) * 0.1
+
 
 class OrderTable(Base):
     __tablename__ = "order_tables"
