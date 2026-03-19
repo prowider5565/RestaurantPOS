@@ -64,7 +64,10 @@ export function OrderHistoryTable({
               <TableCell sx={{ fontWeight: 900 }}>Lavozim</TableCell>
               <TableCell sx={{ fontWeight: 900 }}>Stol</TableCell>
               <TableCell sx={{ fontWeight: 900 }} align="right">
-                Ofitsiant Xizmati
+                Chegirma
+              </TableCell>
+              <TableCell sx={{ fontWeight: 900 }} align="right">
+                Ofitsiant xizmati
               </TableCell>
               <TableCell sx={{ fontWeight: 900 }} align="right">
                 Jami
@@ -81,6 +84,7 @@ export function OrderHistoryTable({
               const username = order.user?.username ?? '-'
               const position = order.user?.position ?? '-'
               const table = order.order_table
+              const finalTotal = totals.discountedTotal + order.waitress_wage
 
               return (
                 <TableRow key={order.id} hover>
@@ -111,20 +115,14 @@ export function OrderHistoryTable({
                       '-'
                     )}
                   </TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 1000, color: 'warning.dark' }}>
+                  <TableCell align="right" sx={{ fontWeight: 800 }}>
+                    {formatMoney(totals.discountAmount)}
+                  </TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 800 }}>
                     {formatMoney(order.waitress_wage)}
                   </TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 1000 }}>
-                    {totals.discountAmount > 0 ? (
-                      <Stack alignItems="flex-end" spacing={0} sx={{ lineHeight: 1.1 }}>
-                        <Typography sx={{ fontWeight: 900, textDecoration: 'line-through', color: 'text.secondary' }}>
-                          {formatMoney(totals.total)}
-                        </Typography>
-                        <Typography sx={{ fontWeight: 1100 }}>{formatMoney(totals.discountedTotal)}</Typography>
-                      </Stack>
-                    ) : (
-                      formatMoney(totals.total)
-                    )}
+                  <TableCell align="right" sx={{ fontWeight: 900 }}>
+                    {formatMoney(finalTotal)}
                   </TableCell>
                   <TableCell>{formatCreated(order.created_at)}</TableCell>
                   <TableCell align="right">
