@@ -3,7 +3,7 @@ import requests
 BASE_URL = "http://localhost:8000"
 
 PRODUCTS_URL = f"{BASE_URL}/products"
-CATEGORIES_URL = f"{BASE_URL}/products/product-categories"
+CATEGORIES_URL = f"{BASE_URL}/product-categories"
 
 
 DATA = [
@@ -93,7 +93,7 @@ def create_products(category_map):
             "name": item["name"],
             "price": item["price"],
             "category_id": category_map[item["category"]],
-            "measure": item["measure"],
+            "measure": str(item["measure"]).strip().lower(),
         }
 
         res = requests.post(PRODUCTS_URL, data=payload)

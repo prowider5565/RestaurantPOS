@@ -18,6 +18,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
+import { useRef, useState } from 'react'
 
 import type { Category, EditFoodForm, NewFoodForm, UiProduct } from '../types'
 import { formatIntegerForInput } from '../utils'
@@ -57,6 +58,24 @@ function FoodDialog({
 }) {
   const measureLabelId = `${title}-measure-label`
   const categoryLabelId = `${title}-category-label`
+  const [isDragActive, setIsDragActive] = useState(false)
+  const uploadAreaRef = useRef<HTMLDivElement | null>(null)
+
+  function handleDroppedFile(file: File | null) {
+    setIsDragActive(false)
+    onPickImage(file)
+  }
+
+  function handlePaste(event: React.ClipboardEvent<HTMLDivElement>) {
+    const file = Array.from(event.clipboardData.items)
+      .find((item) => item.type.startsWith('image/'))
+      ?.getAsFile()
+
+    if (!file) return
+
+    event.preventDefault()
+    handleDroppedFile(file)
+  }
 
   return (
     <Dialog
@@ -165,7 +184,7 @@ function FoodDialog({
               <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ sm: 'center' }} gap={2}>
                 <Button component="label" variant="outlined">
                   Rasm tanlash
-                  <input hidden type="file" accept="image/*" onChange={(e) => onPickImage(e.target.files?.[0] ?? null)} />
+                  <input hidden type="file" accept="image/*" onChange={(e) => handleDroppedFile(e.target.files?.[0] ?? null)} />
                 </Button>
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                   {food.imageFile ? food.imageFile.name : 'Fayl tanlanmagan'}
@@ -173,24 +192,54 @@ function FoodDialog({
               </Stack>
 
               <Box
+                ref={uploadAreaRef}
+                tabIndex={0}
+                onMouseEnter={() => uploadAreaRef.current?.focus()}
+                onClick={() => uploadAreaRef.current?.focus()}
+                onPaste={handlePaste}
+                onDragEnter={(event) => {
+                  event.preventDefault()
+                  setIsDragActive(true)
+                }}
+                onDragOver={(event) => {
+                  event.preventDefault()
+                  if (!isDragActive) setIsDragActive(true)
+                }}
+                onDragLeave={(event) => {
+                  event.preventDefault()
+                  if (event.currentTarget.contains(event.relatedTarget as Node | null)) return
+                  setIsDragActive(false)
+                }}
+                onDrop={(event) => {
+                  event.preventDefault()
+                  const file = event.dataTransfer.files?.[0]
+                  handleDroppedFile(file ?? null)
+                }}
                 sx={{
                   mt: 1,
                   height: 160,
                   borderRadius: 2,
                   border: '1px dashed',
-                  borderColor: 'divider',
+                  borderColor: isDragActive ? 'warning.main' : 'divider',
                   overflow: 'hidden',
-                  bgcolor: 'background.default',
+                  bgcolor: isDragActive ? 'rgba(255, 152, 0, 0.08)' : 'background.default',
+                  cursor: 'pointer',
                   display: 'grid',
                   placeItems: 'center',
                   backgroundImage: previewUrl ? `url("${previewUrl}")` : 'none',
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
+                  transition: 'border-color 120ms ease, background-color 120ms ease',
+                  outline: 'none',
+                  '&:focus-visible': {
+                    borderColor: 'warning.main',
+                    boxShadow: '0 0 0 3px rgba(255, 152, 0, 0.18)',
+                  },
                 }}
               >
                 {!previewUrl ? (
                   <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 800 }}>
-                    Rasm ko'rinishi
+                    {isDragActive ? 'Rasmni shu yerga tashlang' : "Rasm ko'rinishi yoki Ctrl+V bosing"}
                   </Typography>
                 ) : null}
               </Box>
