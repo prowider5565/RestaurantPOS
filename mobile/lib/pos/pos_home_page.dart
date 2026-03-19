@@ -491,9 +491,11 @@ class _PosHomePageState extends State<PosHomePage> {
   }
 
   Widget _buildProductCard(UiProduct p) {
+    final isSelected = (_cart[p.id]?.qty ?? 0) > 0;
     return _AnimatedProductCard(
       product: p,
       priceText: _formatMoneyInt(p.price.round()),
+      isSelected: isSelected,
       onTap: () => _addToCart(p),
     );
   }
@@ -1020,11 +1022,13 @@ class _AnimatedProductCard extends StatefulWidget {
   const _AnimatedProductCard({
     required this.product,
     required this.priceText,
+    required this.isSelected,
     required this.onTap,
   });
 
   final UiProduct product;
   final String priceText;
+  final bool isSelected;
   final VoidCallback onTap;
 
   @override
@@ -1044,7 +1048,10 @@ class _AnimatedProductCardState extends State<_AnimatedProductCard> {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: Color(0xFFE8E8E8)),
+          side: BorderSide(
+            color: widget.isSelected ? Colors.deepOrange : const Color(0xFFE8E8E8),
+            width: widget.isSelected ? 2 : 1,
+          ),
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
