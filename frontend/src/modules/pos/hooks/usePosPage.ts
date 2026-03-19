@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
 import { getCurrentUser } from '../../../shared/auth'
+import { compressProductImage } from '../imageCompression'
 import { generateReceipt, printReceipt } from '../receipt'
 import type {
   ApiCategory,
@@ -127,21 +128,21 @@ export function usePosPage() {
     setIsEditingTotal(false)
   }
 
-  function addToCart(product: UiProduct) {
+  const addToCart = useCallback((product: UiProduct) => {
     setCart((prev) => {
       const existing = prev[String(product.id)]
       const nextQty = existing ? existing.qty + 1 : 1
       return { ...prev, [String(product.id)]: { product, qty: nextQty } }
     })
-  }
+  }, [])
 
-  function clearLongPressTimer() {
+  const clearLongPressTimer = useCallback(() => {
     if (longPressTimerRef.current == null) return
     window.clearTimeout(longPressTimerRef.current)
     longPressTimerRef.current = null
-  }
+  }, [])
 
-  function beginLongPress(product: UiProduct, left: number, top: number) {
+  const beginLongPress = useCallback((product: UiProduct, left: number, top: number) => {
     clearLongPressTimer()
     longPressFiredRef.current = false
     longPressTimerRef.current = window.setTimeout(() => {
@@ -149,11 +150,11 @@ export function usePosPage() {
       setProductMenu({ product, left, top })
       clearLongPressTimer()
     }, 550)
-  }
+  }, [clearLongPressTimer])
 
-  function cancelLongPress() {
+  const cancelLongPress = useCallback(() => {
     clearLongPressTimer()
-  }
+  }, [clearLongPressTimer])
 
   function setQty(productId: number, qty: number) {
     setCart((prev) => {
@@ -327,7 +328,10 @@ export function usePosPage() {
     form.append('price', newFood.priceDigits)
     form.append('category_id', String(categoryId))
     form.append('measure', newFood.measure)
-    if (newFood.imageFile) form.append('image', newFood.imageFile)
+    if (newFood.imageFile) {
+      const compressedImage = await compressProductImage(newFood.imageFile)
+      form.append('image', compressedImage)
+    }
 
     const response = await fetch(`${API_URL}/products`, { method: 'POST', body: form })
     if (!response.ok) return

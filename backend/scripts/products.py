@@ -4,8 +4,8 @@ import requests
 from enum import Enum
 
 
-PRODUCTS_URL = "http://172.21.94.36:8000/products"
-CATEGORIES_URL = "http://172.21.94.36:8000/product-categories"
+PRODUCTS_URL = "http://localhost:8000/products"
+CATEGORIES_URL = "http://localhost:8000/product-categories"
 
 IMAGE_DIR = "../frontend/public/mock-images"
 
