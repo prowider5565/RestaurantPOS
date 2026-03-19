@@ -23,7 +23,7 @@ export default function OrderHistoryPage({
   const historyPage = useOrderHistoryPage()
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
       <Navbar
         active={active}
         onNavigate={onNavigate}
@@ -80,6 +80,9 @@ export default function OrderHistoryPage({
           display: 'flex',
           flexDirection: 'column',
           gap: 2,
+          flex: 1,
+          minHeight: 0,
+          overflow: 'hidden',
         }}
       >
         <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2} flexWrap="wrap">
@@ -103,16 +106,20 @@ export default function OrderHistoryPage({
           />
         </Stack>
 
-        <OrderHistorySummary overview={historyPage.history?.overview} />
+        <Box sx={{ flex: '0 0 auto' }}>
+          <OrderHistorySummary overview={historyPage.history?.overview} />
+        </Box>
 
-        <OrderHistoryTable
-          loading={historyPage.loading}
-          rows={historyPage.rows}
-          page={historyPage.page}
-          totalPages={historyPage.history?.page.pages ?? 0}
-          onPageChange={historyPage.setPage}
-          onOpenDetails={historyPage.setSelectedOrderId}
-        />
+        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+          <OrderHistoryTable
+            loading={historyPage.loading}
+            rows={historyPage.rows}
+            page={historyPage.page}
+            totalPages={historyPage.history?.page.pages ?? 0}
+            onPageChange={historyPage.setPage}
+            onOpenDetails={historyPage.setSelectedOrderId}
+          />
+        </Box>
       </Box>
 
       <OrderDetailsDialog
