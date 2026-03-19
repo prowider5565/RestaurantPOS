@@ -9,7 +9,16 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
 
 from .models import Order, OrderItem, OrderTable
-from .schemas import OrderCreate, OrderHistoryOverviewOut, OrderHistoryResponseOut, OrderTableCreate
+from products.models import Product
+
+from .schemas import (
+    FoodAnalyticsResponseOut,
+    FoodAnalyticsRowOut,
+    OrderCreate,
+    OrderHistoryOverviewOut,
+    OrderHistoryResponseOut,
+    OrderTableCreate,
+)
 
 
 def list_order_tables(db: Session) -> list[OrderTable]:
@@ -132,6 +141,49 @@ def get_order_history(
         total_discount_sum=total_discount_sum,
     )
     return OrderHistoryResponseOut(overview=overview, page=page)
+
+
+def get_food_sales_analytics(
+    db: Session, from_date: date | None, to_date: date | None
+) -> FoodAnalyticsResponseOut:
+    query = (
+        db.query(
+            Product.id.label("product_id"),
+            Product.name.label("food_name"),
+            func.coalesce(func.sum(OrderItem.quantity * Product.price), 0.0).label(
+                "total_sold_price"
+            ),
+            func.coalesce(func.sum(OrderItem.quantity), 0).label("times_sold"),
+        )
+        .join(OrderItem, OrderItem.product_id == Product.id)
+        .join(Order, Order.id == OrderItem.order_id)
+    )
+
+    if from_date is not None:
+        query = query.filter(Order.created_at >= datetime.combine(from_date, time.min))
+    if to_date is not None:
+        query = query.filter(Order.created_at <= datetime.combine(to_date, time.max))
+
+    rows = (
+        query.group_by(Product.id, Product.name)
+        .order_by(
+            func.coalesce(func.sum(OrderItem.quantity * Product.price), 0.0).desc(),
+            Product.name.asc(),
+        )
+        .all()
+    )
+
+    return FoodAnalyticsResponseOut(
+        items=[
+            FoodAnalyticsRowOut(
+                product_id=int(row.product_id),
+                food_name=str(row.food_name),
+                total_sold_price=float(row.total_sold_price or 0.0),
+                times_sold=int(row.times_sold or 0),
+            )
+            for row in rows
+        ]
+    )
 
 
 def get_my_order_history(

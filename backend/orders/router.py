@@ -10,12 +10,14 @@ from users.models import User
 from .handlers import (
     create_order,
     create_order_table,
+    get_food_sales_analytics,
     get_my_order_history,
     get_order_history,
     get_order_or_404,
     list_order_tables,
 )
 from .schemas import (
+    FoodAnalyticsResponseOut,
     OrderCreate,
     OrderHistoryResponseOut,
     OrderOut,
@@ -61,6 +63,15 @@ def get_my_order_history_api(
     current_user: User = Depends(get_current_user),
 ) -> OrderHistoryResponseOut:
     return get_my_order_history(db, user_id=current_user.id, params=params)
+
+
+@router.get("/food-analytics", response_model=FoodAnalyticsResponseOut)
+def get_food_sales_analytics_api(
+    from_date: date | None = Query(default=None),
+    to_date: date | None = Query(default=None),
+    db: Session = Depends(get_db),
+) -> FoodAnalyticsResponseOut:
+    return get_food_sales_analytics(db, from_date=from_date, to_date=to_date)
 
 
 @router.get("/{order_id}", response_model=OrderOut)

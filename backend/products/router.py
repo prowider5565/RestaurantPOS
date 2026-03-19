@@ -30,9 +30,6 @@ def create_product_api(
     return create_product(db, payload, image=image)
 
 
-@router.get("/{product_id}", response_model=ProductOut)
-def get_product_api(product_id: int, db: Session = Depends(get_db)) -> ProductOut:
-    return get_product(db, product_id)
 
 
 @router.get("", response_model=list[ProductOut])
@@ -63,3 +60,9 @@ def update_product_api(
         data["measure"] = measure
     payload = ProductUpdate(**data)
     return update_product(db, product_id, payload, image=image)
+
+
+
+@router.get("/detail/{product_id}", response_model=ProductOut)
+def get_product_api(product_id: int, db: Session = Depends(get_db)) -> ProductOut:
+    return get_product(db, product_id)

@@ -1,11 +1,13 @@
 import LogoutIcon from '@mui/icons-material/Logout'
 import SettingsIcon from '@mui/icons-material/Settings'
 import UploadFileIcon from '@mui/icons-material/UploadFile'
-import { Box, Button, IconButton, Stack, Tooltip } from '@mui/material'
+import { Box, Button, IconButton, Stack, Tab, Tabs, Tooltip } from '@mui/material'
+import { useState } from 'react'
 
 import { logout } from '../../../shared/auth'
 import DateRangeFilterCard from '../../../shared/components/DateRangeFilterCard'
 import Navbar, { type NavItemId } from '../../../shared/components/Navbar'
+import FoodAnalyticsTable from '../components/FoodAnalyticsTable'
 import OrderDetailsDialog from '../components/OrderDetailsDialog'
 import OrderHistorySummary from '../components/OrderHistorySummary'
 import OrderHistoryTable from '../components/OrderHistoryTable'
@@ -21,6 +23,7 @@ export default function OrderHistoryPage({
   showUsers?: boolean
 }) {
   const historyPage = useOrderHistoryPage()
+  const [activeTab, setActiveTab] = useState<'orders' | 'food_analytics'>('orders')
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
@@ -30,7 +33,7 @@ export default function OrderHistoryPage({
         showUsers={showUsers}
         searchValue={historyPage.search}
         onSearchChange={historyPage.setSearch}
-        searchPlaceholder="Buyurtma qidirish..."
+        searchPlaceholder={activeTab === 'orders' ? 'Buyurtma qidirish...' : 'Ovqat qidirish...'}
         settingsAction={
           <Tooltip title="Sozlamalar" placement="bottom">
             <IconButton
@@ -87,14 +90,16 @@ export default function OrderHistoryPage({
       >
         <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2} flexWrap="wrap">
           <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap">
-            <Button
-              variant="outlined"
-              startIcon={<UploadFileIcon />}
-              onClick={historyPage.exportToExcelCsv}
-              disabled={historyPage.rows.length === 0}
-            >
-              Excelga eksport qilish
-            </Button>
+            {activeTab === 'orders' ? (
+              <Button
+                variant="outlined"
+                startIcon={<UploadFileIcon />}
+                onClick={historyPage.exportToExcelCsv}
+                disabled={historyPage.rows.length === 0}
+              >
+                Excelga eksport qilish
+              </Button>
+            ) : null}
           </Stack>
 
           <DateRangeFilterCard
@@ -107,26 +112,51 @@ export default function OrderHistoryPage({
         </Stack>
 
         <Box sx={{ flex: '0 0 auto' }}>
-          <OrderHistorySummary overview={historyPage.history?.overview} />
+          <Tabs
+            value={activeTab}
+            onChange={(_, next: 'orders' | 'food_analytics') => setActiveTab(next)}
+            sx={{
+              minHeight: 44,
+              '& .MuiTab-root': {
+                minHeight: 44,
+                fontWeight: 900,
+              },
+            }}
+          >
+            <Tab value="orders" label="Buyurtmalarim" />
+            <Tab value="food_analytics" label="Ovqatlar savdo analitikasi" />
+          </Tabs>
         </Box>
 
+        {activeTab === 'orders' ? (
+          <Box sx={{ flex: '0 0 auto' }}>
+            <OrderHistorySummary overview={historyPage.history?.overview} />
+          </Box>
+        ) : null}
+
         <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-          <OrderHistoryTable
-            loading={historyPage.loading}
-            rows={historyPage.rows}
-            page={historyPage.page}
-            totalPages={historyPage.history?.page.pages ?? 0}
-            onPageChange={historyPage.setPage}
-            onOpenDetails={historyPage.setSelectedOrderId}
-          />
+          {activeTab === 'orders' ? (
+            <OrderHistoryTable
+              loading={historyPage.loading}
+              rows={historyPage.rows}
+              page={historyPage.page}
+              totalPages={historyPage.history?.page.pages ?? 0}
+              onPageChange={historyPage.setPage}
+              onOpenDetails={historyPage.setSelectedOrderId}
+            />
+          ) : (
+            <FoodAnalyticsTable loading={historyPage.analyticsLoading} rows={historyPage.foodAnalyticsRows} />
+          )}
         </Box>
       </Box>
 
-      <OrderDetailsDialog
-        open={Boolean(historyPage.selectedOrderId)}
-        orderId={historyPage.selectedOrderId}
-        onClose={() => historyPage.setSelectedOrderId(null)}
-      />
+      {activeTab === 'orders' ? (
+        <OrderDetailsDialog
+          open={Boolean(historyPage.selectedOrderId)}
+          orderId={historyPage.selectedOrderId}
+          onClose={() => historyPage.setSelectedOrderId(null)}
+        />
+      ) : null}
     </Box>
   )
 }

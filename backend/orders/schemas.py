@@ -107,3 +107,14 @@ class OrderHistoryOverviewOut(BaseModel):
 class OrderHistoryResponseOut(BaseModel):
     overview: OrderHistoryOverviewOut
     page: Page[OrderHistoryRowOut]
+
+
+class FoodAnalyticsRowOut(BaseModel):
+    product_id: int
+    food_name: str
+    total_sold_price: float
+    times_sold: int
+
+
+class FoodAnalyticsResponseOut(BaseModel):
+    items: list[FoodAnalyticsRowOut]

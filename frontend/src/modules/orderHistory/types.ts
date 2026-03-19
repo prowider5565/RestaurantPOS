@@ -55,3 +55,14 @@ export type ApiOrderHistoryResponse = {
   overview: ApiHistoryOverview
   page: ApiPage<ApiOrderRow>
 }
+
+export type ApiFoodAnalyticsRow = {
+  product_id: number
+  food_name: string
+  total_sold_price: number
+  times_sold: number
+}
+
+export type ApiFoodAnalyticsResponse = {
+  items: ApiFoodAnalyticsRow[]
+}

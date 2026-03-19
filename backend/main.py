@@ -75,8 +75,8 @@ app.add_middleware(
 )
 
 
-app.include_router(products_router)
 app.include_router(product_categories_router)
+app.include_router(products_router)
 app.include_router(orders_router)
 app.include_router(users_router, prefix="/users", tags=["users"])
 app.include_router(cash_desk_router)

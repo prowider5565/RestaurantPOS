@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
 import type { DateRangePreset } from '../../../shared/components/DateRangeFilterCard'
-import type { ApiOrderHistoryResponse } from '../types'
+import type { ApiFoodAnalyticsResponse, ApiOrderHistoryResponse } from '../types'
 import { formatCreated, toYmd } from '../utils'
 
 export function useOrderHistoryPage() {
@@ -14,7 +14,9 @@ export function useOrderHistoryPage() {
   const [page, setPage] = useState(1)
   const size = 12
   const [history, setHistory] = useState<ApiOrderHistoryResponse | null>(null)
+  const [foodAnalytics, setFoodAnalytics] = useState<ApiFoodAnalyticsResponse | null>(null)
   const [loading, setLoading] = useState(false)
+  const [analyticsLoading, setAnalyticsLoading] = useState(false)
   const hasCompleteRange = preset !== null || (!!fromDate && !!toDate)
 
   useEffect(() => {
@@ -51,12 +53,51 @@ export function useOrderHistoryPage() {
     }
   }, [fromDate, hasCompleteRange, page, size, toDate])
 
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadFoodAnalytics() {
+      if (!hasCompleteRange) {
+        setFoodAnalytics(null)
+        setAnalyticsLoading(false)
+        return
+      }
+
+      setAnalyticsLoading(true)
+      try {
+        const params = new URLSearchParams()
+        if (fromDate) params.set('from_date', fromDate)
+        if (toDate) params.set('to_date', toDate)
+
+        const response = await fetch(`${API_URL}/orders/food-analytics?${params.toString()}`)
+        if (!response.ok) return
+        const data = (await response.json()) as ApiFoodAnalyticsResponse
+        if (cancelled) return
+        setFoodAnalytics(data)
+      } finally {
+        if (!cancelled) setAnalyticsLoading(false)
+      }
+    }
+
+    loadFoodAnalytics()
+    return () => {
+      cancelled = true
+    }
+  }, [fromDate, hasCompleteRange, toDate])
+
   const rows = useMemo(() => {
     const items = history?.page.items ?? []
     const query = search.trim().toLowerCase()
     if (!query) return items
     return items.filter((order) => String(order.id).includes(query))
   }, [history?.page.items, search])
+
+  const foodAnalyticsRows = useMemo(() => {
+    const items = foodAnalytics?.items ?? []
+    const query = search.trim().toLowerCase()
+    if (!query) return items
+    return items.filter((item) => item.food_name.toLowerCase().includes(query))
+  }, [foodAnalytics?.items, search])
 
   function exportToExcelCsv() {
     const header = ['ID', 'Foydalanuvchi', 'Lavozim', 'Stol', 'Jami summa', 'Sana']
@@ -114,6 +155,9 @@ export function useOrderHistoryPage() {
     history,
     loading,
     rows,
+    foodAnalytics,
+    analyticsLoading,
+    foodAnalyticsRows,
     exportToExcelCsv,
   }
 }
