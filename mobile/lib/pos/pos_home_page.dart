@@ -364,7 +364,7 @@ class _PosHomePageState extends State<PosHomePage> {
 
     setState(() => _isPlacingOrder = true);
     try {
-      final ok = await _api.createOrder(
+      final createdOrder = await _api.createOrder(
         total: _totalInt,
         discountedTotal: _discountedTotalInt,
         userId: _currentUserId!,
@@ -373,12 +373,17 @@ class _PosHomePageState extends State<PosHomePage> {
       );
 
       if (!mounted) return;
-      if (!ok) {
+      if (createdOrder == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Buyurtma yuborilmadi. Backend manzilini tekshiring.")),
         );
         return;
       }
+
+      await _api.printCheque(
+        orderData: createdOrder.toPrintJson(),
+        programName: 'Parhez Plyus',
+      );
 
       _clearCart();
       _setTab(0);

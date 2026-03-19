@@ -190,6 +190,130 @@ class ApiOrderHistoryResponse {
   }
 }
 
+class ApiPrintOrderUser {
+  const ApiPrintOrderUser({
+    required this.id,
+    required this.username,
+    required this.position,
+  });
+
+  final int id;
+  final String username;
+  final String? position;
+
+  factory ApiPrintOrderUser.fromJson(Map<String, dynamic> json) {
+    return ApiPrintOrderUser(
+      id: (json['id'] as num).toInt(),
+      username: (json['username'] as String?) ?? '',
+      position: json['position'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'username': username,
+      'position': position,
+    };
+  }
+}
+
+class ApiPrintOrderItem {
+  const ApiPrintOrderItem({
+    required this.product,
+    required this.quantity,
+  });
+
+  final ApiProduct product;
+  final int quantity;
+
+  factory ApiPrintOrderItem.fromJson(Map<String, dynamic> json) {
+    final productRaw = json['product'];
+    return ApiPrintOrderItem(
+      product: productRaw is Map
+          ? ApiProduct.fromJson(Map<String, dynamic>.from(productRaw))
+          : const ApiProduct(id: 0, name: '', price: 0, imagePath: null, categoryId: null),
+      quantity: (json['quantity'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'product': {
+        'id': product.id,
+        'name': product.name,
+        'price': product.price,
+      },
+      'quantity': quantity,
+    };
+  }
+}
+
+class ApiCreatedOrder {
+  const ApiCreatedOrder({
+    required this.id,
+    required this.totalPrice,
+    required this.waitressWage,
+    required this.discountAmount,
+    required this.createdAt,
+    required this.user,
+    required this.orderTable,
+    required this.items,
+  });
+
+  final int id;
+  final double totalPrice;
+  final double waitressWage;
+  final double discountAmount;
+  final String createdAt;
+  final ApiPrintOrderUser? user;
+  final ApiOrderTable? orderTable;
+  final List<ApiPrintOrderItem> items;
+
+  factory ApiCreatedOrder.fromJson(Map<String, dynamic> json) {
+    final itemsRaw = json['items'];
+    final items = itemsRaw is List
+        ? itemsRaw
+            .whereType<Map>()
+            .map((item) => ApiPrintOrderItem.fromJson(Map<String, dynamic>.from(item)))
+            .toList()
+        : const <ApiPrintOrderItem>[];
+
+    final userRaw = json['user'];
+    final orderTableRaw = json['order_table'];
+
+    return ApiCreatedOrder(
+      id: (json['id'] as num).toInt(),
+      totalPrice: (json['total_price'] as num?)?.toDouble() ?? 0,
+      waitressWage: (json['waitress_wage'] as num?)?.toDouble() ?? 0,
+      discountAmount: (json['discount_amount'] as num?)?.toDouble() ?? 0,
+      createdAt: (json['created_at'] as String?) ?? '',
+      user: userRaw is Map ? ApiPrintOrderUser.fromJson(Map<String, dynamic>.from(userRaw)) : null,
+      orderTable: orderTableRaw is Map ? ApiOrderTable.fromJson(Map<String, dynamic>.from(orderTableRaw)) : null,
+      items: items,
+    );
+  }
+
+  Map<String, dynamic> toPrintJson() {
+    return {
+      'id': id,
+      'total_price': totalPrice,
+      'waitress_wage': waitressWage,
+      'discount_amount': discountAmount,
+      'created_at': createdAt,
+      'user': user?.toJson(),
+      'order_table': orderTable == null
+          ? null
+          : {
+              'id': orderTable!.id,
+              'table_number': orderTable!.tableNumber,
+              'table_color': orderTable!.tableColor,
+            },
+      'items': items.map((item) => item.toJson()).toList(),
+    };
+  }
+}
+
 class PosApi {
   PosApi({required String baseUrl, http.Client? client})
       : _baseUrl = baseUrl.trim().replaceAll(RegExp(r'/+$'), ''),
@@ -252,7 +376,7 @@ class PosApi {
     return ApiMe.fromJson(Map<String, dynamic>.from(raw));
   }
 
-  Future<bool> createOrder({
+  Future<ApiCreatedOrder?> createOrder({
     required int total,
     required int discountedTotal,
     required int userId,
@@ -271,6 +395,25 @@ class PosApi {
       Uri.parse('$_baseUrl/orders'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(payload),
+    );
+    if (res.statusCode < 200 || res.statusCode >= 300) return null;
+
+    final raw = jsonDecode(res.body);
+    if (raw is! Map) return null;
+    return ApiCreatedOrder.fromJson(Map<String, dynamic>.from(raw));
+  }
+
+  Future<bool> printCheque({
+    required Map<String, dynamic> orderData,
+    String programName = 'Restoran Cheki',
+  }) async {
+    final res = await _client.post(
+      Uri.parse('$_baseUrl/cheque/print'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'order_data': orderData,
+        'program_name': programName,
+      }),
     );
     return res.statusCode >= 200 && res.statusCode < 300;
   }
