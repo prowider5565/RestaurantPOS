@@ -199,7 +199,17 @@ export function usePosPage() {
       if (!response.ok) return
 
       const orderData = await response.json()
-      await printReceipt(orderData)
+      const selectedOrderTable = orderTables.find((table) => String(table.id) === selectedOrderTableId)
+      await printReceipt({
+        ...orderData,
+        order_table: selectedOrderTable
+          ? {
+              id: selectedOrderTable.id,
+              table_number: selectedOrderTable.table_number,
+              table_color: selectedOrderTable.table_color,
+            }
+          : orderData.order_table ?? null,
+      })
       clearCart()
     } finally {
       setIsPlacingOrder(false)
