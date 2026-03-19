@@ -55,7 +55,7 @@ export default function CashDeskSummaryPanel({
           <Stack direction="row" alignItems="stretch" divider={<Divider orientation="vertical" flexItem />} sx={{ mb: 1.5 }}>
             <Box sx={{ flex: 1, pr: 2, textAlign: 'center' }}>
               <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 14 }}>
-                Buyurtmalardan jami daromad
+                Bugungi daromad
               </Typography>
               <Typography sx={{ fontWeight: 900, fontSize: 18, color: 'success.main' }}>
                 +{formatMoney(summary.total_order_income)}
@@ -63,7 +63,7 @@ export default function CashDeskSummaryPanel({
             </Box>
             <Box sx={{ flex: 1, pl: 2, textAlign: 'center' }}>
               <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 14 }}>
-                Boshqa jami daromad
+                Bugungi Kirim
               </Typography>
               <Typography sx={{ fontWeight: 900, fontSize: 18, color: 'success.main' }}>
                 +{formatMoney(summary.total_misc_income)}
@@ -74,7 +74,7 @@ export default function CashDeskSummaryPanel({
           <Divider sx={{ my: 1.5 }} />
 
           <Box sx={{ textAlign: 'center' }}>
-            <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 14 }}>Jami xarajatlar</Typography>
+            <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 14 }}>Bugungi xarajatlar</Typography>
             <Typography sx={{ fontWeight: 900, fontSize: 20, color: 'error.main' }}>-{formatMoney(summary.total_expense)}</Typography>
           </Box>
         </Box>

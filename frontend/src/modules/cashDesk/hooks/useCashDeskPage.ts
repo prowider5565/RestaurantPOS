@@ -6,6 +6,13 @@ import type { DateRangePreset } from '../../../shared/components/DateRangeFilter
 import { useAuth } from '../../../shared/authContext'
 import type { ApiCashDeskTransaction, ApiDeleteOut, ApiPage, CashDeskSummary } from '../types'
 
+function toYmd(date: Date) {
+  const yyyy = date.getFullYear()
+  const mm = String(date.getMonth() + 1).padStart(2, '0')
+  const dd = String(date.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
+
 async function getResponseError(response: Response, fallback: string) {
   const payload = (await response.json().catch(() => null)) as { detail?: string } | null
   return payload?.detail || `${fallback} (${response.status})`
@@ -14,15 +21,16 @@ async function getResponseError(response: Response, fallback: string) {
 export function useCashDeskPage() {
   const { me } = useAuth()
   const isAdmin = me?.is_admin === true || me?.is_admin === 1
+  const today = toYmd(new Date())
 
   const [summary, setSummary] = useState<CashDeskSummary | null>(null)
   const [summaryLoading, setSummaryLoading] = useState(false)
   const [summaryError, setSummaryError] = useState<string | null>(null)
 
   const [txPage, setTxPage] = useState<ApiPage<ApiCashDeskTransaction> | null>(null)
-  const [preset, setPreset] = useState<DateRangePreset>(null)
-  const [fromDate, setFromDate] = useState('')
-  const [toDate, setToDate] = useState('')
+  const [preset, setPreset] = useState<DateRangePreset>('daily')
+  const [fromDate, setFromDate] = useState(today)
+  const [toDate, setToDate] = useState(today)
   const [createAmount, setCreateAmount] = useState('')
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
