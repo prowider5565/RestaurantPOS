@@ -100,11 +100,11 @@ def generate_receipt(
 
     def build_double_size_summary_line(label: str, value: str) -> str:
         effective_width = table_width // 2
-        content_width = effective_width - 2
+        content_width = effective_width
         combined = f"{label} {value}"
         if len(combined) > content_width:
-            return "|" + combined[:content_width] + "|"
-        return "|" + label.ljust(content_width - len(value)) + value + "|"
+            return combined[:content_width]
+        return label.ljust(content_width - len(value)) + value
 
     def push_right(label: str, value: str) -> None:
         if not value:
@@ -166,8 +166,6 @@ def generate_receipt(
         for name_line in name_lines[1:]:
             lines.append(build_row(["", name_line, "", "", ""]))
 
-    lines.append(separator())
-
     original_total = round(_to_number(order_data.get("total_price"), total_amount))
     waitress_wage = round(
         _to_number(order_data.get("waitress_wage"), original_total * 0.1)
@@ -175,6 +173,20 @@ def generate_receipt(
     discount_amount = max(0.0, _to_number(order_data.get("discount_amount"), 0.0))
     final_total = max(0.0, original_total - discount_amount) + waitress_wage
 
+    lines.append(
+        build_row(
+            [
+                "",
+                "Ofitsiant xizmati",
+                "1",
+                format_number_plain(waitress_wage),
+                format_number_plain(waitress_wage),
+            ]
+        )
+    )
+    lines.append(separator())
+
+    lines.append(strong_separator())
     lines.append(
         build_summary_line(
             "Ofitsiant xizmati:", f"{format_number_plain(waitress_wage)} so'm"
@@ -189,7 +201,7 @@ def generate_receipt(
         + escpos_default_size
         + escpos_bold_off
     )
-    lines.append(strong_separator())
+    lines.append(separator())
 
     company_name = str(requisites.get("company_name") or "").strip()
     address = str(requisites.get("address") or "").strip()
