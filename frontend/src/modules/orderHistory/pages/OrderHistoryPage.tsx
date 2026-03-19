@@ -75,7 +75,7 @@ export default function OrderHistoryPage({
       <Box
         sx={{
           p: 2,
-          pb: 8,
+          pb: 6,
           height: { xs: 'calc(100vh - 56px)', sm: 'calc(100vh - 64px)' },
           display: 'flex',
           flexDirection: 'column',
