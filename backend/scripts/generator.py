@@ -44,6 +44,10 @@ def generate_receipt(
     requisites: dict[str, Any] | None = None,
     program_name: str = "Restoran Cheki",
 ) -> str:
+    escpos_bold_on = "\x1bE\x01"
+    escpos_bold_off = "\x1bE\x00"
+    escpos_double_size_on = "\x1d!\x11"
+    escpos_default_size = "\x1d!\x00"
     table_width = 48
     id_width = 3
     name_width = 20
@@ -79,6 +83,9 @@ def generate_receipt(
     def separator() -> str:
         return "-" * table_width
 
+    def strong_separator() -> str:
+        return "=" * table_width
+
     def safe_line(text: str) -> str:
         return (
             text[:table_width] if len(text) > table_width else text.ljust(table_width)
@@ -90,6 +97,14 @@ def generate_receipt(
         if len(combined) <= content_width:
             return "|" + label.ljust(content_width - len(value)) + value + "|"
         return "|" + combined[:content_width].ljust(content_width) + "|"
+
+    def build_double_size_summary_line(label: str, value: str) -> str:
+        effective_width = table_width // 2
+        content_width = effective_width - 2
+        combined = f"{label} {value}"
+        if len(combined) > content_width:
+            return "|" + combined[:content_width] + "|"
+        return "|" + label.ljust(content_width - len(value)) + value + "|"
 
     def push_right(label: str, value: str) -> None:
         if not value:
@@ -161,14 +176,20 @@ def generate_receipt(
     final_total = max(0.0, original_total - discount_amount) + waitress_wage
 
     lines.append(
-        build_summary_line("Jami summa:", f"{format_number_plain(final_total)} so'm")
-    )
-    lines.append(
         build_summary_line(
             "Ofitsiant xizmati:", f"{format_number_plain(waitress_wage)} so'm"
         )
     )
-    lines.append(separator())
+    lines.append(
+        escpos_bold_on
+        + escpos_double_size_on
+        + build_double_size_summary_line(
+            "Jami:", f"{format_number_plain(final_total)} so'm"
+        )
+        + escpos_default_size
+        + escpos_bold_off
+    )
+    lines.append(strong_separator())
 
     company_name = str(requisites.get("company_name") or "").strip()
     address = str(requisites.get("address") or "").strip()
