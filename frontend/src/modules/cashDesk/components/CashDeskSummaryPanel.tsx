@@ -80,11 +80,6 @@ export default function CashDeskSummaryPanel({
         </Box>
       </Stack>
 
-      <Paper variant="outlined" sx={{ mt: 2, borderRadius: 2, p: 1.5, textAlign: 'center' }}>
-        <Typography sx={{ fontWeight: 1000, fontSize: 24, lineHeight: 1.1 }}>{createAmount ? formatInteger(createAmount) : '0'}</Typography>
-        <Typography sx={{ fontWeight: 700, color: 'text.secondary', fontSize: 12, mt: 0.5 }}>Miqdor</Typography>
-      </Paper>
-
       <TextField
         label="Summani kiriting"
         value={createAmount}
