@@ -170,18 +170,18 @@ export default function StatisticsPage({
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1fr) 360px', lg: 'minmax(0, 1fr) 400px' },
+            gridTemplateColumns: { xs: '1fr', sm: 'minmax(0, 1fr) 360px', lg: 'minmax(0, 1fr) 400px' },
             gap: 2,
-            alignItems: { xs: 'start', md: 'stretch' },
+            alignItems: { xs: 'start', sm: 'stretch' },
             flex: 1,
             minHeight: 0,
-            overflow: { xs: 'visible', md: 'hidden' },
+            overflow: { xs: 'visible', sm: 'hidden' },
           }}
         >
           <Box
             sx={{
               minHeight: 0,
-              height: { md: '100%' },
+              height: { sm: '100%' },
               overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column',
@@ -195,6 +195,7 @@ export default function StatisticsPage({
                 preset={preset}
                 fromDate={fromDate}
                 toDate={toDate}
+                compact
                 onPresetChange={(next) => {
                   setPreset(next)
                   setPage(1)
@@ -274,9 +275,9 @@ export default function StatisticsPage({
             variant="outlined"
             sx={{
               borderRadius: 3,
-              p: { xs: 3, md: 2 },
+              p: { xs: 3, sm: 2 },
               width: '100%',
-              height: { xs: 'fit-content', md: '100%' },
+              height: { xs: 'fit-content', sm: '100%' },
               minHeight: 0,
               display: 'flex',
               flexDirection: 'column',

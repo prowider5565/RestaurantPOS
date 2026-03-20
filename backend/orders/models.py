@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, Enum, Float, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, DateTime, Enum, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 from config.database import Base
@@ -28,6 +28,7 @@ class Order(Base):
         lazy="selectin",
         cascade="all, delete-orphan",
     )
+    waiter_fee = Column(Boolean, default=False)
     user = relationship("User", back_populates="orders", lazy="selectin")
     order_table = relationship("OrderTable", back_populates="orders", lazy="selectin")
 
