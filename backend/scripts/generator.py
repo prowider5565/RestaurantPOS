@@ -10,6 +10,18 @@ def wrap_text(text: str, max_width: int) -> list[str]:
     current_line = ""
 
     for word in words:
+        if len(word) > max_width:
+            if current_line:
+                lines.append(current_line)
+                current_line = ""
+            for index in range(0, len(word), max_width):
+                chunk = word[index : index + max_width]
+                if len(chunk) == max_width or index + max_width < len(word):
+                    lines.append(chunk)
+                else:
+                    current_line = chunk
+            continue
+
         if len(current_line + word) <= max_width:
             current_line += ("" if not current_line else " ") + word
         else:
