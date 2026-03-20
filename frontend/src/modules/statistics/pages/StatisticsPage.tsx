@@ -163,8 +163,10 @@ export default function StatisticsPage({
           flexDirection: 'column',
           minHeight: 0,
           flex: 1,
-          height: { xs: 'calc(100dvh - 56px)', sm: 'calc(100dvh - 64px)' },
-          overflow: 'hidden',
+          minBlockSize: { xs: 'calc(100dvh - 56px)', sm: 'calc(100dvh - 64px)' },
+          height: { xs: 'auto', lg: 'calc(100dvh - 64px)' },
+          overflowX: 'hidden',
+          overflowY: { xs: 'auto', lg: 'hidden' },
         }}
       >
         <Box sx={{ mb: 2 }}>
@@ -190,7 +192,7 @@ export default function StatisticsPage({
             gridTemplateColumns: { xs: '1fr', lg: '1fr 570px' },
             gap: 2,
             alignItems: { xs: 'start', lg: 'stretch' },
-            flex: 1,
+            flex: { xs: '0 0 auto', lg: 1 },
             minHeight: 0,
             overflow: { xs: 'visible', lg: 'hidden' },
           }}
@@ -199,7 +201,7 @@ export default function StatisticsPage({
             sx={{
               minHeight: 0,
               height: { lg: '100%' },
-              overflow: 'hidden',
+              overflow: { xs: 'visible', lg: 'hidden' },
               display: 'flex',
               flexDirection: 'column',
               gap: 2,
