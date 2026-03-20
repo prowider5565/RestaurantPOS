@@ -28,15 +28,48 @@ export default function DateRangeFilterCard({
   toDate,
   onPresetChange,
   onDateRangeChange,
+  compact = false,
 }: {
   preset: DateRangePreset
   fromDate: string
   toDate: string
   onPresetChange: (next: DateRangePreset) => void
   onDateRangeChange: (fromDate: string, toDate: string) => void
+  compact?: boolean
 }) {
   return (
-    <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap" justifyContent="flex-end">
+    <Stack
+      direction="row"
+      alignItems="center"
+      gap={compact ? 0.75 : 1}
+      flexWrap="wrap"
+      justifyContent="flex-end"
+      sx={[
+        compact
+          ? {
+              '& .MuiToggleButton-root': {
+                px: 1,
+                py: 0.35,
+                minHeight: 32,
+                fontSize: 12,
+              },
+              '& .MuiTextField-root': {
+                width: { xs: '100%', sm: 140 },
+              },
+              '& .MuiInputBase-root': {
+                minHeight: 34,
+                fontSize: 13,
+              },
+              '& .MuiInputBase-input': {
+                py: 0.7,
+              },
+              '& .MuiInputLabel-root': {
+                fontSize: 12,
+              },
+            }
+          : {},
+      ]}
+    >
       <ToggleButtonGroup
         exclusive
         value={preset}

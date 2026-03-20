@@ -16,6 +16,8 @@ import {
   TableRow,
   Tooltip,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
 
@@ -65,6 +67,9 @@ export default function StatisticsPage({
   onNavigate: (next: NavItemId | 'settings') => void
   showUsers?: boolean
 }) {
+  const theme = useTheme()
+  const compactLayout = useMediaQuery('(max-width: 1280px), (max-height: 800px)')
+  const showDesktopSplit = useMediaQuery(theme.breakpoints.up('md'))
   const today = useMemo(() => toYmd(new Date()), [])
   const [stats, setStats] = useState<ApiOrderHistoryResponse | null>(null)
   const [loading, setLoading] = useState(false)
@@ -157,23 +162,24 @@ export default function StatisticsPage({
 
       <Box
         sx={{
-          p: 2,
-          pb: 12,
+          p: compactLayout ? 1.25 : 2,
+          pb: compactLayout ? 3 : 12,
           display: 'flex',
           flexDirection: 'column',
           minHeight: 0,
           flex: 1,
           minBlockSize: { xs: 'calc(100dvh - 56px)', sm: 'calc(100dvh - 64px)' },
-          height: { xs: 'auto', lg: 'calc(100dvh - 64px)' },
+          height: { xs: 'auto', md: showDesktopSplit ? 'calc(100dvh - 64px)' : 'auto' },
           overflowX: 'hidden',
-          overflowY: { xs: 'auto', lg: 'hidden' },
+          overflowY: { xs: 'auto', md: showDesktopSplit ? 'hidden' : 'auto' },
         }}
       >
-        <Box sx={{ mb: 2 }}>
+        <Box sx={{ mb: compactLayout ? 1.25 : 2 }}>
           <DateRangeFilterCard
             preset={preset}
             fromDate={fromDate}
             toDate={toDate}
+            compact={compactLayout}
             onPresetChange={(next) => {
               setPreset(next)
               setPage(1)
@@ -189,22 +195,26 @@ export default function StatisticsPage({
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', lg: '1fr 570px' },
-            gap: 2,
-            alignItems: { xs: 'start', lg: 'stretch' },
-            flex: { xs: '0 0 auto', lg: 1 },
+            gridTemplateColumns: showDesktopSplit
+              ? compactLayout
+                ? 'minmax(0, 1fr) 360px'
+                : 'minmax(0, 1fr) 570px'
+              : '1fr',
+            gap: compactLayout ? 1.25 : 2,
+            alignItems: { xs: 'start', md: showDesktopSplit ? 'stretch' : 'start' },
+            flex: { xs: '0 0 auto', md: showDesktopSplit ? 1 : '0 0 auto' },
             minHeight: 0,
-            overflow: { xs: 'visible', lg: 'hidden' },
+            overflow: { xs: 'visible', md: showDesktopSplit ? 'hidden' : 'visible' },
           }}
         >
           <Box
             sx={{
               minHeight: 0,
-              height: { lg: '100%' },
-              overflow: { xs: 'visible', lg: 'hidden' },
+              height: { md: showDesktopSplit ? '100%' : 'auto' },
+              overflow: { xs: 'visible', md: showDesktopSplit ? 'hidden' : 'visible' },
               display: 'flex',
               flexDirection: 'column',
-              gap: 2,
+              gap: compactLayout ? 1 : 2,
             }}
           >
             <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 3, flex: 1, minHeight: 0, overflow: 'auto' }}>
@@ -213,8 +223,8 @@ export default function StatisticsPage({
                 stickyHeader
                 sx={{
                   '& .MuiTableCell-root': {
-                    fontSize: '1.3em',
-                    py: 1.1,
+                    fontSize: compactLayout ? '1em' : '1.3em',
+                    py: compactLayout ? 0.8 : 1.1,
                   },
                 }}
               >
@@ -252,7 +262,7 @@ export default function StatisticsPage({
               <Stack direction="row" justifyContent="flex-end">
                 <Pagination
                   color="primary"
-                  size="large"
+                  size={compactLayout ? 'medium' : 'large'}
                   page={page}
                   count={pages}
                   onChange={(_, next) => setPage(next)}
@@ -260,9 +270,9 @@ export default function StatisticsPage({
                   showLastButton
                   sx={{
                     '& .MuiPaginationItem-root': {
-                      fontSize: '1.4em',
-                      minWidth: 45,
-                      height: 45,
+                      fontSize: compactLayout ? '1em' : '1.4em',
+                      minWidth: compactLayout ? 34 : 45,
+                      height: compactLayout ? 34 : 45,
                     },
                   }}
                 />
@@ -274,9 +284,9 @@ export default function StatisticsPage({
             variant="outlined"
             sx={{
               borderRadius: 3,
-              p: 3,
+              p: compactLayout ? 1.5 : 3,
               width: '100%',
-              height: { xs: 'fit-content', lg: '100%' },
+              height: { xs: 'fit-content', md: showDesktopSplit ? '100%' : 'fit-content' },
               minHeight: 0,
               display: 'flex',
               flexDirection: 'column',
@@ -284,12 +294,16 @@ export default function StatisticsPage({
             }}
           >
             <Stack spacing={2} sx={{ flex: 1, minHeight: 0 }}>
-              <Box sx={{ textAlign: 'center', pb: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
-                <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 1 }}>Buyurtmalaringiz</Typography>
-                <Typography sx={{ fontWeight: 1000, fontSize: 48, color: 'primary.main' }}>
+              <Box sx={{ textAlign: 'center', pb: compactLayout ? 1.25 : 2, borderBottom: '1px solid', borderColor: 'divider' }}>
+                <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: compactLayout ? 0.5 : 1, fontSize: compactLayout ? 13 : 16 }}>
+                  Buyurtmalaringiz
+                </Typography>
+                <Typography sx={{ fontWeight: 1000, fontSize: compactLayout ? 24 : 48, color: 'primary.main', lineHeight: 1.1 }}>
                   {new Intl.NumberFormat('uz-UZ').format(Math.round(overview.total_sum))}
                 </Typography>
-                <Typography sx={{ fontWeight: 700, color: 'text.secondary', mt: 1, fontSize: 14 }}>jami so'm</Typography>
+                <Typography sx={{ fontWeight: 700, color: 'text.secondary', mt: compactLayout ? 0.5 : 1, fontSize: compactLayout ? 12 : 14 }}>
+                  jami so'm
+                </Typography>
               </Box>
 
               <Box
@@ -297,18 +311,26 @@ export default function StatisticsPage({
                   border: '1px solid',
                   borderColor: 'divider',
                   borderRadius: 2,
-                  p: 1.5,
+                  p: compactLayout ? 1 : 1.5,
                   bgcolor: 'background.paper',
                 }}
               >
                 <Stack direction="row" alignItems="stretch" divider={<Divider orientation="vertical" flexItem />}>
-                  <Box sx={{ flex: 1, pr: 2, textAlign: 'center' }}>
-                    <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 14 }}>Jami buyurtmalar</Typography>
-                    <Typography sx={{ fontWeight: 1000, fontSize: 22 }}>{new Intl.NumberFormat('uz-UZ').format(overview.total_orders)}</Typography>
+                  <Box sx={{ flex: 1, pr: compactLayout ? 1 : 2, textAlign: 'center' }}>
+                    <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: compactLayout ? 11 : 14 }}>
+                      Jami buyurtmalar
+                    </Typography>
+                    <Typography sx={{ fontWeight: 1000, fontSize: compactLayout ? 16 : 22 }}>
+                      {new Intl.NumberFormat('uz-UZ').format(overview.total_orders)}
+                    </Typography>
                   </Box>
-                  <Box sx={{ flex: 1, pl: 2, textAlign: 'center' }}>
-                    <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 14 }}>Jami summa</Typography>
-                    <Typography sx={{ fontWeight: 1000, fontSize: 22 }}>{formatMoney(overview.total_sum)}</Typography>
+                  <Box sx={{ flex: 1, pl: compactLayout ? 1 : 2, textAlign: 'center' }}>
+                    <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: compactLayout ? 11 : 14 }}>
+                      Jami summa
+                    </Typography>
+                    <Typography sx={{ fontWeight: 1000, fontSize: compactLayout ? 16 : 22 }}>
+                      {formatMoney(overview.total_sum)}
+                    </Typography>
                   </Box>
                 </Stack>
               </Box>
@@ -318,12 +340,12 @@ export default function StatisticsPage({
                   variant="outlined"
                   sx={{
                     borderRadius: 2,
-                    p: 1.25,
+                    p: compactLayout ? 1 : 1.25,
                     textAlign: 'center',
                     bgcolor: 'rgba(255, 152, 0, 0.06)',
                   }}
                 >
-                  <Typography sx={{ fontWeight: 900, color: 'text.secondary', fontSize: 13 }}>
+                  <Typography sx={{ fontWeight: 900, color: 'text.secondary', fontSize: compactLayout ? 11 : 13 }}>
                     Bu yerda faqat sizning hisobingiz yaratgan buyurtmalar ko'rsatiladi.
                   </Typography>
                 </Paper>
