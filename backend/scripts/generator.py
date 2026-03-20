@@ -83,11 +83,14 @@ def generate_receipt(
     def format_number_plain(n: float) -> str:
         return str(round(n))
 
+    def top_separator() -> str:
+        return "\u250c" + (horizontal * (table_width - 2)) + "\u2510"
+
     def separator() -> str:
         return "\u251c" + (horizontal * (table_width - 2)) + "\u2524"
 
-    def strong_separator() -> str:
-        return "\u255e" + (strong_horizontal * (table_width - 2)) + "\u2561"
+    def strong_bottom_separator() -> str:
+        return "\u255a" + (strong_horizontal * (table_width - 2)) + "\u255d"
 
     def table_separator() -> str:
         return (
@@ -119,6 +122,12 @@ def generate_receipt(
             return vertical + label.ljust(content_width - len(value)) + value + vertical
         return vertical + combined[:content_width].ljust(content_width) + vertical
 
+    def build_plain_summary_line(label: str, value: str) -> str:
+        combined = f"{label} {value}"
+        if len(combined) <= table_width:
+            return label.ljust(table_width - len(value)) + value
+        return combined[:table_width].ljust(table_width)
+
     def build_double_size_summary_line(label: str, value: str) -> str:
         effective_width = table_width // 2
         content_width = effective_width
@@ -148,7 +157,7 @@ def generate_receipt(
     lines.append(safe_line("Lavozimi: ".ljust(table_width - len(position)) + position))
     lines.append(safe_line("Stol: ".ljust(table_width - len(table_number)-1) + f"#{table_number}"))
     lines.append("")
-    lines.append(separator())
+    lines.append(top_separator())
     lines.append(framed_line(program_name))
     lines.append(separator())
 
@@ -197,22 +206,9 @@ def generate_receipt(
     discount_amount = max(0.0, _to_number(order_data.get("discount_amount"), 0.0))
     final_total = max(0.0, original_total - discount_amount) + waitress_wage
 
+    lines.append(strong_bottom_separator())
     lines.append(
-        build_row(
-            [
-                "",
-                "Ofitsiant xizmati",
-                "1",
-                format_number_plain(waitress_wage),
-                format_number_plain(waitress_wage),
-            ]
-        )
-    )
-    lines.append(table_separator())
-
-    lines.append(strong_separator())
-    lines.append(
-        build_summary_line(
+        build_plain_summary_line(
             "Ofitsiant xizmati:", f"{format_number_plain(waitress_wage)} so'm"
         )
     )
@@ -225,7 +221,7 @@ def generate_receipt(
         + escpos_default_size
         + escpos_bold_off
     )
-    lines.append(separator())
+    lines.append("")
 
     company_name = str(requisites.get("company_name") or "").strip()
     address = str(requisites.get("address") or "").strip()

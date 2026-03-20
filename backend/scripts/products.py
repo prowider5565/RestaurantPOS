@@ -7,48 +7,48 @@ CATEGORIES_URL = f"{BASE_URL}/product-categories"
 
 
 DATA = [
-  {"category":"Суюк овкатлар","name":"Суп лапша куриные","price":7000,"measure":"GRAM"},
-  {"category":"Суюк овкатлар","name":"Борщ","price":7000,"measure":"GRAM"},
-  {"category":"Суюк овкатлар","name":"Шурва","price":10000,"measure":"GRAM"},
-  {"category":"Суюк овкатлар","name":"Кайла","price":5000,"measure":"GRAM"},
-  {"category":"Суюк овкатлар","name":"Пелмен","price":20000,"measure":"PORTION"},
-  {"category":"Суюк овкатлар","name":"Чечевичный суп","price":7000,"measure":"GRAM"},
-  {"category":"Суюк овкатлар","name":"Щавелевый суп","price":7000,"measure":"GRAM"},
+  # Нонушта
+  {"category":"Нонушта","name":"Каша овсяное","price":5000,"measure":"GRAM"},
+  {"category":"Нонушта","name":"Каша манная","price":5000,"measure":"GRAM"},
+  {"category":"Нонушта","name":"Каша рис","price":5000,"measure":"GRAM"},
+  {"category":"Нонушта","name":"Каша гречка","price":5000,"measure":"GRAM"},
+  {"category":"Нонушта","name":"Яичница запечённые","price":7000,"measure":"UNIT"},
+  {"category":"Нонушта","name":"Яйцо отварной","price":3000,"measure":"UNIT"},
+  {"category":"Нонушта","name":"Омлет с брокколи","price":14000,"measure":"PORTION"},
+  {"category":"Нонушта","name":"Сендвич","price":25000,"measure":"PORTION"},
 
-  {"category":"Тайёр куюк овкатлар","name":"Бефстроганов","price":20000,"measure":"GRAM"},
-  {"category":"Тайёр куюк овкатлар","name":"Гуляш","price":20000,"measure":"GRAM"},
-  {"category":"Тайёр куюк овкатлар","name":"Жаркое из баранина","price":50000,"measure":"PORTION"},
-  {"category":"Тайёр куюк овкатлар","name":"Голубцы","price":5000,"measure":"UNIT"},
-  {"category":"Тайёр куюк овкатлар","name":"Котлет мол гушти","price":16000,"measure":"UNIT"},
-  {"category":"Тайёр куюк овкатлар","name":"Котлет товук гушти","price":16000,"measure":"UNIT"},
-  {"category":"Тайёр куюк овкатлар","name":"Котлет балик","price":16000,"measure":"UNIT"},
+  # Перекус
+  {"category":"Перекус","name":"Начинка белок","price":3000,"measure":"UNIT"},
+  {"category":"Перекус","name":"Запеч. фрукта с творогом","price":10000,"measure":"UNIT"},
+  {"category":"Перекус","name":"Творог с фруктами","price":10000,"measure":"PORTION"},
+  {"category":"Перекус","name":"Хлебцы с паста и бананом","price":6000,"measure":"UNIT"},
+  {"category":"Перекус","name":"Брускетта с помидором","price":5000,"measure":"UNIT"},
+  {"category":"Перекус","name":"Хумус","price":5000,"measure":"GRAM"},
+  {"category":"Перекус","name":"Катык","price":5000,"measure":"PORTION"},
+  {"category":"Перекус","name":"Йогурт с фруктами","price":10000,"measure":"PORTION"},
+  {"category":"Перекус","name":"Йогурт с зеленью","price":10000,"measure":"PORTION"},
+  {"category":"Перекус","name":"Йогурт с куркумой","price":10000,"measure":"PORTION"},
+  {"category":"Перекус","name":"Тухум оқи (белок)","price":2000,"measure":"UNIT"},
+  {"category":"Перекус","name":"Шоколад с бананом","price":20000,"measure":"GRAM"},
+  {"category":"Перекус","name":"Овсяной медовик","price":25000,"measure":"UNIT"},
+  {"category":"Перекус","name":"Мусс","price":30000,"measure":"UNIT"},
 
-  {"category":"гарнирлар","name":"Рис девзира","price":5000,"measure":"GRAM"},
-  {"category":"гарнирлар","name":"Рис басмати с куркумой","price":3000,"measure":"GRAM"},
-  {"category":"гарнирлар","name":"Гречка","price":3000,"measure":"GRAM"},
-  {"category":"гарнирлар","name":"Зелёный чечевица","price":5000,"measure":"GRAM"},
-  {"category":"гарнирлар","name":"Пюре","price":5000,"measure":"GRAM"},
-  {"category":"гарнирлар","name":"Картофельная Дольки","price":5000,"measure":"GRAM"},
-  {"category":"гарнирлар","name":"Овощи на гриле","price":10000,"measure":"GRAM"},
+  # Ичимликлар
+  {"category":"Ичимликлар","name":"Морс клюква","price":10000,"measure":"GRAM"},
+  {"category":"Ичимликлар","name":"Чой малина","price":20000,"measure":"PORTION"},
+  {"category":"Ичимликлар","name":"Чой имбирь","price":20000,"measure":"PORTION"},
+  {"category":"Ичимликлар","name":"Чой куркума","price":20000,"measure":"PORTION"},
+  {"category":"Ичимликлар","name":"Компот","price":5000,"measure":"GRAM"},
+  {"category":"Ичимликлар","name":"Чой кора, кук","price":3000,"measure":"PORTION"},
+  {"category":"Ичимликлар","name":"Айрон","price":10000,"measure":"GRAM"},
+  {"category":"Ичимликлар","name":"Сок помидор","price":10000,"measure":"GRAM"},
 
-  {"category":"Гуштлар","name":"Кайнатилган мол гушти","price":18000,"measure":"GRAM"},
-  {"category":"Гуштлар","name":"Ростбиф","price":18000,"measure":"GRAM"},
-  {"category":"Гуштлар","name":"Стейк медальон","price":25000,"measure":"UNIT"},
-  {"category":"Гуштлар","name":"Стейк балик","price":40000,"measure":"UNIT"},
-  {"category":"Гуштлар","name":"Кайнатилган товук гушти","price":15000,"measure":"GRAM"},
-  {"category":"Гуштлар","name":"Запечённые курица","price":15000,"measure":"UNIT"},
-  {"category":"Гуштлар","name":"Товук оёги (ножки)","price":10000,"measure":"UNIT"},
-
-  {"category":"Соуслар","name":"Аджика","price":5000,"measure":"GRAM"},
-  {"category":"Соуслар","name":"Соус помидор","price":5000,"measure":"GRAM"},
-  {"category":"Соуслар","name":"Песто","price":5000,"measure":"GRAM"},
-  {"category":"Соуслар","name":"Огуречно чесночный соус","price":5000,"measure":"GRAM"},
-  {"category":"Соуслар","name":"Соус тар-тар","price":5000,"measure":"GRAM"},
-
-  {"category":"Нон","name":"Овсянкалик нон (глютенсиз)","price":4000,"measure":"UNIT"},
-  {"category":"Нон","name":"Факачо","price":4000,"measure":"PORTION"},
-  {"category":"Нон","name":"Ок нон","price":2000,"measure":"PORTION"},
-  {"category":"Нон","name":"Кора нон","price":2000,"measure":"PORTION"}
+  # Салатлар
+  {"category":"Салатлар","name":"Греческий","price":15000,"measure":"GRAM"},
+  {"category":"Салатлар","name":"Карам салат","price":10000,"measure":"GRAM"},
+  {"category":"Салатлар","name":"Свежий салат","price":10000,"measure":"GRAM"},
+  {"category":"Салатлар","name":"Шакароп","price":10000,"measure":"GRAM"},
+  {"category":"Салатлар","name":"Молодой огурец и молодая морковка","price":10000,"measure":"GRAM"},
 ]
 
 
