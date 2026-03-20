@@ -40,7 +40,7 @@ def list_order_tables_api(db: Session = Depends(get_db)) -> list[OrderTableOut]:
     return list_order_tables(db)
 
 
-@router.post("/tables", response_model=OrderTableOut)
+@router.post("/tables/create", response_model=OrderTableOut)
 def create_order_table_api(
     payload: OrderTableCreate, db: Session = Depends(get_db)
 ) -> OrderTableOut:

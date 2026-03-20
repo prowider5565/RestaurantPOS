@@ -232,7 +232,7 @@ export function usePosPage() {
     const tableNumber = Number(newOrderTable.tableNumberDigits)
     if (!Number.isInteger(tableNumber) || tableNumber <= 0) return
 
-    const response = await fetch(`${API_URL}/orders/tables`, {
+    const response = await fetch(`${API_URL}/orders/tables/create`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

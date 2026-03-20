@@ -1,4 +1,5 @@
 from pathlib import Path
+import subprocess
 import sys
 
 from fastapi import FastAPI
@@ -37,10 +38,45 @@ def sync_order_table_schema():
         connection.execute(text("ALTER TABLE orders ADD COLUMN order_table_id INTEGER"))
 
 
+def show_startup_notification() -> None:
+    if sys.platform != "win32":
+        return
+
+    message = "Parhez Plyus Dasturi ishga tushdi!"
+    powershell_script = rf"""
+[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] > $null
+[Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] > $null
+$xml = New-Object Windows.Data.Xml.Dom.XmlDocument
+$xml.LoadXml("<toast><visual><binding template='ToastText02'><text id='1'>Parhez Plyus</text><text id='2'>{message}</text></binding></visual></toast>")
+$toast = [Windows.UI.Notifications.ToastNotification]::new($xml)
+$notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("Parhez Plyus")
+$notifier.Show($toast)
+"""
+
+    try:
+        subprocess.Popen(
+            [
+                "powershell",
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-WindowStyle",
+                "Hidden",
+                "-Command",
+                powershell_script,
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except OSError:
+        pass
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     sync_order_table_schema()
+    show_startup_notification()
     db = SessionLocal()
 
     try:
@@ -110,4 +146,4 @@ def read_root():
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000, reload=False, log_level="debug")
+    uvicorn.run(app, host="0.0.0.0", port=8000, reload=False, log_config=None)
