@@ -20,10 +20,6 @@ export function formatCreated(createdAtIso: string) {
   return `${yyyy}-${mm}-${dd} ${hh}:${min}`
 }
 
-export function countFoodTypes(items: ApiOrderItemRef[]) {
-  return new Set(items.map((item) => item.product_id)).size
-}
-
 export function getOrderTotals(order: Pick<ApiOrderRow, 'total_price' | 'discount_amount'>) {
   const total = order.total_price
   const discountAmount = Math.max(0, Number(order.discount_amount ?? 0) || 0)

@@ -55,28 +55,3 @@ export function toCategoryImageSrc(apiCategory: ApiCategory) {
   if (normalized.startsWith('/')) return `${API_URL}${normalized}`
   return `${API_URL}/${normalized}`
 }
-
-export function wrapText(text: string, maxWidth: number): string[] {
-  const words = text.split(' ')
-  const lines: string[] = []
-  let currentLine = ''
-
-  for (const word of words) {
-    if ((currentLine + word).length <= maxWidth) {
-      currentLine += (currentLine ? ' ' : '') + word
-    } else {
-      if (currentLine) lines.push(currentLine)
-      currentLine = word
-    }
-  }
-
-  if (currentLine) lines.push(currentLine)
-  return lines.length === 0 ? [''] : lines
-}
-
-export function centerText(text: string, width: number): string {
-  const padding = Math.max(0, width - text.length)
-  const leftPad = Math.floor(padding / 2)
-  const rightPad = padding - leftPad
-  return ' '.repeat(leftPad) + text + ' '.repeat(rightPad)
-}
