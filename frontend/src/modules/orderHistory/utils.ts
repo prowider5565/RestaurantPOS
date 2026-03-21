@@ -1,5 +1,5 @@
 import { API_URL } from '../../config/env'
-import type { ApiOrderItemRef, ApiOrderRow } from './types'
+import type { ApiOrderRow } from './types'
 
 export function toYmd(date: Date) {
   const yyyy = date.getFullYear()
