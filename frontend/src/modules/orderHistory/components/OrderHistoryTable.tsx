@@ -84,7 +84,7 @@ export function OrderHistoryTable({
               const username = order.user?.username ?? '-'
               const position = order.user?.position ?? '-'
               const table = order.order_table
-              const finalTotal = totals.discountedTotal + order.waitress_wage
+              const finalTotal = totals.discountedTotal + (order.waiter_fee ? order.waitress_wage : 0)
 
               return (
                 <TableRow key={order.id} hover>
@@ -119,7 +119,7 @@ export function OrderHistoryTable({
                     {formatMoney(totals.discountAmount)}
                   </TableCell>
                   <TableCell align="right" sx={{ fontWeight: 800 }}>
-                    {formatMoney(order.waitress_wage)}
+                    {order.waiter_fee ? formatMoney(order.waitress_wage) : '-'}
                   </TableCell>
                   <TableCell align="right" sx={{ fontWeight: 900 }}>
                     {formatMoney(finalTotal)}

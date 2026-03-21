@@ -20,6 +20,7 @@ class OrderCreate(BaseModel):
     discounted_total: float = Field(ge=0)
     user_id: int
     order_table_id: int
+    waiter_fee: bool
     # status: OrderStatus = OrderStatus.PENDING
     items: list[OrderItemCreate] = Field(min_length=1)
 
@@ -74,6 +75,7 @@ class OrderOut(BaseModel):
 
     id: int
     total_price: float
+    waiter_fee: bool
     waitress_wage: float
     discount_amount: int | None = 0
     # status: OrderStatus
@@ -88,6 +90,7 @@ class OrderHistoryRowOut(BaseModel):
 
     id: int
     total_price: float
+    waiter_fee: bool
     waitress_wage: float
     discount_amount: int | None = 0
     # status: OrderStatus
@@ -102,6 +105,7 @@ class OrderHistoryOverviewOut(BaseModel):
     total_sum: float
     total_net_sum: float
     total_discount_sum: float
+    total_waiter_fee_sum: float
 
 
 class OrderHistoryResponseOut(BaseModel):

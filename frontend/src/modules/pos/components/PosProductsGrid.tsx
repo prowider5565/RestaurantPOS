@@ -51,7 +51,10 @@ const ProductCard = memo(function ProductCard({
           }
           onAddToCart(product)
         }}
-        onMouseDown={(e) => onBeginLongPress(product, e.clientX, e.clientY)}
+        onMouseDown={(e) => {
+          if (e.button !== 0) return
+          onBeginLongPress(product, e.clientX, e.clientY)
+        }}
         onMouseUp={onCancelLongPress}
         onMouseLeave={onCancelLongPress}
         onTouchStart={(e) => {
@@ -62,7 +65,17 @@ const ProductCard = memo(function ProductCard({
         onTouchEnd={onCancelLongPress}
         onTouchCancel={onCancelLongPress}
         onTouchMove={onCancelLongPress}
-        sx={{ height: '100%', position: 'relative' }}
+        onContextMenu={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+        }}
+        sx={{
+          height: '100%',
+          position: 'relative',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          WebkitTouchCallout: 'none',
+        }}
       >
         <Box
           component="img"

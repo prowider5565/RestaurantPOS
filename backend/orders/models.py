@@ -34,6 +34,8 @@ class Order(Base):
 
     @property
     def waitress_wage(self) -> float:
+        if not bool(self.waiter_fee):
+            return 0.0
         return float(self.total_price or 0.0) * 0.1
 
 

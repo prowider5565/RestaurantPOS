@@ -152,6 +152,7 @@ export default function PosPage({
               discountDigits={pos.discountDigits}
               waitressWage={pos.waitressWage}
               discountedTotal={pos.discountedTotal}
+              includeWaiterFee={pos.includeWaiterFee}
               isPlacingOrder={pos.isPlacingOrder}
               orderTables={pos.orderTables}
               selectedOrderTableId={pos.selectedOrderTableId}
@@ -161,6 +162,7 @@ export default function PosPage({
               onSetQty={pos.setQty}
               onToggleEditTotal={pos.toggleEditTotal}
               onDiscountDigitsChange={pos.setDiscountDigits}
+              onIncludeWaiterFeeChange={pos.setIncludeWaiterFee}
               onPlaceOrder={pos.placeOrder}
             />
           </Box>

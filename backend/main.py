@@ -1,5 +1,6 @@
 from pathlib import Path
 import subprocess
+import multiprocessing
 import sys
 
 from fastapi import FastAPI
@@ -144,6 +145,8 @@ def read_root():
 
 
 if __name__ == "__main__":
+    multiprocessing.freeze_support()
+
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000, reload=False, log_config=None)
+    uvicorn.run(app, host="0.0.0.0", port=8000, reload=False)

@@ -58,11 +58,13 @@ def get_order_history_api(
 
 @router.get("/my-history", response_model=OrderHistoryResponseOut)
 def get_my_order_history_api(
+    from_date: date | None = Query(default=None),
+    to_date: date | None = Query(default=None),
     params: Params = Depends(),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> OrderHistoryResponseOut:
-    return get_my_order_history(db, user_id=current_user.id, params=params)
+    return get_my_order_history(db, user_id=current_user.id, params=params, from_date=from_date, to_date=to_date)
 
 
 @router.get("/food-analytics", response_model=FoodAnalyticsResponseOut)

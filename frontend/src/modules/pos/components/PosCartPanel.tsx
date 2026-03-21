@@ -2,7 +2,7 @@ import AddIcon from '@mui/icons-material/Add'
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import CloseIcon from '@mui/icons-material/Close'
 import RemoveIcon from '@mui/icons-material/Remove'
-import { Box, Button, Divider, FormControl, IconButton, List, MenuItem, Paper, Select, Stack, TextField, Tooltip, Typography } from '@mui/material'
+import { Box, Button, Checkbox, Divider, FormControl, FormControlLabel, IconButton, List, MenuItem, Paper, Select, Stack, TextField, Tooltip, Typography } from '@mui/material'
 import type { MutableRefObject } from 'react'
 
 import { formatMoney } from '../../../shared/utils/formatters'
@@ -28,6 +28,7 @@ export default function PosCartPanel({
   discountDigits,
   waitressWage,
   discountedTotal,
+  includeWaiterFee,
   isPlacingOrder,
   orderTables,
   selectedOrderTableId,
@@ -37,6 +38,7 @@ export default function PosCartPanel({
   onSetQty,
   onToggleEditTotal,
   onDiscountDigitsChange,
+  onIncludeWaiterFeeChange,
   onPlaceOrder,
 }: {
   cartCount: number
@@ -46,6 +48,7 @@ export default function PosCartPanel({
   discountDigits: string
   waitressWage: number
   discountedTotal: number
+  includeWaiterFee: boolean
   isPlacingOrder: boolean
   orderTables: ApiOrderTable[]
   selectedOrderTableId: string
@@ -55,6 +58,7 @@ export default function PosCartPanel({
   onSetQty: (productId: number, qty: number) => void
   onToggleEditTotal: () => void
   onDiscountDigitsChange: (value: string) => void
+  onIncludeWaiterFeeChange: (value: boolean) => void
   onPlaceOrder: () => void
 }) {
   const selectedTable = orderTables.find((table) => String(table.id) === selectedOrderTableId) ?? null
@@ -246,6 +250,16 @@ export default function PosCartPanel({
             Buyurtma uchun stol tanlanishi shart.
           </Typography>
         ) : null}
+
+        <FormControlLabel
+          control={<Checkbox size="small" checked={includeWaiterFee} onChange={(e) => onIncludeWaiterFeeChange(e.target.checked)} />}
+          label={
+            <Typography sx={{ fontWeight: 800, fontSize: 13 }}>
+              Ofitsiant xizmatini qo'shish
+            </Typography>
+          }
+          sx={{ mb: 0.5, ml: -0.75 }}
+        />
 
         <Stack direction="row" justifyContent="space-between" alignItems="baseline">
           <Typography sx={{ fontWeight: 900, fontSize: 14, color: 'text.secondary' }}>Ofitsiant xizmati</Typography>

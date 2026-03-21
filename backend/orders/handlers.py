@@ -5,7 +5,7 @@ from datetime import date, datetime, time
 from fastapi import HTTPException
 from fastapi_pagination import Page, Params
 from fastapi_pagination.ext.sqlalchemy import paginate
-from sqlalchemy import func
+from sqlalchemy import case, func
 from sqlalchemy.orm import Session, selectinload
 
 from .models import Order, OrderItem, OrderTable
@@ -72,6 +72,7 @@ def create_order(db: Session, payload: OrderCreate) -> tuple[Order, list[OrderIt
         discount_amount=discount_amount,
         user_id=payload.user_id,
         order_table_id=payload.order_table_id,
+        waiter_fee=payload.waiter_fee,
         # status=payload.status,
     )
     db.add(order)
@@ -125,6 +126,21 @@ def get_order_history(
     )
     total_net_sum = float(net_sum_query.scalar() or 0.0)
 
+    waiter_fee_sum_query = apply_filters(
+        db.query(
+            func.coalesce(
+                func.sum(
+                    case(
+                        (Order.waiter_fee.is_(True), Order.total_price * 0.1),
+                        else_=0.0,
+                    )
+                ),
+                0.0,
+            )
+        ).select_from(Order)
+    )
+    total_waiter_fee_sum = float(waiter_fee_sum_query.scalar() or 0.0)
+
     query = apply_filters(
         db.query(Order).options(
             selectinload(Order.items),
@@ -139,6 +155,7 @@ def get_order_history(
         total_sum=total_sum,
         total_net_sum=total_net_sum,
         total_discount_sum=total_discount_sum,
+        total_waiter_fee_sum=total_waiter_fee_sum,
     )
     return OrderHistoryResponseOut(overview=overview, page=page)
 
@@ -187,23 +204,27 @@ def get_food_sales_analytics(
 
 
 def get_my_order_history(
-    db: Session, user_id: int, params: Params
+    db: Session, user_id: int, params: Params, from_date: date | None = None, to_date: date | None = None
 ) -> OrderHistoryResponseOut:
-    total_sum_query = (
-        db.query(func.coalesce(func.sum(Order.total_price), 0.0))
-        .select_from(Order)
-        .filter(Order.user_id == user_id)
+    def apply_filters(q):
+        q = q.filter(Order.user_id == user_id)
+        if from_date is not None:
+            q = q.filter(Order.created_at >= datetime.combine(from_date, time.min))
+        if to_date is not None:
+            q = q.filter(Order.created_at <= datetime.combine(to_date, time.max))
+        return q
+
+    total_sum_query = apply_filters(
+        db.query(func.coalesce(func.sum(Order.total_price), 0.0)).select_from(Order)
     )
     total_sum = float(total_sum_query.scalar() or 0.0)
 
-    discount_sum_query = (
-        db.query(func.coalesce(func.sum(func.coalesce(Order.discount_amount, 0)), 0))
-        .select_from(Order)
-        .filter(Order.user_id == user_id)
+    discount_sum_query = apply_filters(
+        db.query(func.coalesce(func.sum(func.coalesce(Order.discount_amount, 0)), 0)).select_from(Order)
     )
     total_discount_sum = float(discount_sum_query.scalar() or 0.0)
 
-    net_sum_query = (
+    net_sum_query = apply_filters(
         db.query(
             func.coalesce(
                 func.sum(Order.total_price - func.coalesce(Order.discount_amount, 0)),
@@ -211,20 +232,32 @@ def get_my_order_history(
             )
         )
         .select_from(Order)
-        .filter(Order.user_id == user_id)
     )
     total_net_sum = float(net_sum_query.scalar() or 0.0)
 
-    query = (
+    waiter_fee_sum_query = apply_filters(
+        db.query(
+            func.coalesce(
+                func.sum(
+                    case(
+                        (Order.waiter_fee.is_(True), Order.total_price * 0.1),
+                        else_=0.0,
+                    )
+                ),
+                0.0,
+            )
+        ).select_from(Order)
+    )
+    total_waiter_fee_sum = float(waiter_fee_sum_query.scalar() or 0.0)
+
+    query = apply_filters(
         db.query(Order)
         .options(
             selectinload(Order.items),
             selectinload(Order.user),
             selectinload(Order.order_table),
         )
-        .filter(Order.user_id == user_id)
-        .order_by(Order.created_at.desc())
-    )
+    ).order_by(Order.created_at.desc())
     page = paginate(db, query, params)
 
     overview = OrderHistoryOverviewOut(
@@ -232,6 +265,7 @@ def get_my_order_history(
         total_sum=total_sum,
         total_net_sum=total_net_sum,
         total_discount_sum=total_discount_sum,
+        total_waiter_fee_sum=total_waiter_fee_sum,
     )
     return OrderHistoryResponseOut(overview=overview, page=page)
 

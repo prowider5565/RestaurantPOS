@@ -40,6 +40,8 @@ export default function OrderDetailsDialog({
   if (!open) return null
 
   const totals = order ? getOrderTotals(order) : { total: 0, discountAmount: 0, discountedTotal: 0 }
+  const waiterFeeAmount = order?.waiter_fee ? order.waitress_wage : 0
+  const finalTotal = totals.discountedTotal + waiterFeeAmount
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -84,12 +86,19 @@ export default function OrderDetailsDialog({
               <Typography sx={{ fontWeight: 900, textDecoration: 'line-through', color: 'text.secondary' }}>
                 {formatMoney(totals.total)}
               </Typography>
-              <Typography sx={{ fontWeight: 1000 }}>{formatMoney(totals.discountedTotal)}</Typography>
+              <Typography sx={{ fontWeight: 1000 }}>{formatMoney(finalTotal)}</Typography>
             </Stack>
           ) : (
-            <Typography sx={{ fontWeight: 1000 }}>Jami: {formatMoney(totals.total)}</Typography>
+            <Typography sx={{ fontWeight: 1000 }}>Jami: {formatMoney(finalTotal)}</Typography>
           )}
         </Stack>
+
+        {order ? (
+          <Stack direction="row" justifyContent="space-between" sx={{ mb: 2 }}>
+            <Typography sx={{ fontWeight: 800, color: 'text.secondary' }}>Ofitsiant xizmati</Typography>
+            <Typography sx={{ fontWeight: 900 }}>{order.waiter_fee ? formatMoney(order.waitress_wage) : '-'}</Typography>
+          </Stack>
+        ) : null}
 
         <Paper variant="outlined" sx={{ borderRadius: 2 }}>
           <List dense disablePadding>

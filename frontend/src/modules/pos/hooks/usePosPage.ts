@@ -69,6 +69,7 @@ export function usePosPage() {
   const [isEditingTotal, setIsEditingTotal] = useState(false)
   const [discountDigits, setDiscountDigits] = useState('')
   const [discountedTotalOverride, setDiscountedTotalOverride] = useState<number | null>(null)
+  const [includeWaiterFee, setIncludeWaiterFee] = useState(true)
 
   const menuCategories: Category[] = useMemo(() => {
     const base: Category[] = [{ id: 'all', label: 'Barchasi', imageSrc: DEFAULT_CATEGORY_IMAGE_SRC }]
@@ -92,7 +93,7 @@ export function usePosPage() {
   const cartCount = useMemo(() => cartLines.reduce((sum, line) => sum + line.qty, 0), [cartLines])
   const subtotal = useMemo(() => cartLines.reduce((sum, line) => sum + line.qty * line.product.price, 0), [cartLines])
   const subtotalInt = useMemo(() => Math.round(subtotal), [subtotal])
-  const waitressWage = useMemo(() => Math.round(subtotalInt * 0.1), [subtotalInt])
+  const waitressWage = useMemo(() => (includeWaiterFee ? Math.round(subtotalInt * 0.1) : 0), [includeWaiterFee, subtotalInt])
   const totalWithWaitressWage = useMemo(() => subtotalInt + waitressWage, [subtotalInt, waitressWage])
   const discountedSubtotal = useMemo(() => {
     const raw = discountedTotalOverride ?? subtotalInt
@@ -188,6 +189,7 @@ export function usePosPage() {
         discounted_total: discountedSubtotal,
         user_id: currentUser.id,
         order_table_id: Number(selectedOrderTableId),
+        waiter_fee: includeWaiterFee,
         items: cartLines.map((line) => ({ product: line.product.id, quantity: line.qty })),
       }
 
@@ -537,6 +539,8 @@ export function usePosPage() {
     setDiscountDigits,
     waitressWage,
     discountedTotal,
+    includeWaiterFee,
+    setIncludeWaiterFee,
     toggleEditTotal,
     isPlacingOrder,
     placeOrder,

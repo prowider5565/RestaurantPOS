@@ -212,18 +212,23 @@ def generate_receipt(
             lines.append(build_row(["", name_line, "", "", ""]))
 
     original_total = round(_to_number(order_data.get("total_price"), total_amount))
+    waiter_fee_enabled = bool(order_data.get("waiter_fee"))
     waitress_wage = round(
-        _to_number(order_data.get("waitress_wage"), original_total * 0.1)
+        _to_number(
+            order_data.get("waitress_wage"),
+            (original_total * 0.1) if waiter_fee_enabled else 0.0,
+        )
     )
     discount_amount = max(0.0, _to_number(order_data.get("discount_amount"), 0.0))
     final_total = max(0.0, original_total - discount_amount) + waitress_wage
 
     lines.append(strong_bottom_separator())
-    lines.append(
-        build_plain_summary_line(
-            "Ofitsiant xizmati:", f"{format_number_plain(waitress_wage)} so'm"
+    if waiter_fee_enabled:
+        lines.append(
+            build_plain_summary_line(
+                "Ofitsiant xizmati:", f"{format_number_plain(waitress_wage)} so'm"
+            )
         )
-    )
     lines.append(
         escpos_bold_on
         + escpos_double_size_on
