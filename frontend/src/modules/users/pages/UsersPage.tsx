@@ -67,7 +67,7 @@ export default function UsersPage({
       <Box
         sx={{
           p: 2,
-          pb: 12,
+          pb: { xs: 12, md: 2, lg: 12 },
           height: { xs: 'calc(100vh - 56px)', sm: 'calc(100vh - 64px)' },
           display: 'flex',
           flexDirection: 'column',

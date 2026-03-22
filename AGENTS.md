@@ -26,7 +26,7 @@ Communication:
 
 ## Project Overview
 
-This is a restaurant POS System written in React.js for frontend, FastAPI for backend. The project contains frontend and backend folders containing corresponding stack code.
+This is a VPOS (Velocity Points of Sales) System written in React.js for frontend, FastAPI for backend. The project contains frontend and backend folders containing corresponding stack code.
 
 ### Backend Overview
 

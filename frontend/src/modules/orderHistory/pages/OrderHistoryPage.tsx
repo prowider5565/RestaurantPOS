@@ -77,7 +77,7 @@ export default function OrderHistoryPage({
       <Box
         sx={{
           p: 2,
-          pb: 6,
+          pb: { xs: 6, md: 2, lg: 6 },
           height: { xs: 'calc(100vh - 56px)', sm: 'calc(100vh - 64px)' },
           display: 'flex',
           flexDirection: 'column',
@@ -88,16 +88,6 @@ export default function OrderHistoryPage({
         }}
       >
         <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2} flexWrap="wrap">
-          <DateRangeFilterCard
-            preset={historyPage.preset}
-            fromDate={historyPage.fromDate}
-            toDate={historyPage.toDate}
-            onPresetChange={historyPage.changePreset}
-            onDateRangeChange={historyPage.changeDateRange}
-          />
-        </Stack>
-
-        <Box sx={{ flex: '0 0 auto' }}>
           <Tabs
             value={activeTab}
             onChange={(_, next: 'orders' | 'food_analytics') => setActiveTab(next)}
@@ -112,7 +102,15 @@ export default function OrderHistoryPage({
             <Tab value="orders" label="Buyurtmalarim" />
             <Tab value="food_analytics" label="Ovqatlar savdo analitikasi" />
           </Tabs>
-        </Box>
+
+          <DateRangeFilterCard
+            preset={historyPage.preset}
+            fromDate={historyPage.fromDate}
+            toDate={historyPage.toDate}
+            onPresetChange={historyPage.changePreset}
+            onDateRangeChange={historyPage.changeDateRange}
+          />
+        </Stack>
 
         {activeTab === 'orders' ? (
           <Box sx={{ flex: '0 0 auto' }}>
@@ -120,7 +118,7 @@ export default function OrderHistoryPage({
           </Box>
         ) : null}
 
-        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {activeTab === 'orders' ? (
             <OrderHistoryTable
               loading={historyPage.loading}

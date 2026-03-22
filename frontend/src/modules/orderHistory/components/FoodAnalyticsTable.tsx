@@ -34,7 +34,20 @@ export default function FoodAnalyticsTable({
   }
 
   return (
-    <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 3, flex: 1, overflow: 'auto' }}>
+    <TableContainer
+      component={Paper}
+      variant="outlined"
+      sx={{
+        borderRadius: 3,
+        flex: 1,
+        minHeight: 0,
+        overflow: 'auto',
+        width: '100%',
+        '@media (min-width:900px) and (max-width:1199.95px) and (max-height:768px)': {
+          maxHeight: 500,
+        },
+      }}
+    >
       <Table
         size="small"
         stickyHeader

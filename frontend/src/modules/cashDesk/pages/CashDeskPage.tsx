@@ -73,7 +73,7 @@ export default function CashDeskPage({
       <Box
         sx={{
           p: 2,
-          pb: 12,
+          pb: { xs: 12, md: 2, lg: 12 },
           display: 'flex',
           flexDirection: 'column',
           minHeight: 0,
@@ -104,8 +104,6 @@ export default function CashDeskPage({
             }}
           >
             <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2} flexWrap="wrap">
-
-
               <DateRangeFilterCard
                 preset={cashDesk.preset}
                 fromDate={cashDesk.fromDate}
@@ -115,14 +113,16 @@ export default function CashDeskPage({
               />
             </Stack>
 
-            <CashDeskTransactionsTable
-              isAdmin={cashDesk.isAdmin}
-              rows={cashDesk.pagedTransactions}
-              page={cashDesk.page}
-              pages={cashDesk.pages}
-              onPageChange={cashDesk.setPage}
-              onDelete={cashDesk.requestDeleteTransaction}
-            />
+            <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              <CashDeskTransactionsTable
+                isAdmin={cashDesk.isAdmin}
+                rows={cashDesk.pagedTransactions}
+                page={cashDesk.page}
+                pages={cashDesk.pages}
+                onPageChange={cashDesk.setPage}
+                onDelete={cashDesk.requestDeleteTransaction}
+              />
+            </Box>
           </Box>
 
           <CashDeskSummaryPanel

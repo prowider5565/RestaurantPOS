@@ -133,7 +133,16 @@ export default function PosPage({
                 onSelect={pos.setSelectedCategoryId}
               />
 
-              <Box sx={{ minHeight: 0, flex: 1, overflow: 'hidden' }}>
+              <Box
+                sx={{
+                  minHeight: 0,
+                  flex: 1,
+                  overflow: 'hidden',
+                  '@media (min-width:900px) and (max-width:1199.95px) and (max-height:768px)': {
+                    maxHeight: 560,
+                  },
+                }}
+              >
                 <PosProductsGrid
                   visibleProducts={pos.visibleProducts}
                   onAddToCart={pos.addToCart}

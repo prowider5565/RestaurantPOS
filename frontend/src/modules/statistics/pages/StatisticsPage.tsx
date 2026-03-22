@@ -159,7 +159,7 @@ export default function StatisticsPage({
       <Box
         sx={{
           p: 2,
-          pb: 12,
+          pb: { xs: 12, md: 2, lg: 12 },
           display: 'flex',
           flexDirection: 'column',
           minHeight: 0,
@@ -209,67 +209,82 @@ export default function StatisticsPage({
               />
             </Stack>
 
-            <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1, flex: 1, minHeight: 0, overflow: 'auto' }}>
-              <Table
-                size="small"
-                stickyHeader
+            <Stack sx={{ flex: 1, minHeight: 0 }} spacing={2}>
+              <TableContainer
+                component={Paper}
+                variant="outlined"
                 sx={{
-                  '& .MuiTableCell-root': {
-                    fontSize: '0.9em',
-                    py: 1.1,
+                  borderRadius: 1,
+                  flex: 1,
+                  minHeight: 0,
+                  overflow: 'auto',
+                  width: '100%',
+                  '@media (min-width:900px) and (max-width:1199.95px) and (max-height:768px)': {
+                    maxHeight: 500,
                   },
                 }}
               >
-                <TableHead>
-                  <TableRow sx={{ bgcolor: 'background.default' }}>
-                    <TableCell sx={{ fontWeight: 900 }}>Buyurtma ID</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 900 }}>
-                      Jami
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 900 }}>Sana</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {rows.map((o) => (
-                    <TableRow key={o.id} hover>
-                      <TableCell sx={{ fontWeight: 800 }}>#{o.id}</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 900 }}>
-                        {formatMoney(o.total_price)}
-                      </TableCell>
-                      <TableCell>{formatCreated(o.created_at)}</TableCell>
-                    </TableRow>
-                  ))}
-                  {loading && rows.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={3} sx={{ py: 6, textAlign: 'center', color: 'text.secondary', fontWeight: 800 }}>
-                        Yuklanmoqda...
-                      </TableCell>
-                    </TableRow>
-                  ) : null}
-                </TableBody>
-              </Table>
-            </TableContainer>
-
-            {pages > 1 ? (
-              <Stack direction="row" justifyContent="flex-end">
-                <Pagination
-                  color="primary"
-                  size="large"
-                  page={page}
-                  count={pages}
-                  onChange={(_, next) => setPage(next)}
-                  showFirstButton
-                  showLastButton
+                <Table
+                  size="small"
+                  stickyHeader
                   sx={{
-                    '& .MuiPaginationItem-root': {
-                      fontSize: '1.4em',
-                      minWidth: 45,
-                      height: 45,
+                    '& .MuiTableCell-root': {
+                      fontSize: '0.9em',
+                      py: 1.1,
                     },
                   }}
-                />
-              </Stack>
-            ) : null}
+                >
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: 'background.default' }}>
+                      <TableCell sx={{ fontWeight: 900 }}>Buyurtma ID</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 900 }}>
+                        Jami
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 900 }}>Sana</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {rows.map((o) => (
+                      <TableRow key={o.id} hover>
+                        <TableCell sx={{ fontWeight: 800 }}>#{o.id}</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 900 }}>
+                          {formatMoney(o.total_price)}
+                        </TableCell>
+                        <TableCell>{formatCreated(o.created_at)}</TableCell>
+                      </TableRow>
+                    ))}
+                    {loading && rows.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={3} sx={{ py: 6, textAlign: 'center', color: 'text.secondary', fontWeight: 800 }}>
+                          Yuklanmoqda...
+                        </TableCell>
+                      </TableRow>
+                    ) : null}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              {pages > 1 ? (
+                <Stack direction="row" justifyContent="flex-end">
+                  <Pagination
+                    color="primary"
+                    size="large"
+                    page={page}
+                    count={pages}
+                    onChange={(_, next) => setPage(next)}
+                    showFirstButton
+                    showLastButton
+                    sx={{
+                      '& .MuiPaginationItem-root': {
+                        fontSize: '1.4em',
+                        minWidth: 45,
+                        height: 45,
+                      },
+                    }}
+                  />
+                </Stack>
+              ) : null}
+            </Stack>
           </Box>
 
           <Card

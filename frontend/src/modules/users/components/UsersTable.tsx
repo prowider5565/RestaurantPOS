@@ -49,7 +49,19 @@ export default function UsersTable({
 
   return (
     <>
-      <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1, overflow: 'auto', flex: 1 }}>
+      <TableContainer
+        component={Paper}
+        variant="outlined"
+        sx={{
+          borderRadius: 1,
+          overflow: 'auto',
+          width: '100%',
+          maxHeight: { xs: 'calc(100dvh - 260px)', sm: 'calc(100dvh - 240px)', md: 'calc(100dvh - 280px)', lg: 'calc(100dvh - 240px)' },
+          '@media (min-width:900px) and (max-width:1199.95px) and (max-height:768px)': {
+            maxHeight: 560,
+          },
+        }}
+      >
         <Table
           size="small"
           stickyHeader
