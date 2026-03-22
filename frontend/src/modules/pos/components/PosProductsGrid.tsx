@@ -5,7 +5,7 @@ import { memo, type MutableRefObject, useEffect, useMemo, useRef, useState } fro
 import { formatMoney } from '../../../shared/utils/formatters'
 import type { UiProduct } from '../types'
 
-const CARD_HEIGHT = 100
+const CARD_HEIGHT = 140
 const MOBILE_GAP = 16
 const DESKTOP_GAP = 10
 const OVERSCAN_ROWS = 2

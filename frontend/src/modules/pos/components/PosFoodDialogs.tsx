@@ -60,13 +60,14 @@ function FoodDialog({
   const categoryLabelId = `${title}-category-label`
   const [isDragActive, setIsDragActive] = useState(false)
   const uploadAreaRef = useRef<HTMLDivElement | null>(null)
+  const pasteInputRef = useRef<HTMLTextAreaElement | null>(null)
 
   function handleDroppedFile(file: File | null) {
     setIsDragActive(false)
     onPickImage(file)
   }
 
-  function handlePaste(event: React.ClipboardEvent<HTMLDivElement>) {
+  function handlePaste(event: React.ClipboardEvent<HTMLTextAreaElement>) {
     const file = Array.from(event.clipboardData.items)
       .find((item) => item.type.startsWith('image/'))
       ?.getAsFile()
@@ -193,10 +194,9 @@ function FoodDialog({
 
               <Box
                 ref={uploadAreaRef}
-                tabIndex={0}
-                onMouseEnter={() => uploadAreaRef.current?.focus()}
-                onClick={() => uploadAreaRef.current?.focus()}
-                onPaste={handlePaste}
+                tabIndex={-1}
+                onMouseEnter={() => pasteInputRef.current?.focus()}
+                onClick={() => pasteInputRef.current?.focus()}
                 onDragEnter={(event) => {
                   event.preventDefault()
                   setIsDragActive(true)
@@ -226,6 +226,7 @@ function FoodDialog({
                   cursor: 'pointer',
                   display: 'grid',
                   placeItems: 'center',
+                  position: 'relative',
                   backgroundImage: previewUrl ? `url("${previewUrl}")` : 'none',
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
@@ -237,11 +238,52 @@ function FoodDialog({
                   },
                 }}
               >
+                <textarea
+                  ref={pasteInputRef}
+                  aria-label="Rasm joylash maydoni"
+                  onPaste={handlePaste}
+                  onChange={() => undefined}
+                  value=""
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    width: '100%',
+                    height: '100%',
+                    opacity: 0,
+                    resize: 'none',
+                    border: 'none',
+                    outline: 'none',
+                    background: 'transparent',
+                    color: 'transparent',
+                    caretColor: 'transparent',
+                    cursor: 'pointer',
+                    padding: 0,
+                    margin: 0,
+                    zIndex: 1,
+                  }}
+                />
                 {!previewUrl ? (
                   <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 800 }}>
                     {isDragActive ? 'Rasmni shu yerga tashlang' : "Rasm ko'rinishi yoki Ctrl+V bosing"}
                   </Typography>
-                ) : null}
+                ) : (
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      alignSelf: 'end',
+                      justifySelf: 'start',
+                      m: 1,
+                      px: 1,
+                      py: 0.5,
+                      borderRadius: 999,
+                      bgcolor: 'rgba(255,255,255,0.84)',
+                      color: 'text.secondary',
+                      fontWeight: 800,
+                    }}
+                  >
+                    Ctrl+V joylash
+                  </Typography>
+                )}
               </Box>
             </Paper>
           </Stack>
