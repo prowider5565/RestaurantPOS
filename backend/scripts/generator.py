@@ -127,13 +127,6 @@ def generate_receipt(
     def framed_line(text: str) -> str:
         return vertical + center_text(text, table_width - 2) + vertical
 
-    def build_summary_line(label: str, value: str) -> str:
-        content_width = table_width - 2
-        combined = f"{label}: {value}"
-        if len(combined) <= content_width:
-            return vertical + label.ljust(content_width - len(value)) + value + vertical
-        return vertical + combined[:content_width].ljust(content_width) + vertical
-
     def build_plain_summary_line(label: str, value: str) -> str:
         combined = f"{label} {value}"
         if len(combined) <= table_width:

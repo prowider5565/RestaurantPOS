@@ -17,8 +17,8 @@ class Settings:
     ACCESS_TOKEN_EXPIRE_DAYS: int
 
     COMPANY_NAME: str
-    STIR: int
-    REGISTRY_NUMBER: int
+    STIR: str
+    REGISTRY_NUMBER: str
     PHONE_NUMBER: str
     ADDRESS: str
 
@@ -43,8 +43,8 @@ def get_settings() -> Settings:
         ALGORITHM=os.getenv("ALGORITHM"),
         ACCESS_TOKEN_EXPIRE_DAYS=int(os.getenv("ACCESS_TOKEN_EXPIRE_DAYS", 30)),
         COMPANY_NAME=os.getenv("COMPANY_NAME"),
-        STIR=int(os.getenv("STIR")),
-        REGISTRY_NUMBER=int(os.getenv("REGISTRY_NUMBER")),
+        STIR=str(os.getenv("STIR")),
+        REGISTRY_NUMBER=str(os.getenv("REGISTRY_NUMBER")),
         PHONE_NUMBER=os.getenv("PHONE_NUMBER"),
         ADDRESS=os.getenv("ADDRESS"),
         cors_allowed_origins=(

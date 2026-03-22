@@ -14,6 +14,3 @@ async def print_cheque_handler(payload: PrintChequeRequest):
     print_cheque(content)
     return Response(status_code=204)
 
-@router.get("/requisites", response_model=RequisiteSchema)
-async def get_requisites():
-    return get_requisite_data()
