@@ -1,7 +1,6 @@
 import LogoutIcon from '@mui/icons-material/Logout'
 import SettingsIcon from '@mui/icons-material/Settings'
-import UploadFileIcon from '@mui/icons-material/UploadFile'
-import { Box, Button, IconButton, Stack, Tooltip } from '@mui/material'
+import { Box, IconButton, Stack, Tooltip } from '@mui/material'
 
 import { logout } from '../../../shared/auth'
 import DateRangeFilterCard from '../../../shared/components/DateRangeFilterCard'
@@ -105,11 +104,7 @@ export default function CashDeskPage({
             }}
           >
             <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2} flexWrap="wrap">
-              <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap">
-                <Button variant="outlined" startIcon={<UploadFileIcon />} onClick={cashDesk.exportSnapshot}>
-                  Hisobotni eksport qilish
-                </Button>
-              </Stack>
+
 
               <DateRangeFilterCard
                 preset={cashDesk.preset}

@@ -1,7 +1,6 @@
 import LogoutIcon from '@mui/icons-material/Logout'
 import SettingsIcon from '@mui/icons-material/Settings'
-import UploadFileIcon from '@mui/icons-material/UploadFile'
-import { Box, Button, IconButton, Stack, Tab, Tabs, Tooltip } from '@mui/material'
+import { Box, IconButton, Stack, Tab, Tabs, Tooltip } from '@mui/material'
 import { useState } from 'react'
 
 import { logout } from '../../../shared/auth'
@@ -89,19 +88,6 @@ export default function OrderHistoryPage({
         }}
       >
         <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2} flexWrap="wrap">
-          <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap">
-            {activeTab === 'orders' ? (
-              <Button
-                variant="outlined"
-                startIcon={<UploadFileIcon />}
-                onClick={historyPage.exportToExcelCsv}
-                disabled={historyPage.rows.length === 0}
-              >
-                Excelga eksport qilish
-              </Button>
-            ) : null}
-          </Stack>
-
           <DateRangeFilterCard
             preset={historyPage.preset}
             fromDate={historyPage.fromDate}

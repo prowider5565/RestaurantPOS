@@ -11,12 +11,11 @@ DISABLE_MULTIBYTE_MODE = b"\x1c\x2e"
 ESC_POS_CODEPAGE_SEQUENCE = b"\x1b\x74\x11"
 TEXT_ENCODING = "cp866"
 
+# Cash drawer open command (pin 2)
+OPEN_DRAWER = b"\x1b\x70\x00\x19\xfa"
+
 
 def get_requisite_data():
-    """
-    Return static requisite data for the restaurant.
-    In a real application, this could be fetched from a database or config file.
-    """
     return {
         "company_name": settings.COMPANY_NAME,
         "address": settings.ADDRESS,
@@ -37,12 +36,14 @@ def print_cheque(text=None):
         receipt_text = str(text or "")
         payload = (
             PRINTER_INIT
+            + OPEN_DRAWER  # <-- added here
             + DISABLE_MULTIBYTE_MODE
             + ESC_POS_CODEPAGE_SEQUENCE
             + receipt_text.encode(TEXT_ENCODING, errors="replace")
             + (b"\n" * LINE_FEEDS_AFTER_PRINT)
             + CUT_PAPER
         )
+
         win32print.WritePrinter(h, payload)
 
         win32print.EndPagePrinter(h)
@@ -58,4 +59,3 @@ def generate_cheque_content(order_data: dict, program_name: str) -> str:
         requisites=requisites,
         program_name=program_name,
     )
-
