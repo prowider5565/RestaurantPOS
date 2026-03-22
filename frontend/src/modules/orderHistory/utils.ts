@@ -1,5 +1,5 @@
 import { API_URL } from '../../config/env'
-import type { ApiOrderItemRef, ApiOrderRow } from './types'
+import type { ApiOrderRow } from './types'
 
 export function toYmd(date: Date) {
   const yyyy = date.getFullYear()
@@ -18,10 +18,6 @@ export function formatCreated(createdAtIso: string) {
   const hh = String(date.getHours()).padStart(2, '0')
   const min = String(date.getMinutes()).padStart(2, '0')
   return `${yyyy}-${mm}-${dd} ${hh}:${min}`
-}
-
-export function countFoodTypes(items: ApiOrderItemRef[]) {
-  return new Set(items.map((item) => item.product_id)).size
 }
 
 export function getOrderTotals(order: Pick<ApiOrderRow, 'total_price' | 'discount_amount'>) {

@@ -255,7 +255,7 @@ export default function PosCartPanel({
           control={<Checkbox size="small" checked={includeWaiterFee} onChange={(e) => onIncludeWaiterFeeChange(e.target.checked)} />}
           label={
             <Typography sx={{ fontWeight: 800, fontSize: 13 }}>
-              Ofitsiant xizmatini qo'shish
+              Ofitsiant xizmati
             </Typography>
           }
           sx={{ mb: 0.5, ml: -0.75 }}
