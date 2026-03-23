@@ -46,8 +46,7 @@ export default function Navbar({
   onSearchChange?: (value: string) => void
   searchPlaceholder?: string
 }) {
-  const itemsBeforeStats = NAV_ITEMS.filter((item) => item.id !== 'statistics' && (showUsers || item.id !== 'users'))
-  const statisticsItem = NAV_ITEMS.find((item) => item.id === 'statistics')
+  const itemsBeforeStats = NAV_ITEMS.filter((item) => (showUsers || item.id !== 'users'))
 
   return (
     <AppBar
@@ -107,38 +106,6 @@ export default function Navbar({
             </Button>
           ))}
 
-          {statisticsItem ? (
-            <Button
-              key={statisticsItem.id}
-              color={statisticsItem.id === active ? 'primary' : 'inherit'}
-              startIcon={statisticsItem.icon}
-              onClick={() => onNavigate(statisticsItem.id)}
-              sx={{
-                fontWeight: 900,
-                fontSize: 14,
-                borderRadius: 2,
-                minWidth: 0,
-                px: { xs: 0.9, sm: 1.4 },
-                py: 0.7,
-                textTransform: 'none',
-                whiteSpace: 'nowrap',
-                bgcolor: statisticsItem.id === active ? 'primary.main' : 'transparent',
-                color: statisticsItem.id === active ? 'common.white' : 'inherit',
-                '&:hover': {
-                  bgcolor: statisticsItem.id === active ? 'primary.dark' : 'action.hover',
-                },
-                '& .MuiButton-startIcon': {
-                  mr: 0.6,
-                  color: statisticsItem.id === active ? 'common.white' : 'inherit',
-                  '& > *:first-of-type': {
-                    fontSize: 18,
-                  },
-                },
-              }}
-            >
-              {statisticsItem.label}
-            </Button>
-          ) : null}
 
           {onSearchChange ? (
             <TextField

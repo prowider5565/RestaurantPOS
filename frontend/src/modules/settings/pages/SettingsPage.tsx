@@ -2,8 +2,7 @@ import LogoutIcon from '@mui/icons-material/Logout'
 import SettingsIcon from '@mui/icons-material/Settings'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
-import { invoke } from '@tauri-apps/api/core'
-import { Alert, Box, Button, Divider, IconButton, Paper, Stack, TextField, Tooltip, Typography } from '@mui/material'
+import { Alert, Box, Button, IconButton, Stack, TextField, Tooltip, Typography } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
@@ -17,9 +16,6 @@ type Me = {
   is_admin: boolean
 }
 
-const PROGRAM_NAME_STORAGE_KEY = 'programName'
-const DEFAULT_PROGRAM_NAME = 'Restoran Cheki'
-
 export default function SettingsPage({
   onNavigate,
   showUsers,
@@ -29,75 +25,46 @@ export default function SettingsPage({
 }) {
   const [me, setMe] = useState<Me | null>(null)
   const [username, setUsername] = useState('')
-
-  const [programName, setProgramName] = useState(DEFAULT_PROGRAM_NAME)
-  const [savedProgramName, setSavedProgramName] = useState(DEFAULT_PROGRAM_NAME)
-
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false)
-
-  const [status, setStatus] = useState<{ kind: 'ok' | 'err'; msg: string } | null>(null)
   const [saving, setSaving] = useState(false)
-
-  const [ipAddress, setIpAddress] = useState<string | null>(null)
-  const [ipLoading, setIpLoading] = useState(false)
-
-  useEffect(() => {
-    const fromStorage = localStorage.getItem(PROGRAM_NAME_STORAGE_KEY)
-    const next = (fromStorage ?? DEFAULT_PROGRAM_NAME).trim() || DEFAULT_PROGRAM_NAME
-    setProgramName(next)
-    setSavedProgramName(next)
-  }, [])
+  const [status, setStatus] = useState<{ kind: 'ok' | 'err'; msg: string } | null>(null)
 
   useEffect(() => {
     let alive = true
-    ;(async () => {
+
+    async function loadMe() {
       const res = await fetch(`${API_URL}/users/me`, { headers: getAuthHeaders() })
       if (!res.ok) return
       const data = (await res.json()) as Me
       if (!alive) return
       setMe(data)
       setUsername(data.username ?? '')
-    })()
+    }
+
+    loadMe()
     return () => {
       alive = false
     }
   }, [])
 
   const saveDisabled = useMemo(() => {
+    const usernameUnchanged = username.trim() === (me?.username ?? '')
     const passwordMismatch = Boolean(password || passwordConfirm) && password !== passwordConfirm
-    const unchangedProgram = programName.trim() === savedProgramName.trim()
-    const unchangedUser = me ? username.trim() === (me.username ?? '') : true
-    return saving || passwordMismatch || (unchangedProgram && unchangedUser && !password)
-  }, [password, passwordConfirm, programName, savedProgramName, saving, username, me])
-
-  async function getMyIp() {
-    setIpLoading(true)
-    try {
-      const ip = await invoke<string>('get_local_ip')
-      setIpAddress(ip)
-    } catch {
-      setIpAddress('Xatolik')
-    } finally {
-      setIpLoading(false)
-    }
-  }
+    return saving || passwordMismatch || (usernameUnchanged && !password)
+  }, [me?.username, password, passwordConfirm, saving, username])
 
   async function save(e: React.FormEvent) {
     e.preventDefault()
     if (saveDisabled) return
+
     setSaving(true)
     setStatus(null)
     try {
-      const nextProgramName = programName.trim() || DEFAULT_PROGRAM_NAME
-      if (nextProgramName !== savedProgramName) {
-        localStorage.setItem(PROGRAM_NAME_STORAGE_KEY, nextProgramName)
-        setSavedProgramName(nextProgramName)
-      }
-
       const nextUsername = username.trim()
+
       if (me && nextUsername !== me.username) {
         const res = await fetch(`${API_URL}/users/update-username`, {
           method: 'PUT',
@@ -120,7 +87,7 @@ export default function SettingsPage({
       }
 
       setStatus({ kind: 'ok', msg: 'Saqlandi' })
-    } catch (err) {
+    } catch {
       setStatus({ kind: 'err', msg: 'Xatolik yuz berdi' })
     } finally {
       setSaving(false)
@@ -130,86 +97,106 @@ export default function SettingsPage({
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
       <Navbar
-        title="Sozlamalar"
         active="menu"
         onNavigate={onNavigate}
         showUsers={showUsers}
-        settingsAction={
-          <Tooltip title="Sozlamalar" placement="bottom">
-            <IconButton
-              aria-label="Sozlamalar"
-              onClick={() => onNavigate('settings')}
-              sx={{
-                width: 36,
-                height: 36,
-                borderRadius: 999,
-                border: '1px solid',
-                borderColor: 'divider',
-              }}
-            >
-              <SettingsIcon />
-            </IconButton>
-          </Tooltip>
-        }
         rightActions={
-          <Tooltip title="Chiqish" placement="bottom">
-            <IconButton
-              aria-label="Chiqish"
-              onClick={() => logout()}
-              sx={{
-                width: 36,
-                height: 36,
-                borderRadius: 999,
-                border: '1px solid',
-                borderColor: 'divider',
-                '&:hover': {
-                  borderColor: 'error.main',
-                  color: 'error.main',
-                  bgcolor: 'rgba(211, 47, 47, 0.06)',
-                },
-              }}
-            >
-              <LogoutIcon />
-            </IconButton>
-          </Tooltip>
+          <Stack direction="row" alignItems="center" spacing={0.75}>
+            <Tooltip title="Sozlamalar" placement="bottom">
+              <IconButton
+                aria-label="Sozlamalar"
+                onClick={() => onNavigate('settings')}
+                sx={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 999,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                }}
+              >
+                <SettingsIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Chiqish" placement="bottom">
+              <IconButton
+                aria-label="Chiqish"
+                onClick={() => logout()}
+                sx={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 999,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  '&:hover': {
+                    borderColor: 'error.main',
+                    color: 'error.main',
+                    bgcolor: 'rgba(211, 47, 47, 0.06)',
+                  },
+                }}
+              >
+                <LogoutIcon />
+              </IconButton>
+            </Tooltip>
+          </Stack>
         }
       />
 
-      <Box sx={{ p: 3, display: 'grid', placeItems: 'center', flex: 1 }}>
-        <Paper sx={{ width: '100%', maxWidth: 520, p: 2 }}>
-          <Stack spacing={1} component="form" onSubmit={save}>
-            <Typography sx={{ fontWeight: 900, textAlign: 'center' }}>Sozlamalar</Typography>
+      <Box
+        sx={{
+          flex: 1,
+          display: 'grid',
+          minHeight: 0,
+          gridTemplateColumns: { xs: '1fr', md: '280px minmax(0, 1fr)' },
+        }}
+      >
+        <Box
+          sx={{
+            borderRight: { md: '1px solid' },
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+            p: 1.5,
+            display: 'flex',
+            alignItems: 'flex-start',
+          }}
+        >
+          <Box
+            sx={{
+              width: '100%',
+              px: 1.5,
+              py: 1.25,
+              borderRadius: 2,
+              bgcolor: 'rgba(249, 115, 22, 0.12)',
+              color: '#EA580C',
+              fontWeight: 900,
+            }}
+          >
+            Profil
+          </Box>
+        </Box>
 
-            <Divider />
+        <Box
+          sx={{
+            display: 'grid',
+            placeItems: 'center',
+            p: { xs: 3, md: 4 },
+          }}
+        >
+          <Stack component="form" spacing={2} onSubmit={save} sx={{ width: '100%', maxWidth: 520 }}>
+            <Typography sx={{ fontWeight: 900, fontSize: 22 }}>Profil</Typography>
 
-            {status && <Alert severity={status.kind === 'ok' ? 'success' : 'error'}>{status.msg}</Alert>}
+            {status ? <Alert severity={status.kind === 'ok' ? 'success' : 'error'}>{status.msg}</Alert> : null}
 
-            <TextField label="Dastur nomi" value={programName} onChange={(e) => setProgramName(e.target.value)} fullWidth />
-
-            <TextField label="Foydalanuvchi nomi" value={username} onChange={(e) => setUsername(e.target.value)} fullWidth />
-
-            <Divider sx={{ my: 1 }} />
-
-            <Typography sx={{ fontWeight: 900 }}>Tarmoq</Typography>
-
-            <Stack direction="row" spacing={1.5} alignItems="center">
-              <Button variant="outlined" onClick={getMyIp} disabled={ipLoading}>
-                {ipLoading ? 'Yuklanmoqda…' : 'IP olish'}
-              </Button>
-              <Typography variant="body2">{ipAddress ?? '—'}</Typography>
-            </Stack>
-
-            <Divider />
+            <TextField label="Username" value={username} onChange={(e) => setUsername(e.target.value)} fullWidth />
 
             <TextField
-              label="Parol"
+              label="Password"
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               fullWidth
               InputProps={{
                 endAdornment: (
-                  <IconButton onClick={() => setShowPassword((v) => !v)}>
+                  <IconButton onClick={() => setShowPassword((value) => !value)}>
                     {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
                   </IconButton>
                 ),
@@ -217,25 +204,25 @@ export default function SettingsPage({
             />
 
             <TextField
-              label="Tasdiqlash"
+              label="Confirm password"
               type={showPasswordConfirm ? 'text' : 'password'}
               value={passwordConfirm}
               onChange={(e) => setPasswordConfirm(e.target.value)}
               fullWidth
               InputProps={{
                 endAdornment: (
-                  <IconButton onClick={() => setShowPasswordConfirm((v) => !v)}>
+                  <IconButton onClick={() => setShowPasswordConfirm((value) => !value)}>
                     {showPasswordConfirm ? <VisibilityOffIcon /> : <VisibilityIcon />}
                   </IconButton>
                 ),
               }}
             />
 
-            <Button type="submit" disabled={saveDisabled}>
-              Saqlash
+            <Button type="submit" variant="contained" disabled={saveDisabled} sx={{ alignSelf: 'flex-start' }}>
+              Submit
             </Button>
           </Stack>
-        </Paper>
+        </Box>
       </Box>
     </Box>
   )

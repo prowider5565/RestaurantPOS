@@ -4,6 +4,10 @@ import { formatMoney } from '../../../shared/utils/formatters'
 import type { CashDeskSummary } from '../types'
 import { formatInteger } from '../utils'
 
+function formatAmountInput(value: string) {
+  return value.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+}
+
 export default function CashDeskSummaryPanel({
   summary,
   summaryLoading,
@@ -92,7 +96,7 @@ export default function CashDeskSummaryPanel({
       >
         <TextField
           label="Summani kiriting"
-          value={createAmount}
+          value={formatAmountInput(createAmount)}
           onChange={(e) => onCreateAmountChange(e.target.value.replaceAll(/[^\d]/g, '').slice(0, 18))}
           inputMode="numeric"
           fullWidth

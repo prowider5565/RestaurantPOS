@@ -17,6 +17,12 @@ import type {
 } from '../types'
 import { DEFAULT_CATEGORY_IMAGE_SRC, toCategoryImageSrc, toImageSrc } from '../utils'
 
+const DEFAULT_WAITER_FEE_ENABLED_STORAGE_KEY = 'defaultWaiterFeeEnabled'
+
+function getDefaultWaiterFeeEnabled() {
+  return localStorage.getItem(DEFAULT_WAITER_FEE_ENABLED_STORAGE_KEY) !== 'false'
+}
+
 type ProductMenuState = {
   product: UiProduct
   left: number
@@ -69,7 +75,7 @@ export function usePosPage() {
   const [isEditingTotal, setIsEditingTotal] = useState(false)
   const [discountDigits, setDiscountDigits] = useState('')
   const [discountedTotalOverride, setDiscountedTotalOverride] = useState<number | null>(null)
-  const [includeWaiterFee, setIncludeWaiterFee] = useState(true)
+  const [includeWaiterFee, setIncludeWaiterFee] = useState(getDefaultWaiterFeeEnabled)
 
   const menuCategories: Category[] = useMemo(() => {
     const base: Category[] = [{ id: 'all', label: 'Barchasi', imageSrc: DEFAULT_CATEGORY_IMAGE_SRC }]
