@@ -16,8 +16,10 @@ export default function CashDeskSummaryPanel({
   creating,
   createAmountInt,
   createError,
+  cashingOut,
   onCreateAmountChange,
   onCreateTransaction,
+  onCashOut,
 }: {
   summary: CashDeskSummary
   summaryLoading: boolean
@@ -26,8 +28,10 @@ export default function CashDeskSummaryPanel({
   creating: boolean
   createAmountInt: number | null
   createError: string | null
+  cashingOut: boolean
   onCreateAmountChange: (value: string) => void
   onCreateTransaction: (type: 'in' | 'out') => void
+  onCashOut: () => void
 }) {
   return (
     <Card
@@ -128,6 +132,16 @@ export default function CashDeskSummaryPanel({
             disabled={creating || !createAmountInt}
           >
             - Xarajat qo'shish
+          </Button>
+          <Button
+            color="warning"
+            variant="contained"
+            onClick={onCashOut}
+            sx={{ py: 2.2, borderRadius: 2, fontSize: 18, gridColumn: { xs: 'auto', sm: '1 / -1' } }}
+            fullWidth
+            disabled={cashingOut}
+          >
+            {cashingOut ? 'Ochilmoqda...' : 'Pulni olish'}
           </Button>
         </Box>
 

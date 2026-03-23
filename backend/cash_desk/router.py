@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import date, datetime, time
-from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi_pagination import Page, Params
@@ -25,28 +24,6 @@ from cash_desk.types import TransactionType
 
 
 router = APIRouter(prefix="/cash-desk", tags=["cash-desk"])
-
-DatePreset = Literal["daily", "weekly", "monthly"]
-
-
-def resolve_date_range(
-    preset: DatePreset | None,
-    from_date: date | None,
-    to_date: date | None,
-) -> tuple[datetime, datetime]:
-    if preset is not None:
-        end_date = date.today()
-        start_date = end_date
-        if preset == "weekly":
-            start_date = end_date.fromordinal(end_date.toordinal() - 6)
-        elif preset == "monthly":
-            start_date = end_date.fromordinal(end_date.toordinal() - 29)
-
-        return datetime.combine(start_date, time.min), datetime.combine(end_date, time.max)
-
-    start_date = from_date or to_date or date.today()
-    end_date = to_date or from_date or start_date
-    return datetime.combine(start_date, time.min), datetime.combine(end_date, time.max)
 
 
 @router.post("/transactions", response_model=CashDeskTransactionOut)
@@ -94,34 +71,27 @@ def delete_transaction_api(
 
 @router.get("/transactions", response_model=Page[CashDeskTransactionOut])
 def get_transactions_api(
-    preset: DatePreset | None = Query(default=None),
-    from_date: date | None = Query(default=None),
-    to_date: date | None = Query(default=None),
     params: Params = Depends(),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Page[CashDeskTransactionOut]:
-    start, end = resolve_date_range(preset, from_date, to_date)
     q = db.query(CashDesk).options(selectinload(CashDesk.user))
-    q = q.filter(CashDesk.created_at >= start)
-    q = q.filter(CashDesk.created_at <= end)
     q = q.order_by(CashDesk.created_at.desc())
     return paginate(db, q, params)
 
 
 @router.get("/summary", response_model=CashDeskSummaryOut)
 def get_cash_desk_summary_api(
-    preset: DatePreset | None = Query(default=None),
-    from_date: date | None = Query(default=None),
-    to_date: date | None = Query(default=None),
+    cashout_at: datetime | None = Query(default=None),
     db: Session = Depends(get_db),
 ) -> CashDeskSummaryOut:
-    start, end = resolve_date_range(preset, from_date, to_date)
+    end = datetime.combine(date.today(), time.max)
+    current_start = cashout_at
 
     total_order_income = float(
         (
             db.query(func.coalesce(func.sum(Order.paid_amount), 0.0))
-            .filter(Order.created_at >= start)
+            .filter(Order.created_at >= datetime.combine(date.today(), time.min))
             .filter(Order.created_at <= end)
             .scalar()
         )
@@ -131,7 +101,7 @@ def get_cash_desk_summary_api(
     total_misc_income = float(
         db.query(func.coalesce(func.sum(CashDesk.amount), 0))
         .filter(CashDesk.transaction_type == TransactionType.IN)
-        .filter(CashDesk.created_at >= start)
+        .filter(CashDesk.created_at >= datetime.combine(date.today(), time.min))
         .filter(CashDesk.created_at <= end)
         .scalar() or 0.0
     )
@@ -139,30 +109,31 @@ def get_cash_desk_summary_api(
     total_expense = float(
         db.query(func.coalesce(func.sum(CashDesk.amount), 0))
         .filter(CashDesk.transaction_type == TransactionType.OUT)
-        .filter(CashDesk.created_at >= start)
+        .filter(CashDesk.created_at >= datetime.combine(date.today(), time.min))
         .filter(CashDesk.created_at <= end)
         .scalar() or 0.0
     )
 
-    cumulative_order_income = float(
-        db.query(func.coalesce(func.sum(Order.paid_amount), 0.0))
-        .filter(Order.created_at <= end)
-        .scalar() or 0.0
-    )
-
-    cumulative_misc_income = float(
+    cumulative_order_income_query = db.query(func.coalesce(func.sum(Order.paid_amount), 0.0)).filter(Order.created_at <= end)
+    cumulative_misc_income_query = (
         db.query(func.coalesce(func.sum(CashDesk.amount), 0))
         .filter(CashDesk.transaction_type == TransactionType.IN)
         .filter(CashDesk.created_at <= end)
-        .scalar() or 0.0
     )
-
-    cumulative_expense = float(
+    cumulative_expense_query = (
         db.query(func.coalesce(func.sum(CashDesk.amount), 0))
         .filter(CashDesk.transaction_type == TransactionType.OUT)
         .filter(CashDesk.created_at <= end)
-        .scalar() or 0.0
     )
+
+    if current_start is not None:
+        cumulative_order_income_query = cumulative_order_income_query.filter(Order.created_at >= current_start)
+        cumulative_misc_income_query = cumulative_misc_income_query.filter(CashDesk.created_at >= current_start)
+        cumulative_expense_query = cumulative_expense_query.filter(CashDesk.created_at >= current_start)
+
+    cumulative_order_income = float(cumulative_order_income_query.scalar() or 0.0)
+    cumulative_misc_income = float(cumulative_misc_income_query.scalar() or 0.0)
+    cumulative_expense = float(cumulative_expense_query.scalar() or 0.0)
 
     current_amount = cumulative_order_income + cumulative_misc_income - cumulative_expense
     return CashDeskSummaryOut(

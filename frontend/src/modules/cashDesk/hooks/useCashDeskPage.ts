@@ -2,16 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
 import { getAuthHeaders } from '../../../shared/auth'
-import type { DateRangePreset } from '../../../shared/components/DateRangeFilterCard'
 import { useAuth } from '../../../shared/authContext'
 import type { ApiCashDeskTransaction, ApiDeleteOut, ApiPage, CashDeskSummary } from '../types'
 
-function toYmd(date: Date) {
-  const yyyy = date.getFullYear()
-  const mm = String(date.getMonth() + 1).padStart(2, '0')
-  const dd = String(date.getDate()).padStart(2, '0')
-  return `${yyyy}-${mm}-${dd}`
-}
+const CASHOUT_AT_STORAGE_KEY = 'cashDeskCashoutAt'
 
 async function getResponseError(response: Response, fallback: string) {
   const payload = (await response.json().catch(() => null)) as { detail?: string } | null
@@ -21,16 +15,12 @@ async function getResponseError(response: Response, fallback: string) {
 export function useCashDeskPage() {
   const { me } = useAuth()
   const isAdmin = me?.is_admin === true || me?.is_admin === 1
-  const today = toYmd(new Date())
 
   const [summary, setSummary] = useState<CashDeskSummary | null>(null)
   const [summaryLoading, setSummaryLoading] = useState(false)
   const [summaryError, setSummaryError] = useState<string | null>(null)
 
   const [txPage, setTxPage] = useState<ApiPage<ApiCashDeskTransaction> | null>(null)
-  const [preset, setPreset] = useState<DateRangePreset>('daily')
-  const [fromDate, setFromDate] = useState(today)
-  const [toDate, setToDate] = useState(today)
   const [createAmount, setCreateAmount] = useState('')
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
@@ -42,26 +32,18 @@ export function useCashDeskPage() {
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [deletePassword, setDeletePassword] = useState('')
-  const hasCompleteRange = preset !== null || (!!fromDate && !!toDate)
+  const [cashingOut, setCashingOut] = useState(false)
 
   useEffect(() => {
     let cancelled = false
 
     async function loadSummary() {
-      if (!hasCompleteRange) {
-        setSummary(null)
-        setSummaryError(null)
-        setSummaryLoading(false)
-        return
-      }
-
       setSummaryLoading(true)
       setSummaryError(null)
       try {
         const params = new URLSearchParams()
-        if (preset) params.set('preset', preset)
-        if (fromDate) params.set('from_date', fromDate)
-        if (toDate) params.set('to_date', toDate)
+        const cashoutAt = localStorage.getItem(CASHOUT_AT_STORAGE_KEY)
+        if (cashoutAt) params.set('cashout_at', cashoutAt)
 
         const summaryUrl = params.size ? `${API_URL}/cash-desk/summary?${params.toString()}` : `${API_URL}/cash-desk/summary`
         const response = await fetch(summaryUrl)
@@ -83,24 +65,16 @@ export function useCashDeskPage() {
     return () => {
       cancelled = true
     }
-  }, [fromDate, hasCompleteRange, preset, reloadKey, toDate])
+  }, [reloadKey])
 
   useEffect(() => {
     let cancelled = false
 
     async function loadTransactions() {
-      if (!hasCompleteRange) {
-        setTxPage(null)
-        return
-      }
-
       try {
         const params = new URLSearchParams()
         params.set('page', String(page))
         params.set('size', String(size))
-        if (preset) params.set('preset', preset)
-        if (fromDate) params.set('from_date', fromDate)
-        if (toDate) params.set('to_date', toDate)
 
         const response = await fetch(`${API_URL}/cash-desk/transactions?${params.toString()}`, {
           headers: getAuthHeaders(),
@@ -122,7 +96,7 @@ export function useCashDeskPage() {
     return () => {
       cancelled = true
     }
-  }, [fromDate, hasCompleteRange, page, preset, reloadKey, size, toDate])
+  }, [page, reloadKey, size])
 
   const createAmountInt = useMemo(() => {
     const numeric = Number(createAmount)
@@ -203,15 +177,26 @@ export function useCashDeskPage() {
     // Backend-driven export will be wired here.
   }
 
-  function changePreset(next: DateRangePreset) {
-    setPreset(next)
-    setPage(1)
-  }
+  async function cashOut() {
+    if (cashingOut) return
 
-  function changeDateRange(nextFromDate: string, nextToDate: string) {
-    setFromDate(nextFromDate)
-    setToDate(nextToDate)
-    setPage(1)
+    setCashingOut(true)
+    setSummaryError(null)
+    const nextCashoutAt = new Date().toISOString()
+    localStorage.setItem(CASHOUT_AT_STORAGE_KEY, nextCashoutAt)
+    setReloadKey((value) => value + 1)
+    try {
+      const response = await fetch(`${API_URL}/cheque/open-drawer`, {
+        method: 'POST',
+      })
+      if (!response.ok) {
+        throw new Error(await getResponseError(response, "Tortmani ochib bo'lmadi"))
+      }
+    } catch (nextError) {
+      setSummaryError(nextError instanceof Error ? nextError.message : "Tortmani ochib bo'lmadi")
+    } finally {
+      setCashingOut(false)
+    }
   }
 
   return {
@@ -219,11 +204,6 @@ export function useCashDeskPage() {
     summary,
     summaryLoading,
     summaryError,
-    preset,
-    changePreset,
-    fromDate,
-    toDate,
-    changeDateRange,
     page,
     setPage,
     pages: txPage?.pages ?? 1,
@@ -232,8 +212,10 @@ export function useCashDeskPage() {
     setCreateAmount,
     createAmountInt,
     creating,
+    cashingOut,
     createError,
     createTransaction,
+    cashOut,
     exportSnapshot,
     deleteOpen,
     deleteTarget,
