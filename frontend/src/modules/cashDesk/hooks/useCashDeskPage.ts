@@ -41,6 +41,7 @@ export function useCashDeskPage() {
   const [deleteTarget, setDeleteTarget] = useState<ApiCashDeskTransaction | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [deletePassword, setDeletePassword] = useState('')
   const hasCompleteRange = preset !== null || (!!fromDate && !!toDate)
 
   useEffect(() => {
@@ -160,6 +161,7 @@ export function useCashDeskPage() {
   function requestDeleteTransaction(transaction: ApiCashDeskTransaction) {
     if (!isAdmin) return
     setDeleteError(null)
+    setDeletePassword('')
     setDeleteTarget(transaction)
     setDeleteOpen(true)
   }
@@ -167,15 +169,18 @@ export function useCashDeskPage() {
   function closeDelete() {
     if (deleting) return
     setDeleteOpen(false)
+    setDeletePassword('')
   }
 
   async function confirmDelete() {
-    if (!deleteTarget || deleting) return
+    const password = deletePassword.trim()
+    if (!deleteTarget || deleting || !password) return
 
     setDeleting(true)
     setDeleteError(null)
     try {
-      const response = await fetch(`${API_URL}/cash-desk/transactions/${deleteTarget.id}`, {
+      const params = new URLSearchParams({ password })
+      const response = await fetch(`${API_URL}/cash-desk/transactions/${deleteTarget.id}?${params.toString()}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
       })
@@ -185,6 +190,7 @@ export function useCashDeskPage() {
 
       await response.json().catch(() => null as ApiDeleteOut | null)
       setDeleteOpen(false)
+      setDeletePassword('')
       setReloadKey((value) => value + 1)
     } catch (nextError) {
       setDeleteError(nextError instanceof Error ? nextError.message : "Tranzaksiyani o'chirib bo'lmadi")
@@ -233,6 +239,8 @@ export function useCashDeskPage() {
     deleteTarget,
     deleting,
     deleteError,
+    deletePassword,
+    setDeletePassword,
     requestDeleteTransaction,
     closeDelete,
     confirmDelete,

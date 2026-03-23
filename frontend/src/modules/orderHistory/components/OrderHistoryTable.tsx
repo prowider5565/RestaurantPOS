@@ -1,5 +1,6 @@
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import HistoryIcon from '@mui/icons-material/History'
-import { Box, Button, Pagination, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material'
+import { Box, Button, IconButton, Pagination, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography } from '@mui/material'
 
 import { formatMoney } from '../../../shared/utils/formatters'
 import type { ApiOrderRow } from '../types'
@@ -12,6 +13,7 @@ export function OrderHistoryTable({
   totalPages,
   onPageChange,
   onOpenDetails,
+  onDelete,
 }: {
   loading: boolean
   rows: ApiOrderRow[]
@@ -19,6 +21,7 @@ export function OrderHistoryTable({
   totalPages: number
   onPageChange: (page: number) => void
   onOpenDetails: (orderId: number) => void
+  onDelete: (orderId: number) => void
 }) {
   if (!loading && rows.length === 0) {
     return (
@@ -139,9 +142,27 @@ export function OrderHistoryTable({
                   </TableCell>
                   <TableCell>{formatCreated(order.created_at)}</TableCell>
                   <TableCell align="right">
-                    <Button variant="outlined" onClick={() => onOpenDetails(order.id)}>
-                      Tafsilotlar
-                    </Button>
+                    <Stack direction="row" justifyContent="flex-end" spacing={1}>
+                      <Button variant="outlined" onClick={() => onOpenDetails(order.id)}>
+                        Tafsilotlar
+                      </Button>
+                      <Tooltip title="O'chirish" placement="top">
+                        <IconButton
+                          aria-label="O'chirish"
+                          onClick={() => onDelete(order.id)}
+                          sx={{
+                            color: 'error.main',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: 2,
+                            width: 40,
+                            height: 40,
+                          }}
+                        >
+                          <DeleteOutlineIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </Stack>
                   </TableCell>
                 </TableRow>
               )

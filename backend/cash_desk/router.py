@@ -17,6 +17,7 @@ from cash_desk.schemas import (
     DeleteOut,
 )
 from config.database import get_db
+from misc.decorators import require_delete_password
 from orders.models import Order
 from users.dependencies import get_current_user
 from users.models import User
@@ -73,6 +74,7 @@ def create_transaction_api(
 
 
 @router.delete("/transactions/{transaction_id}", response_model=DeleteOut)
+@require_delete_password
 def delete_transaction_api(
     transaction_id: int,
     db: Session = Depends(get_db),
