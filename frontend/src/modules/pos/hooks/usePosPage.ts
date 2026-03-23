@@ -78,6 +78,18 @@ export function usePosPage() {
   const [discountedTotalOverride, setDiscountedTotalOverride] = useState<number | null>(null)
   const [includeWaiterFee, setIncludeWaiterFee] = useState(getDefaultWaiterFeeEnabled)
   const [paymentType, setPaymentType] = useState<PaymentType>('Naqd')
+  const [cashbackOpen, setCashbackOpen] = useState(false)
+  const [cashbackTotalAmount, setCashbackTotalAmount] = useState(0)
+  const [cashbackPaidValues, setCashbackPaidValues] = useState<number[]>([])
+
+  const cashbackPaidAmount = useMemo(
+    () => cashbackPaidValues.reduce((sum, value) => sum + value, 0),
+    [cashbackPaidValues],
+  )
+  const cashbackAmount = useMemo(
+    () => Math.max(0, cashbackPaidAmount - cashbackTotalAmount),
+    [cashbackPaidAmount, cashbackTotalAmount],
+  )
 
   const menuCategories: Category[] = useMemo(() => {
     const base: Category[] = [{ id: 'all', label: 'Barchasi', imageSrc: DEFAULT_CATEGORY_IMAGE_SRC }]
@@ -221,6 +233,9 @@ export function usePosPage() {
             }
           : orderData.order_table ?? null,
       })
+      setCashbackTotalAmount(discountedTotal)
+      setCashbackPaidValues([])
+      setCashbackOpen(true)
       clearCart()
     } finally {
       setIsPlacingOrder(false)
@@ -237,6 +252,18 @@ export function usePosPage() {
 
   function closeCreateTable() {
     setCreateTableOpen(false)
+  }
+
+  function closeCashbackDialog() {
+    setCashbackOpen(false)
+  }
+
+  function addCashbackMoney(value: number) {
+    setCashbackPaidValues((prev) => [...prev, value])
+  }
+
+  function resetCashbackMoney() {
+    setCashbackPaidValues([])
   }
 
   async function createOrderTable() {
@@ -550,6 +577,10 @@ export function usePosPage() {
     discountedTotal,
     includeWaiterFee,
     paymentType,
+    cashbackOpen,
+    cashbackTotalAmount,
+    cashbackPaidAmount,
+    cashbackAmount,
     setIncludeWaiterFee,
     setPaymentType,
     toggleEditTotal,
@@ -558,6 +589,9 @@ export function usePosPage() {
     createOpen,
     openCreateFood,
     closeCreateFood,
+    closeCashbackDialog,
+    addCashbackMoney,
+    resetCashbackMoney,
     newFood,
     setNewFood,
     newFoodPreviewUrl,

@@ -6,6 +6,7 @@ import { logout } from '../../../shared/auth'
 import Navbar, { type NavItemId } from '../../../shared/components/Navbar'
 import PosCartPanel from '../components/PosCartPanel'
 import PosCategoryStrip from '../components/PosCategoryStrip'
+import PosCashbackDialog from '../components/PosCashbackDialog'
 import PosFoodDialogs from '../components/PosFoodDialogs'
 import PosProductsGrid from '../components/PosProductsGrid'
 import PosTableDialog from '../components/PosTableDialog'
@@ -212,6 +213,16 @@ export default function PosPage({
           onClose={pos.closeCreateTable}
           onChange={pos.setNewOrderTable}
           onSubmit={pos.createOrderTable}
+        />
+
+        <PosCashbackDialog
+          open={pos.cashbackOpen}
+          totalAmount={pos.cashbackTotalAmount}
+          paidAmount={pos.cashbackPaidAmount}
+          cashback={pos.cashbackAmount}
+          onAddMoney={pos.addCashbackMoney}
+          onReset={pos.resetCashbackMoney}
+          onClose={pos.closeCashbackDialog}
         />
       </Box>
     </Box>
