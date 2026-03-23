@@ -29,6 +29,8 @@ export default function PosCartPanel({
   waitressWage,
   discountedTotal,
   includeWaiterFee,
+  isDebt,
+  debtPaidAmountDigits,
   paymentType,
   isPlacingOrder,
   orderTables,
@@ -40,6 +42,8 @@ export default function PosCartPanel({
   onToggleEditTotal,
   onDiscountDigitsChange,
   onIncludeWaiterFeeChange,
+  onIsDebtChange,
+  onDebtPaidAmountDigitsChange,
   onPaymentTypeChange,
   onPlaceOrder,
 }: {
@@ -51,6 +55,8 @@ export default function PosCartPanel({
   waitressWage: number
   discountedTotal: number
   includeWaiterFee: boolean
+  isDebt: boolean
+  debtPaidAmountDigits: string
   paymentType: PaymentType
   isPlacingOrder: boolean
   orderTables: ApiOrderTable[]
@@ -62,6 +68,8 @@ export default function PosCartPanel({
   onToggleEditTotal: () => void
   onDiscountDigitsChange: (value: string) => void
   onIncludeWaiterFeeChange: (value: boolean) => void
+  onIsDebtChange: (value: boolean) => void
+  onDebtPaidAmountDigitsChange: (value: string) => void
   onPaymentTypeChange: (value: PaymentType) => void
   onPlaceOrder: () => void
 }) {
@@ -291,6 +299,28 @@ export default function PosCartPanel({
           }
           sx={{ mb: 0.5, ml: -0.75 }}
         />
+
+        <FormControlLabel
+          control={<Checkbox size="small" checked={isDebt} onChange={(e) => onIsDebtChange(e.target.checked)} />}
+          label={
+            <Typography sx={{ fontWeight: 800, fontSize: 13 }}>
+              Nasiya savdo
+            </Typography>
+          }
+          sx={{ mb: isDebt ? 1 : 0.5, ml: -0.75 }}
+        />
+
+        {isDebt ? (
+          <TextField
+            label="To'langan summa"
+            value={debtPaidAmountDigits.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}
+            onChange={(e) => onDebtPaidAmountDigitsChange(e.target.value.replaceAll(/[^\d]/g, '').slice(0, 18))}
+            inputMode="numeric"
+            fullWidth
+            size="small"
+            sx={{ mb: 1 }}
+          />
+        ) : null}
 
         <Stack direction="row" justifyContent="space-between" alignItems="baseline">
           <Typography sx={{ fontWeight: 900, fontSize: 14, color: 'text.secondary' }}>Ofitsiant xizmati</Typography>

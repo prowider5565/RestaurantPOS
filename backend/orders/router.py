@@ -53,22 +53,35 @@ def create_order_table_api(
 def get_order_history_api(
     from_date: date | None = Query(default=None),
     to_date: date | None = Query(default=None),
+    exclude_debt_from_total_sum: bool = Query(default=False),
     params: Params = Depends(),
     db: Session = Depends(get_db),
 ) -> OrderHistoryResponseOut:
-    return get_order_history(db, from_date=from_date, to_date=to_date, params=params)
+    return get_order_history(
+        db,
+        from_date=from_date,
+        to_date=to_date,
+        params=params,
+        exclude_debt_from_total_sum=exclude_debt_from_total_sum,
+    )
 
 
 @router.get("/my-history", response_model=OrderHistoryResponseOut)
 def get_my_order_history_api(
     from_date: date | None = Query(default=None),
     to_date: date | None = Query(default=None),
+    exclude_debt_from_total_sum: bool = Query(default=False),
     params: Params = Depends(),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> OrderHistoryResponseOut:
     return get_my_order_history(
-        db, user_id=current_user.id, params=params, from_date=from_date, to_date=to_date
+        db,
+        user_id=current_user.id,
+        params=params,
+        from_date=from_date,
+        to_date=to_date,
+        exclude_debt_from_total_sum=exclude_debt_from_total_sum,
     )
 
 

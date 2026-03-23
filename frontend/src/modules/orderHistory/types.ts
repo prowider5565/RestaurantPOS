@@ -27,6 +27,9 @@ export type ApiOrderRow = {
   waiter_fee: boolean
   waitress_wage: number
   discount_amount?: number | null
+  is_debt: boolean
+  paid_amount?: number | null
+  payment_type?: string | null
   created_at: string
   items: ApiOrderItemRef[]
   user?: { id: number; username: string; position?: string | null }

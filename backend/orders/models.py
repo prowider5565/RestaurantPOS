@@ -12,7 +12,6 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 
 from config.database import Base
-from orders.types import OrderStatus
 from products.models import Product  # noqa: F401
 
 
@@ -20,11 +19,13 @@ class Order(Base):
     __tablename__ = "orders"
 
     id = Column(Integer, primary_key=True, index=True)
-    total_price = Column(Float, default=0.0)
+    total_price = Column(Integer, default=0, nullable=False)
+    paid_amount = Column(Integer, default=0, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     discount_amount = Column(Integer, nullable=True, default=0)
     user_id = Column(Integer, ForeignKey("users.id"))
     payment_type = Column(String(50), nullable=True, default="Boshqa")
+    note = Column(String(800), nullable=True)
     order_table_id = Column(
         Integer, ForeignKey("order_tables.id"), nullable=False, index=True
     )
@@ -35,6 +36,7 @@ class Order(Base):
         cascade="all, delete-orphan",
     )
     waiter_fee = Column(Boolean, default=False)
+    is_debt = Column(Boolean, default=False)
     user = relationship("User", back_populates="orders", lazy="selectin")
     order_table = relationship("OrderTable", back_populates="orders", lazy="selectin")
 

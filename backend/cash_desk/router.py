@@ -120,7 +120,7 @@ def get_cash_desk_summary_api(
 
     total_order_income = float(
         (
-            db.query(func.coalesce(func.sum(Order.total_price), 0.0))
+            db.query(func.coalesce(func.sum(Order.paid_amount), 0.0))
             .filter(Order.created_at >= start)
             .filter(Order.created_at <= end)
             .scalar()
@@ -145,7 +145,7 @@ def get_cash_desk_summary_api(
     )
 
     cumulative_order_income = float(
-        db.query(func.coalesce(func.sum(Order.total_price), 0.0))
+        db.query(func.coalesce(func.sum(Order.paid_amount), 0.0))
         .filter(Order.created_at <= end)
         .scalar() or 0.0
     )

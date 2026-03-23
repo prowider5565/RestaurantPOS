@@ -23,6 +23,17 @@ export function OrderHistoryTable({
   onOpenDetails: (orderId: number) => void
   onDelete: (orderId: number) => void
 }) {
+  const totals = rows.reduce(
+    (acc, order) => {
+      const orderTotals = getOrderTotals(order)
+      acc.discountAmount += orderTotals.discountAmount
+      acc.waiterFee += order.waiter_fee ? order.waitress_wage : 0
+      acc.paidAmount += order.paid_amount ?? 0
+      return acc
+    },
+    { discountAmount: 0, waiterFee: 0, paidAmount: 0 },
+  )
+
   if (!loading && rows.length === 0) {
     return (
       <Paper
@@ -86,6 +97,9 @@ export function OrderHistoryTable({
                 Ofitsiant xizmati
               </TableCell>
               <TableCell sx={{ fontWeight: 900 }} align="right">
+                To'langan
+              </TableCell>
+              <TableCell sx={{ fontWeight: 900 }} align="right">
                 Jami
               </TableCell>
               <TableCell sx={{ fontWeight: 900 }}>Sana</TableCell>
@@ -103,7 +117,16 @@ export function OrderHistoryTable({
               const finalTotal = totals.discountedTotal + (order.waiter_fee ? order.waitress_wage : 0)
 
               return (
-                <TableRow key={order.id} hover>
+                <TableRow
+                  key={order.id}
+                  hover
+                  sx={{
+                    bgcolor: order.is_debt ? 'rgba(255, 244, 179, 0.45)' : undefined,
+                    '&:hover': {
+                      bgcolor: order.is_debt ? 'rgba(255, 244, 179, 0.62)' : undefined,
+                    },
+                  }}
+                >
                   <TableCell align="right" sx={{ fontWeight: 900 }}>
                     {order.id}
                   </TableCell>
@@ -138,6 +161,9 @@ export function OrderHistoryTable({
                     {order.waiter_fee ? formatMoney(order.waitress_wage) : '-'}
                   </TableCell>
                   <TableCell align="right" sx={{ fontWeight: 900 }}>
+                    {formatMoney(order.paid_amount ?? 0)}
+                  </TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 900 }}>
                     {formatMoney(finalTotal)}
                   </TableCell>
                   <TableCell>{formatCreated(order.created_at)}</TableCell>
@@ -167,6 +193,23 @@ export function OrderHistoryTable({
                 </TableRow>
               )
             })}
+            {rows.length ? (
+              <TableRow
+                sx={{
+                  bgcolor: 'rgba(249, 115, 22, 0.08)',
+                  '& .MuiTableCell-root': {
+                    fontWeight: 1000,
+                  },
+                }}
+              >
+                <TableCell colSpan={4}>Jami</TableCell>
+                <TableCell align="right">{formatMoney(totals.discountAmount)}</TableCell>
+                <TableCell align="right">{formatMoney(totals.waiterFee)}</TableCell>
+                <TableCell align="right">{formatMoney(totals.paidAmount)}</TableCell>
+                <TableCell align="right">-</TableCell>
+                <TableCell align="right">-</TableCell>
+              </TableRow>
+            ) : null}
           </TableBody>
         </Table>
       </TableContainer>

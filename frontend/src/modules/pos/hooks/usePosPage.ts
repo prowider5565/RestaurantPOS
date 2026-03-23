@@ -77,6 +77,8 @@ export function usePosPage() {
   const [discountDigits, setDiscountDigits] = useState('')
   const [discountedTotalOverride, setDiscountedTotalOverride] = useState<number | null>(null)
   const [includeWaiterFee, setIncludeWaiterFee] = useState(getDefaultWaiterFeeEnabled)
+  const [isDebt, setIsDebt] = useState(false)
+  const [debtPaidAmountDigits, setDebtPaidAmountDigits] = useState('')
   const [paymentType, setPaymentType] = useState<PaymentType>('Naqd')
   const [cashbackOpen, setCashbackOpen] = useState(false)
   const [cashbackTotalAmount, setCashbackTotalAmount] = useState(0)
@@ -130,6 +132,12 @@ export function usePosPage() {
 
     return discountedSubtotal + waitressWage
   }, [discountDigits, discountedSubtotal, isEditingTotal, totalWithWaitressWage, waitressWage])
+
+  const debtPaidAmount = useMemo(() => {
+    const parsed = Number(debtPaidAmountDigits || '0')
+    if (!Number.isFinite(parsed)) return 0
+    return Math.min(Math.max(Math.round(parsed), 0), discountedTotal)
+  }, [debtPaidAmountDigits, discountedTotal])
 
   function toggleEditTotal() {
     if (cartCount === 0) return
@@ -194,6 +202,8 @@ export function usePosPage() {
 
   function clearCart() {
     setCart({})
+    setIsDebt(false)
+    setDebtPaidAmountDigits('')
   }
 
   async function placeOrder() {
@@ -211,6 +221,8 @@ export function usePosPage() {
         order_table_id: Number(selectedOrderTableId),
         waiter_fee: includeWaiterFee,
         payment_type: paymentType,
+        is_debt: isDebt,
+        paid_amount: isDebt ? debtPaidAmount : discountedTotal,
         items: cartLines.map((line) => ({ product: line.product.id, quantity: line.qty })),
       }
 
@@ -233,9 +245,11 @@ export function usePosPage() {
             }
           : orderData.order_table ?? null,
       })
-      setCashbackTotalAmount(discountedTotal)
-      setCashbackPaidValues([])
-      setCashbackOpen(true)
+      if (paymentType === 'Naqd' && !isDebt) {
+        setCashbackTotalAmount(discountedTotal)
+        setCashbackPaidValues([])
+        setCashbackOpen(true)
+      }
       clearCart()
     } finally {
       setIsPlacingOrder(false)
@@ -576,12 +590,16 @@ export function usePosPage() {
     waitressWage,
     discountedTotal,
     includeWaiterFee,
+    isDebt,
+    debtPaidAmountDigits,
     paymentType,
     cashbackOpen,
     cashbackTotalAmount,
     cashbackPaidAmount,
     cashbackAmount,
     setIncludeWaiterFee,
+    setIsDebt,
+    setDebtPaidAmountDigits,
     setPaymentType,
     toggleEditTotal,
     isPlacingOrder,

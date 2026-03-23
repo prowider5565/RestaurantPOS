@@ -9,7 +9,6 @@ import Navbar, { type NavItemId } from '../../../shared/components/Navbar'
 import DeleteOrderDialog from '../components/DeleteOrderDialog'
 import FoodAnalyticsTable from '../components/FoodAnalyticsTable'
 import OrderDetailsDialog from '../components/OrderDetailsDialog'
-import OrderHistorySummary from '../components/OrderHistorySummary'
 import OrderHistoryTable from '../components/OrderHistoryTable'
 import { useOrderHistoryPage } from '../hooks/useOrderHistoryPage'
 
@@ -112,12 +111,6 @@ export default function OrderHistoryPage({
             onDateRangeChange={historyPage.changeDateRange}
           />
         </Stack>
-
-        {activeTab === 'orders' ? (
-          <Box sx={{ flex: '0 0 auto' }}>
-            <OrderHistorySummary overview={historyPage.history?.overview} />
-          </Box>
-        ) : null}
 
         <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {activeTab === 'orders' ? (

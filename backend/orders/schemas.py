@@ -8,8 +8,6 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from products.types import ProductMeasure
 
-from .types import OrderStatus
-
 
 class OrderItemCreate(BaseModel):
     product: int
@@ -23,8 +21,9 @@ class OrderCreate(BaseModel):
     order_table_id: int
     waiter_fee: bool
     payment_type: Optional[str] = None
-    # status: OrderStatus = OrderStatus.PENDING
+    is_debt: Optional[bool] = False
     items: list[OrderItemCreate] = Field(min_length=1)
+    paid_amount: Optional[int] = Field(ge=0)
 
 
 class OrderItemOut(BaseModel):
@@ -80,7 +79,9 @@ class OrderOut(BaseModel):
     waiter_fee: bool
     waitress_wage: float
     discount_amount: int | None = 0
-    # status: OrderStatus
+    is_debt: bool
+    paid_amount: Optional[int] = 0
+    payment_type: Optional[str] = None
     created_at: datetime
     user: UserSummaryOut | None = None
     order_table: OrderTableOut | None = None
@@ -95,7 +96,9 @@ class OrderHistoryRowOut(BaseModel):
     waiter_fee: bool
     waitress_wage: float
     discount_amount: int | None = 0
-    # status: OrderStatus
+    is_debt: bool
+    paid_amount: int | None = 0
+    payment_type: str | None = None
     created_at: datetime
     user: UserSummaryOut | None = None
     order_table: OrderTableOut | None = None
