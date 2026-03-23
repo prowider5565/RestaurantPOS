@@ -19,6 +19,8 @@ export type ApiOrderTable = {
   table_color: string
 }
 
+export type PaymentType = 'Karta' | 'Naqd'
+
 export type UiProduct = {
   id: number
   name: string

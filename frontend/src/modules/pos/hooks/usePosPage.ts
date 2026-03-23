@@ -13,6 +13,7 @@ import type {
   EditFoodForm,
   NewFoodForm,
   NewOrderTableForm,
+  PaymentType,
   UiProduct,
 } from '../types'
 import { DEFAULT_CATEGORY_IMAGE_SRC, toCategoryImageSrc, toImageSrc } from '../utils'
@@ -76,6 +77,7 @@ export function usePosPage() {
   const [discountDigits, setDiscountDigits] = useState('')
   const [discountedTotalOverride, setDiscountedTotalOverride] = useState<number | null>(null)
   const [includeWaiterFee, setIncludeWaiterFee] = useState(getDefaultWaiterFeeEnabled)
+  const [paymentType, setPaymentType] = useState<PaymentType>('Naqd')
 
   const menuCategories: Category[] = useMemo(() => {
     const base: Category[] = [{ id: 'all', label: 'Barchasi', imageSrc: DEFAULT_CATEGORY_IMAGE_SRC }]
@@ -196,6 +198,7 @@ export function usePosPage() {
         user_id: currentUser.id,
         order_table_id: Number(selectedOrderTableId),
         waiter_fee: includeWaiterFee,
+        payment_type: paymentType,
         items: cartLines.map((line) => ({ product: line.product.id, quantity: line.qty })),
       }
 
@@ -546,7 +549,9 @@ export function usePosPage() {
     waitressWage,
     discountedTotal,
     includeWaiterFee,
+    paymentType,
     setIncludeWaiterFee,
+    setPaymentType,
     toggleEditTotal,
     isPlacingOrder,
     placeOrder,

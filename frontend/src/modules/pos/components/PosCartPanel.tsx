@@ -2,11 +2,11 @@ import AddIcon from '@mui/icons-material/Add'
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import CloseIcon from '@mui/icons-material/Close'
 import RemoveIcon from '@mui/icons-material/Remove'
-import { Box, Button, Checkbox, Divider, FormControl, FormControlLabel, IconButton, List, MenuItem, Paper, Select, Stack, TextField, Tooltip, Typography } from '@mui/material'
+import { Box, Button, Checkbox, Divider, FormControl, FormControlLabel, IconButton, List, MenuItem, Paper, Select, Stack, Tab, Tabs, TextField, Tooltip, Typography } from '@mui/material'
 import type { MutableRefObject } from 'react'
 
 import { formatMoney } from '../../../shared/utils/formatters'
-import type { ApiOrderTable, CartLine } from '../types'
+import type { ApiOrderTable, CartLine, PaymentType } from '../types'
 import SwipeToDeleteRow from './SwipeToDeleteRow'
 
 function getTableTextColor(color: string) {
@@ -29,6 +29,7 @@ export default function PosCartPanel({
   waitressWage,
   discountedTotal,
   includeWaiterFee,
+  paymentType,
   isPlacingOrder,
   orderTables,
   selectedOrderTableId,
@@ -39,6 +40,7 @@ export default function PosCartPanel({
   onToggleEditTotal,
   onDiscountDigitsChange,
   onIncludeWaiterFeeChange,
+  onPaymentTypeChange,
   onPlaceOrder,
 }: {
   cartCount: number
@@ -49,6 +51,7 @@ export default function PosCartPanel({
   waitressWage: number
   discountedTotal: number
   includeWaiterFee: boolean
+  paymentType: PaymentType
   isPlacingOrder: boolean
   orderTables: ApiOrderTable[]
   selectedOrderTableId: string
@@ -59,6 +62,7 @@ export default function PosCartPanel({
   onToggleEditTotal: () => void
   onDiscountDigitsChange: (value: string) => void
   onIncludeWaiterFeeChange: (value: boolean) => void
+  onPaymentTypeChange: (value: PaymentType) => void
   onPlaceOrder: () => void
 }) {
   const selectedTable = orderTables.find((table) => String(table.id) === selectedOrderTableId) ?? null
@@ -250,6 +254,33 @@ export default function PosCartPanel({
             Buyurtma uchun stol tanlanishi shart.
           </Typography>
         ) : null}
+
+        <Tabs
+          value={paymentType}
+          onChange={(_, value: PaymentType) => onPaymentTypeChange(value)}
+          variant="fullWidth"
+          sx={{
+            mb: 0.75,
+            minHeight: 40,
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 2,
+            bgcolor: 'background.paper',
+            '& .MuiTabs-indicator': {
+              height: '100%',
+              borderRadius: 1.5,
+              bgcolor: 'rgba(249, 115, 22, 0.14)',
+            },
+            '& .MuiTab-root': {
+              minHeight: 40,
+              fontWeight: 900,
+              textTransform: 'none',
+            },
+          }}
+        >
+          <Tab value="Karta" label="Karta" />
+          <Tab value="Naqd" label="Naqd" />
+        </Tabs>
 
         <FormControlLabel
           control={<Checkbox size="small" checked={includeWaiterFee} onChange={(e) => onIncludeWaiterFeeChange(e.target.checked)} />}

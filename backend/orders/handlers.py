@@ -65,6 +65,7 @@ def create_order(db: Session, payload: OrderCreate) -> tuple[Order, list[OrderIt
         user_id=payload.user_id,
         order_table_id=payload.order_table_id,
         waiter_fee=payload.waiter_fee,
+        payment_type=payload.payment_type,
         # status=payload.status,
     )
     db.add(order)

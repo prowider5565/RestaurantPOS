@@ -1,14 +1,6 @@
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
-
-
-class RequisiteSchema(BaseModel):
-    company_name: str
-    stir: Optional[int] = None
-    registry_number: Optional[int] = None
-    phone_number: str
-    address: str
 
 
 class PrintChequeRequest(BaseModel):
