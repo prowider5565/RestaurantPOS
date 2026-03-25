@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { clearAccessToken } from '../../../shared/auth'
 import DateRangeFilterCard from '../../../shared/components/DateRangeFilterCard'
 import Navbar, { type NavItemId } from '../../../shared/components/Navbar'
+import DeleteOrderDialog from '../components/DeleteOrderDialog'
 import FoodAnalyticsTable from '../components/FoodAnalyticsTable'
 import OrderDetailsDialog from '../components/OrderDetailsDialog'
 import OrderHistorySummary from '../components/OrderHistorySummary'
@@ -127,6 +128,7 @@ export default function OrderHistoryPage({
               totalPages={historyPage.history?.page.pages ?? 0}
               onPageChange={historyPage.setPage}
               onOpenDetails={historyPage.setSelectedOrderId}
+              onDelete={historyPage.requestDeleteOrder}
             />
           ) : (
             <FoodAnalyticsTable loading={historyPage.analyticsLoading} rows={historyPage.foodAnalyticsRows} />
@@ -135,11 +137,23 @@ export default function OrderHistoryPage({
       </Box>
 
       {activeTab === 'orders' ? (
-        <OrderDetailsDialog
-          open={Boolean(historyPage.selectedOrderId)}
-          orderId={historyPage.selectedOrderId}
-          onClose={() => historyPage.setSelectedOrderId(null)}
-        />
+        <>
+          <OrderDetailsDialog
+            open={Boolean(historyPage.selectedOrderId)}
+            orderId={historyPage.selectedOrderId}
+            onClose={() => historyPage.setSelectedOrderId(null)}
+          />
+          <DeleteOrderDialog
+            open={historyPage.deleteOpen}
+            orderId={historyPage.deleteTargetId}
+            deleting={historyPage.deleting}
+            error={historyPage.deleteError}
+            password={historyPage.deletePassword}
+            onPasswordChange={historyPage.setDeletePassword}
+            onClose={historyPage.closeDelete}
+            onConfirm={historyPage.confirmDelete}
+          />
+        </>
       ) : null}
     </Box>
   )

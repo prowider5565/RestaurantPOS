@@ -145,6 +145,8 @@ export default function CashDeskPage({
           transaction={cashDesk.deleteTarget}
           deleting={cashDesk.deleting}
           error={cashDesk.deleteError}
+          password={cashDesk.deletePassword}
+          onPasswordChange={cashDesk.setDeletePassword}
           onClose={cashDesk.closeDelete}
           onConfirm={cashDesk.confirmDelete}
         />

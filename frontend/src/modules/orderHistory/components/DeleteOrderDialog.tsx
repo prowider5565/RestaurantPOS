@@ -1,11 +1,8 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Paper, Stack, TextField, Typography } from '@mui/material'
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField, Typography } from '@mui/material'
 
-import type { ApiCashDeskTransaction } from '../types'
-import { formatInteger } from '../utils'
-
-export default function DeleteTransactionDialog({
+export default function DeleteOrderDialog({
   open,
-  transaction,
+  orderId,
   deleting,
   error,
   password,
@@ -14,7 +11,7 @@ export default function DeleteTransactionDialog({
   onConfirm,
 }: {
   open: boolean
-  transaction: ApiCashDeskTransaction | null
+  orderId: number | null
   deleting: boolean
   error: string | null
   password: string
@@ -24,22 +21,12 @@ export default function DeleteTransactionDialog({
 }) {
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
-      <DialogTitle sx={{ fontWeight: 1000 }}>Tranzaksiyani o'chirish</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 1000 }}>Buyurtmani o'chirish</DialogTitle>
       <DialogContent sx={{ pt: 1 }}>
         <Stack gap={1.5} sx={{ mt: 1 }}>
           <Typography variant="body2" color="text.secondary">
-            {transaction ? `#${transaction.id} tranzaksiyasini o'chirasizmi?` : "Ushbu tranzaksiyani o'chirasizmi?"}
+            {orderId ? `#${orderId} buyurtmasini o'chirasizmi?` : "Ushbu buyurtmani o'chirasizmi?"}
           </Typography>
-          {transaction ? (
-            <Paper variant="outlined" sx={{ borderRadius: 2, p: 1.5 }}>
-              <Stack direction="row" justifyContent="space-between" gap={2}>
-                <Typography sx={{ fontWeight: 900 }}>Miqdor</Typography>
-                <Typography sx={{ fontWeight: 1000 }}>
-                  {(transaction.transaction_type === 'in' ? '+' : '-') + formatInteger(transaction.amount)}
-                </Typography>
-              </Stack>
-            </Paper>
-          ) : null}
           <TextField
             fullWidth
             type="password"
@@ -55,7 +42,7 @@ export default function DeleteTransactionDialog({
         <Button variant="outlined" onClick={onClose} disabled={deleting}>
           Bekor qilish
         </Button>
-        <Button color="error" variant="contained" onClick={onConfirm} disabled={!transaction || deleting || !password.trim()}>
+        <Button color="error" variant="contained" onClick={onConfirm} disabled={!orderId || deleting || !password.trim()}>
           {deleting ? "O'chirilmoqda..." : "O'chirish"}
         </Button>
       </DialogActions>

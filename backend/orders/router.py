@@ -1,15 +1,17 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
 from datetime import date
 from fastapi_pagination import Params
 
 from config.database import get_db
+from misc.decorators import require_delete_password
 from users.dependencies import get_current_user
 from users.models import User
 
 from .handlers import (
     create_order,
     create_order_table,
+    delete_order,
     get_food_sales_analytics,
     get_my_order_history,
     get_order_history,
@@ -46,6 +48,7 @@ def create_order_table_api(
 ) -> OrderTableOut:
     return create_order_table(db, payload)
 
+
 @router.get("/history", response_model=OrderHistoryResponseOut)
 def get_order_history_api(
     from_date: date | None = Query(default=None),
@@ -64,7 +67,9 @@ def get_my_order_history_api(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> OrderHistoryResponseOut:
-    return get_my_order_history(db, user_id=current_user.id, params=params, from_date=from_date, to_date=to_date)
+    return get_my_order_history(
+        db, user_id=current_user.id, params=params, from_date=from_date, to_date=to_date
+    )
 
 
 @router.get("/food-analytics", response_model=FoodAnalyticsResponseOut)
@@ -79,3 +84,14 @@ def get_food_sales_analytics_api(
 @router.get("/{order_id}", response_model=OrderOut)
 def get_order_api(order_id: int, db: Session = Depends(get_db)) -> OrderOut:
     return get_order_or_404(db, order_id)
+
+
+@router.delete("/delete/{order_id}")
+@require_delete_password
+async def delete_order_api(
+    order_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> None:
+    delete_order(db, order_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -49,14 +49,6 @@ def create_order_table(db: Session, payload: OrderTableCreate) -> OrderTable:
 
 
 def create_order(db: Session, payload: OrderCreate) -> tuple[Order, list[OrderItem]]:
-    # product_ids = [i.product for i in payload.items]
-    # existing = set(
-    #     r[0] for r in db.query(Product.id).filter(Product.id.in_(product_ids)).all()
-    # )
-    # missing = [pid for pid in product_ids if pid not in existing]
-    # if missing:
-    #     raise HTTPException(status_code=400, detail="Invalid product id(s)")
-
     discounted_total = max(0.0, min(payload.discounted_total, payload.total))
     discount_amount = int(max(0, round(payload.total - discounted_total)))
     order_table = (
@@ -73,6 +65,7 @@ def create_order(db: Session, payload: OrderCreate) -> tuple[Order, list[OrderIt
         user_id=payload.user_id,
         order_table_id=payload.order_table_id,
         waiter_fee=payload.waiter_fee,
+        payment_type=payload.payment_type,
         # status=payload.status,
     )
     db.add(order)
@@ -284,3 +277,13 @@ def get_order_or_404(db: Session, order_id: int) -> Order:
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
     return order
+
+
+
+def delete_order(db: Session, order_id: int) -> None:
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    db.delete(order)
+    db.commit()

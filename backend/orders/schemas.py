@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Optional
 
 from fastapi_pagination import Page
 from pydantic import BaseModel, ConfigDict, Field
@@ -21,6 +22,7 @@ class OrderCreate(BaseModel):
     user_id: int
     order_table_id: int
     waiter_fee: bool
+    payment_type: Optional[str] = None
     # status: OrderStatus = OrderStatus.PENDING
     items: list[OrderItemCreate] = Field(min_length=1)
 
@@ -75,6 +77,7 @@ class OrderOut(BaseModel):
 
     id: int
     total_price: float
+    payment_type: str | None = None
     waiter_fee: bool
     waitress_wage: float
     discount_amount: int | None = 0
@@ -90,6 +93,7 @@ class OrderHistoryRowOut(BaseModel):
 
     id: int
     total_price: float
+    payment_type: str | None = None
     waiter_fee: bool
     waitress_wage: float
     discount_amount: int | None = 0

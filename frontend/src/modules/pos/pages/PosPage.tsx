@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 import LogoutIcon from '@mui/icons-material/Logout'
 import SettingsIcon from '@mui/icons-material/Settings'
@@ -8,6 +8,7 @@ import { clearAccessToken } from '../../../shared/auth'
 import Navbar, { type NavItemId } from '../../../shared/components/Navbar'
 import PosCartPanel from '../components/PosCartPanel'
 import PosCategoryStrip from '../components/PosCategoryStrip'
+import PosCashbackDialog from '../components/PosCashbackDialog'
 import PosFoodDialogs from '../components/PosFoodDialogs'
 import PosProductsGrid from '../components/PosProductsGrid'
 import PosTableDialog from '../components/PosTableDialog'
@@ -30,6 +31,9 @@ export default function PosPage({
   const cart = usePosCart()
   const totals = usePosTotals(cart.cartLines, cart.cartCount)
   const tables = usePosOrderTables()
+  const [paymentType, setPaymentType] = useState<'Karta' | 'Naqd'>('Karta')
+  const [cashbackOpen, setCashbackOpen] = useState(false)
+  const [cashbackPaidAmount, setCashbackPaidAmount] = useState(0)
   const page = usePosPageState({
     cartLines: cart.cartLines,
     clearCart: cart.clearCart,
@@ -51,6 +55,53 @@ export default function PosPage({
     window.addEventListener('pos:createFood', handler)
     return () => window.removeEventListener('pos:createFood', handler)
   }, [foodDialogs])
+
+  const cashbackTotalAmount = totals.discountedTotal
+  const cashbackAmount = Math.max(cashbackPaidAmount - cashbackTotalAmount, 0)
+
+  const pos = {
+    cartCount: cart.cartCount,
+    cartLines: cart.cartLines,
+    cartItemsRef: cart.cartItemsRef,
+    isEditingTotal: totals.isEditingTotal,
+    discountDigits: totals.discountDigits,
+    waitressWage: totals.waitressWage,
+    discountedTotal: totals.discountedTotal,
+    includeWaiterFee: totals.includeWaiterFee,
+    paymentType,
+    isPlacingOrder: page.isPlacingOrder,
+    orderTables: tables.orderTables,
+    selectedOrderTableId: tables.selectedOrderTableId,
+    clearCart: cart.clearCart,
+    setSelectedOrderTableId: tables.setSelectedOrderTableId,
+    openCreateTable: tables.openCreateTable,
+    setQty: cart.setQty,
+    toggleEditTotal: totals.toggleEditTotal,
+    setDiscountDigits: totals.setDiscountDigits,
+    setIncludeWaiterFee: totals.setIncludeWaiterFee,
+    setPaymentType,
+    placeOrder: page.placeOrder,
+    createTableOpen: tables.createTableOpen,
+    newOrderTable: tables.newOrderTable,
+    closeCreateTable: tables.closeCreateTable,
+    setNewOrderTable: tables.setNewOrderTable,
+    createOrderTable: tables.createOrderTable,
+    cashbackOpen,
+    cashbackTotalAmount,
+    cashbackPaidAmount,
+    cashbackAmount,
+    addCashbackMoney: (value: number) => {
+      setCashbackOpen(true)
+      setCashbackPaidAmount((current) => current + value)
+    },
+    resetCashbackMoney: () => {
+      setCashbackPaidAmount(0)
+    },
+    closeCashbackDialog: () => {
+      setCashbackOpen(false)
+      setCashbackPaidAmount(0)
+    },
+  }
 
   return (
     <Box
@@ -184,25 +235,27 @@ export default function PosPage({
             </Box>
 
             <PosCartPanel
-              cartCount={cart.cartCount}
-              cartLines={cart.cartLines}
-              cartItemsRef={cart.cartItemsRef}
-              isEditingTotal={totals.isEditingTotal}
-              discountDigits={totals.discountDigits}
-              waitressWage={totals.waitressWage}
-              discountedTotal={totals.discountedTotal}
-              includeWaiterFee={totals.includeWaiterFee}
-              isPlacingOrder={page.isPlacingOrder}
-              orderTables={tables.orderTables}
-              selectedOrderTableId={tables.selectedOrderTableId}
-              onClearCart={cart.clearCart}
-              onSelectOrderTable={tables.setSelectedOrderTableId}
-              onOpenCreateTable={tables.openCreateTable}
-              onSetQty={cart.setQty}
-              onToggleEditTotal={totals.toggleEditTotal}
-              onDiscountDigitsChange={totals.setDiscountDigits}
-              onIncludeWaiterFeeChange={totals.setIncludeWaiterFee}
-              onPlaceOrder={page.placeOrder}
+              cartCount={pos.cartCount}
+              cartLines={pos.cartLines}
+              cartItemsRef={pos.cartItemsRef}
+              isEditingTotal={pos.isEditingTotal}
+              discountDigits={pos.discountDigits}
+              waitressWage={pos.waitressWage}
+              discountedTotal={pos.discountedTotal}
+              includeWaiterFee={pos.includeWaiterFee}
+              paymentType={pos.paymentType}
+              isPlacingOrder={pos.isPlacingOrder}
+              orderTables={pos.orderTables}
+              selectedOrderTableId={pos.selectedOrderTableId}
+              onClearCart={pos.clearCart}
+              onSelectOrderTable={pos.setSelectedOrderTableId}
+              onOpenCreateTable={pos.openCreateTable}
+              onSetQty={pos.setQty}
+              onToggleEditTotal={pos.toggleEditTotal}
+              onDiscountDigitsChange={pos.setDiscountDigits}
+              onIncludeWaiterFeeChange={pos.setIncludeWaiterFee}
+              onPaymentTypeChange={pos.setPaymentType}
+              onPlaceOrder={pos.placeOrder}
             />
           </Box>
         </Box>
@@ -235,11 +288,21 @@ export default function PosPage({
         />
 
         <PosTableDialog
-          open={tables.createTableOpen}
-          value={tables.newOrderTable}
-          onClose={tables.closeCreateTable}
-          onChange={tables.setNewOrderTable}
-          onSubmit={tables.createOrderTable}
+          open={pos.createTableOpen}
+          value={pos.newOrderTable}
+          onClose={pos.closeCreateTable}
+          onChange={pos.setNewOrderTable}
+          onSubmit={pos.createOrderTable}
+        />
+
+        <PosCashbackDialog
+          open={pos.cashbackOpen}
+          totalAmount={pos.cashbackTotalAmount}
+          paidAmount={pos.cashbackPaidAmount}
+          cashback={pos.cashbackAmount}
+          onAddMoney={pos.addCashbackMoney}
+          onReset={pos.resetCashbackMoney}
+          onClose={pos.closeCashbackDialog}
         />
       </Box>
     </Box>

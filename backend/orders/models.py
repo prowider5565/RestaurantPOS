@@ -1,6 +1,14 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, Enum, Float, ForeignKey, Integer, String
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+)
 from sqlalchemy.orm import relationship
 
 from config.database import Base
@@ -13,15 +21,13 @@ class Order(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     total_price = Column(Float, default=0.0)
-    # status = Column(
-    #     Enum(OrderStatus, name="order_status"),
-    #     default=OrderStatus.PENDING,
-    #     nullable=False,
-    # )
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     discount_amount = Column(Integer, nullable=True, default=0)
     user_id = Column(Integer, ForeignKey("users.id"))
-    order_table_id = Column(Integer, ForeignKey("order_tables.id"), nullable=False, index=True)
+    payment_type = Column(String(50), nullable=True, default="Boshqa")
+    order_table_id = Column(
+        Integer, ForeignKey("order_tables.id"), nullable=False, index=True
+    )
     items = relationship(
         "OrderItem",
         back_populates="order",
@@ -48,11 +54,12 @@ class OrderTable(Base):
 
     orders = relationship("Order", back_populates="order_table")
 
+
 class OrderItem(Base):
     __tablename__ = "order_items"
 
     id = Column(Integer, primary_key=True, index=True)
-    order_id = Column(Integer, ForeignKey("orders.id"))
+    order_id = Column(Integer, ForeignKey("orders.id"), on_delete="CASCADE")
     product_id = Column(Integer, ForeignKey("products.id"))
     quantity = Column(Integer, default=1)
 

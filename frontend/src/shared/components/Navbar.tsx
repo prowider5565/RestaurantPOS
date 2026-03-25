@@ -2,10 +2,12 @@ import AddIcon from '@mui/icons-material/Add'
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney'
 import BarChartIcon from '@mui/icons-material/BarChart'
 import HistoryIcon from '@mui/icons-material/History'
+import MoveToInboxOutlinedIcon from '@mui/icons-material/MoveToInboxOutlined'
 import PeopleIcon from '@mui/icons-material/People'
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu'
+import { API_URL } from '../../config/env'
 import { AppBar, Button, IconButton, Stack, TextField, Toolbar, Tooltip, Typography } from '@mui/material'
-import { type ReactNode } from 'react'
+import { type ReactNode, useState } from 'react'
 
 export type NavItemId = 'menu' | 'order_history' | 'users' | 'cash_desk' | 'statistics'
 
@@ -46,7 +48,23 @@ export default function Navbar({
   onSearchChange?: (value: string) => void
   searchPlaceholder?: string
 }) {
-  const itemsBeforeStats = NAV_ITEMS.filter((item) =>(showUsers || item.id !== 'users'))
+  const [openingDrawer, setOpeningDrawer] = useState(false)
+  const itemsBeforeStats = NAV_ITEMS.filter((item) => (showUsers || item.id !== 'users'))
+
+  async function openDrawer() {
+    if (openingDrawer) return
+
+    setOpeningDrawer(true)
+    try {
+      await fetch(`${API_URL}/cheque/open-drawer`, {
+        method: 'POST',
+      })
+    } catch (error) {
+      console.error('Error opening drawer:', error)
+    } finally {
+      setOpeningDrawer(false)
+    }
+  }
 
   return (
     <AppBar
@@ -106,6 +124,7 @@ export default function Navbar({
             </Button>
           ))}
 
+
           {onSearchChange ? (
             <TextField
               value={searchValue ?? ''}
@@ -160,6 +179,18 @@ export default function Navbar({
               </IconButton>
             </Tooltip>
           ) : null}
+          <Tooltip title="Tortmani ochish" placement="bottom">
+            <span>
+              <IconButton
+                onClick={openDrawer}
+                disabled={openingDrawer}
+                sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 999 }}
+                aria-label="Tortmani ochish"
+              >
+                <MoveToInboxOutlinedIcon />
+              </IconButton>
+            </span>
+          </Tooltip>
           {rightActions}
         </Stack>
       </Toolbar>

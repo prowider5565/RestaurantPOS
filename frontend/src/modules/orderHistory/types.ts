@@ -24,6 +24,7 @@ export type ApiOrderTable = {
 export type ApiOrderRow = {
   id: number
   total_price: number
+  payment_type?: string | null
   waiter_fee: boolean
   waitress_wage: number
   discount_amount?: number | null

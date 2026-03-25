@@ -52,6 +52,20 @@ def print_cheque(text=None):
         win32print.ClosePrinter(h)
 
 
+def open_drawer():
+    printer = win32print.GetDefaultPrinter()
+    h = win32print.OpenPrinter(printer)
+
+    try:
+        win32print.StartDocPrinter(h, 1, ("Open Drawer", None, "RAW"))
+        win32print.StartPagePrinter(h)
+        win32print.WritePrinter(h, PRINTER_INIT + OPEN_DRAWER)
+        win32print.EndPagePrinter(h)
+        win32print.EndDocPrinter(h)
+    finally:
+        win32print.ClosePrinter(h)
+
+
 def generate_cheque_content(order_data: dict, program_name: str) -> str:
     requisites = get_requisite_data()
     return generate_receipt(
