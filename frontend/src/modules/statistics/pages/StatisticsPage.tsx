@@ -20,7 +20,7 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
-import { getAuthHeaders, logout } from '../../../shared/auth'
+import { clearAccessToken, getAuthHeaders } from '../../../shared/auth'
 import DateRangeFilterCard, { type DateRangePreset } from '../../../shared/components/DateRangeFilterCard'
 import Navbar, { type NavItemId } from '../../../shared/components/Navbar'
 import { formatMoney } from '../../../shared/utils/formatters'
@@ -135,7 +135,7 @@ export default function StatisticsPage({
             <Tooltip title="Chiqish" placement="bottom">
               <IconButton
                 aria-label="Chiqish"
-                onClick={logout}
+                onClick={clearAccessToken}
                 sx={{
                   width: 48,
                   height: 48,

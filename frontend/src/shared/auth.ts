@@ -44,8 +44,3 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     return null
   }
 }
-
-export async function logout() {
-  clearAccessToken()
-  await fetch(`${API_URL}/users/logout`, { method: 'POST' })
-}

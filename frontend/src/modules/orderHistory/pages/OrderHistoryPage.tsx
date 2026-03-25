@@ -3,7 +3,7 @@ import SettingsIcon from '@mui/icons-material/Settings'
 import { Box, IconButton, Stack, Tab, Tabs, Tooltip } from '@mui/material'
 import { useState } from 'react'
 
-import { logout } from '../../../shared/auth'
+import { clearAccessToken } from '../../../shared/auth'
 import DateRangeFilterCard from '../../../shared/components/DateRangeFilterCard'
 import Navbar, { type NavItemId } from '../../../shared/components/Navbar'
 import FoodAnalyticsTable from '../components/FoodAnalyticsTable'
@@ -54,7 +54,7 @@ export default function OrderHistoryPage({
           <Tooltip title="Chiqish" placement="bottom">
             <IconButton
               aria-label="Chiqish"
-              onClick={() => logout()}
+              onClick={() => clearAccessToken()}
               sx={{
                 width: 36,
                 height: 36,

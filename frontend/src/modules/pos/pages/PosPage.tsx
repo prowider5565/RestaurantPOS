@@ -1,15 +1,22 @@
+import { useEffect } from 'react'
+
 import LogoutIcon from '@mui/icons-material/Logout'
 import SettingsIcon from '@mui/icons-material/Settings'
 import { Box, IconButton, Tooltip } from '@mui/material'
 
-import { logout } from '../../../shared/auth'
+import { clearAccessToken } from '../../../shared/auth'
 import Navbar, { type NavItemId } from '../../../shared/components/Navbar'
 import PosCartPanel from '../components/PosCartPanel'
 import PosCategoryStrip from '../components/PosCategoryStrip'
 import PosFoodDialogs from '../components/PosFoodDialogs'
 import PosProductsGrid from '../components/PosProductsGrid'
 import PosTableDialog from '../components/PosTableDialog'
-import { usePosPage } from '../hooks/usePosPage'
+import { usePosCart } from '../hooks/usePosCart'
+import { usePosCatalog } from '../hooks/usePosCatalog'
+import { usePosFoodDialogs } from '../hooks/usePosFoodDialogs'
+import { usePosOrderTables } from '../hooks/usePosOrderTables'
+import { usePosPageState } from '../hooks/usePosPageState'
+import { usePosTotals } from '../hooks/usePosTotals'
 
 export default function PosPage({
   active,
@@ -20,7 +27,30 @@ export default function PosPage({
   onNavigate: (next: NavItemId | 'settings') => void
   showUsers?: boolean
 }) {
-  const pos = usePosPage()
+  const cart = usePosCart()
+  const totals = usePosTotals(cart.cartLines, cart.cartCount)
+  const tables = usePosOrderTables()
+  const page = usePosPageState({
+    cartLines: cart.cartLines,
+    clearCart: cart.clearCart,
+    discountedSubtotal: totals.discountedSubtotal,
+    includeWaiterFee: totals.includeWaiterFee,
+    orderTables: tables.orderTables,
+    selectedOrderTableId: tables.selectedOrderTableId,
+    subtotalInt: totals.subtotalInt,
+  })
+  const catalog = usePosCatalog(page.search)
+  const foodDialogs = usePosFoodDialogs({
+    selectedCategoryId: catalog.selectedCategoryId,
+    setApiCategories: catalog.setApiCategories,
+    setMenuProducts: catalog.setMenuProducts,
+  })
+
+  useEffect(() => {
+    const handler = () => foodDialogs.openCreateFood()
+    window.addEventListener('pos:createFood', handler)
+    return () => window.removeEventListener('pos:createFood', handler)
+  }, [foodDialogs])
 
   return (
     <Box
@@ -45,12 +75,12 @@ export default function PosPage({
           active={active}
           onNavigate={onNavigate}
           showUsers={showUsers}
-          onAdd={pos.openCreateFood}
+          onAdd={foodDialogs.openCreateFood}
           rightActions={
             <Tooltip title="Chiqish" placement="bottom">
               <IconButton
                 aria-label="Chiqish"
-                onClick={() => logout()}
+                onClick={() => clearAccessToken()}
                 sx={{
                   width: 36,
                   height: 36,
@@ -68,8 +98,8 @@ export default function PosPage({
               </IconButton>
             </Tooltip>
           }
-          searchValue={pos.search}
-          onSearchChange={pos.setSearch}
+          searchValue={page.search}
+          onSearchChange={page.setSearch}
           searchPlaceholder="Mahsulot qidirish..."
           settingsAction={
             <Tooltip title="Sozlamalar" placement="bottom">
@@ -128,9 +158,9 @@ export default function PosPage({
               }}
             >
               <PosCategoryStrip
-                categories={pos.menuCategories}
-                selectedCategoryId={pos.selectedCategoryId}
-                onSelect={pos.setSelectedCategoryId}
+                categories={catalog.menuCategories}
+                selectedCategoryId={catalog.selectedCategoryId}
+                onSelect={catalog.setSelectedCategoryId}
               />
 
               <Box
@@ -144,72 +174,72 @@ export default function PosPage({
                 }}
               >
                 <PosProductsGrid
-                  visibleProducts={pos.visibleProducts}
-                  onAddToCart={pos.addToCart}
-                  onBeginLongPress={pos.beginLongPress}
-                  onCancelLongPress={pos.cancelLongPress}
-                  longPressFiredRef={pos.longPressFiredRef}
+                  visibleProducts={catalog.visibleProducts}
+                  onAddToCart={cart.addToCart}
+                  onBeginLongPress={page.beginLongPress}
+                  onCancelLongPress={page.cancelLongPress}
+                  longPressFiredRef={page.longPressFiredRef}
                 />
               </Box>
             </Box>
 
             <PosCartPanel
-              cartCount={pos.cartCount}
-              cartLines={pos.cartLines}
-              cartItemsRef={pos.cartItemsRef}
-              isEditingTotal={pos.isEditingTotal}
-              discountDigits={pos.discountDigits}
-              waitressWage={pos.waitressWage}
-              discountedTotal={pos.discountedTotal}
-              includeWaiterFee={pos.includeWaiterFee}
-              isPlacingOrder={pos.isPlacingOrder}
-              orderTables={pos.orderTables}
-              selectedOrderTableId={pos.selectedOrderTableId}
-              onClearCart={pos.clearCart}
-              onSelectOrderTable={pos.setSelectedOrderTableId}
-              onOpenCreateTable={pos.openCreateTable}
-              onSetQty={pos.setQty}
-              onToggleEditTotal={pos.toggleEditTotal}
-              onDiscountDigitsChange={pos.setDiscountDigits}
-              onIncludeWaiterFeeChange={pos.setIncludeWaiterFee}
-              onPlaceOrder={pos.placeOrder}
+              cartCount={cart.cartCount}
+              cartLines={cart.cartLines}
+              cartItemsRef={cart.cartItemsRef}
+              isEditingTotal={totals.isEditingTotal}
+              discountDigits={totals.discountDigits}
+              waitressWage={totals.waitressWage}
+              discountedTotal={totals.discountedTotal}
+              includeWaiterFee={totals.includeWaiterFee}
+              isPlacingOrder={page.isPlacingOrder}
+              orderTables={tables.orderTables}
+              selectedOrderTableId={tables.selectedOrderTableId}
+              onClearCart={cart.clearCart}
+              onSelectOrderTable={tables.setSelectedOrderTableId}
+              onOpenCreateTable={tables.openCreateTable}
+              onSetQty={cart.setQty}
+              onToggleEditTotal={totals.toggleEditTotal}
+              onDiscountDigitsChange={totals.setDiscountDigits}
+              onIncludeWaiterFeeChange={totals.setIncludeWaiterFee}
+              onPlaceOrder={page.placeOrder}
             />
           </Box>
         </Box>
 
         <PosFoodDialogs
-          menuCategories={pos.menuCategories}
-          createOpen={pos.createOpen}
-          newFood={pos.newFood}
-          newFoodPreviewUrl={pos.newFoodPreviewUrl}
-          onCloseCreateFood={pos.closeCreateFood}
-          onCreateFood={pos.createFood}
-          onNewFoodChange={pos.setNewFood}
-          onPickImage={pos.onPickImage}
-          onOpenCreateCategory={pos.openCreateCategory}
-          createCategoryOpen={pos.createCategoryOpen}
-          newCategoryName={pos.newCategoryName}
-          onNewCategoryNameChange={pos.setNewCategoryName}
-          onCloseCreateCategory={pos.closeCreateCategory}
-          onCreateCategory={pos.createCategory}
-          editOpen={pos.editOpen}
-          editFood={pos.editFood}
-          editFoodPreviewUrl={pos.editFoodPreviewUrl}
-          onCloseEditFood={pos.closeEditFood}
-          onUpdateFood={pos.updateFood}
-          onEditFoodChange={pos.setEditFood}
-          onPickEditImage={pos.onPickEditImage}
-          productMenu={pos.productMenu}
-          onCloseProductMenu={() => pos.setProductMenu(null)}
-          onEditFromMenu={pos.openEditFood}
+          menuCategories={catalog.menuCategories}
+          createOpen={foodDialogs.createOpen}
+          newFood={foodDialogs.newFood}
+          newFoodPreviewUrl={foodDialogs.newFoodPreviewUrl}
+          onCloseCreateFood={foodDialogs.closeCreateFood}
+          onCreateFood={foodDialogs.createFood}
+          onNewFoodChange={foodDialogs.setNewFood}
+          onPickImage={foodDialogs.onPickImage}
+          onOpenCreateCategory={foodDialogs.openCreateCategory}
+          createCategoryOpen={foodDialogs.createCategoryOpen}
+          newCategoryName={foodDialogs.newCategoryName}
+          onNewCategoryNameChange={foodDialogs.setNewCategoryName}
+          onCloseCreateCategory={foodDialogs.closeCreateCategory}
+          onCreateCategory={foodDialogs.createCategory}
+          editOpen={foodDialogs.editOpen}
+          editFood={foodDialogs.editFood}
+          editFoodPreviewUrl={foodDialogs.editFoodPreviewUrl}
+          onCloseEditFood={foodDialogs.closeEditFood}
+          onUpdateFood={foodDialogs.updateFood}
+          onEditFoodChange={foodDialogs.setEditFood}
+          onPickEditImage={foodDialogs.onPickEditImage}
+          productMenu={page.productMenu}
+          onCloseProductMenu={() => page.setProductMenu(null)}
+          onEditFromMenu={foodDialogs.openEditFood}
         />
 
         <PosTableDialog
-          open={pos.createTableOpen}
-          value={pos.newOrderTable}
-          onClose={pos.closeCreateTable}
-          onChange={pos.setNewOrderTable}
-          onSubmit={pos.createOrderTable}
+          open={tables.createTableOpen}
+          value={tables.newOrderTable}
+          onClose={tables.closeCreateTable}
+          onChange={tables.setNewOrderTable}
+          onSubmit={tables.createOrderTable}
         />
       </Box>
     </Box>

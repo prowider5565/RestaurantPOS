@@ -2,7 +2,7 @@ import LogoutIcon from '@mui/icons-material/Logout'
 import SettingsIcon from '@mui/icons-material/Settings'
 import { Box, IconButton, Stack, Tooltip } from '@mui/material'
 
-import { logout } from '../../../shared/auth'
+import { clearAccessToken } from '../../../shared/auth'
 import DateRangeFilterCard from '../../../shared/components/DateRangeFilterCard'
 import Navbar, { type NavItemId } from '../../../shared/components/Navbar'
 import CashDeskSummaryPanel from '../components/CashDeskSummaryPanel'
@@ -49,7 +49,7 @@ export default function CashDeskPage({
             <Tooltip title="Chiqish" placement="bottom">
               <IconButton
                 aria-label="Chiqish"
-                onClick={() => logout()}
+                onClick={() => clearAccessToken()}
                 sx={{
                   width: 48,
                   height: 48,

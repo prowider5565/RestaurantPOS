@@ -29,11 +29,6 @@ def login(login_payload: LoginSchema):
     return {"access_token": token, "token_type": "bearer"}
 
 
-@router.post("/logout")
-def logout():
-    return {"message": "Logged out"}
-
-
 @router.get("/me")
 def read_current_user(current_user: User = Depends(get_current_user)):
     return {
@@ -84,6 +79,13 @@ def update_username(
     user.username = username
     db.commit()
     return {"message": "Username updated"}
+
+
+
+
+
+
+
 
 
 @router.put("/update-password/{user_id}")

@@ -2,7 +2,7 @@ import LogoutIcon from '@mui/icons-material/Logout'
 import SettingsIcon from '@mui/icons-material/Settings'
 import { Box, IconButton, Tooltip } from '@mui/material'
 
-import { logout } from '../../../shared/auth'
+import { clearAccessToken } from '../../../shared/auth'
 import Navbar, { type NavItemId } from '../../../shared/components/Navbar'
 import UserDialogs from '../components/UserDialogs'
 import UsersTable from '../components/UsersTable'
@@ -30,7 +30,7 @@ export default function UsersPage({
           <Tooltip title="Chiqish" placement="bottom">
             <IconButton
               aria-label="Chiqish"
-              onClick={() => logout()}
+              onClick={() => clearAccessToken()}
               sx={{
                 width: 36,
                 height: 36,

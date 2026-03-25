@@ -7,7 +7,7 @@ import { Alert, Box, Button, Divider, IconButton, Paper, Stack, TextField, Toolt
 import { useEffect, useMemo, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
-import { getAuthHeaders, logout } from '../../../shared/auth'
+import { clearAccessToken, getAuthHeaders } from '../../../shared/auth'
 import Navbar, { type NavItemId } from '../../../shared/components/Navbar'
 
 type Me = {
@@ -155,7 +155,7 @@ export default function SettingsPage({
           <Tooltip title="Chiqish" placement="bottom">
             <IconButton
               aria-label="Chiqish"
-              onClick={() => logout()}
+              onClick={() => clearAccessToken()}
               sx={{
                 width: 36,
                 height: 36,
