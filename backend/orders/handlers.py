@@ -8,6 +8,8 @@ from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy import case, func
 from sqlalchemy.orm import Session, selectinload
 
+from orders.types import OrderStatus
+
 from .models import Order, OrderItem, OrderTable
 from products.models import Product
 
@@ -23,6 +25,23 @@ from .schemas import (
 
 def list_order_tables(db: Session) -> list[OrderTable]:
     return db.query(OrderTable).order_by(OrderTable.table_number.asc()).all()
+
+
+def get_pending_order_for_table(db: Session, table_id: int) -> Order | None:
+    return (
+        db.query(Order)
+        .options(
+            selectinload(Order.items).selectinload(OrderItem.product),
+            selectinload(Order.user),
+            selectinload(Order.order_table),
+        )
+        .filter(
+            Order.order_table_id == table_id,
+            Order.status == OrderStatus.PENDING,
+        )
+        .order_by(Order.created_at.desc())
+        .first()
+    )
 
 
 def create_order_table(db: Session, payload: OrderTableCreate) -> OrderTable:
@@ -52,12 +71,14 @@ def create_order(db: Session, payload: OrderCreate) -> tuple[Order, list[OrderIt
     discounted_total = max(0.0, min(payload.discounted_total, payload.total))
     discount_amount = int(max(0, round(payload.total - discounted_total)))
     order_table = (
-        db.query(OrderTable)
-        .filter(OrderTable.id == payload.order_table_id)
-        .first()
+        db.query(OrderTable).filter(OrderTable.id == payload.order_table_id).first()
     )
     if not order_table:
         raise HTTPException(status_code=400, detail="Invalid order table id")
+    if order_table.orders and any(
+        o.status == OrderStatus.PENDING for o in order_table.orders
+    ):
+        raise HTTPException(status_code=400, detail="Ushbu stol band qilingan")
 
     order = Order(
         total_price=payload.total,
@@ -66,7 +87,6 @@ def create_order(db: Session, payload: OrderCreate) -> tuple[Order, list[OrderIt
         order_table_id=payload.order_table_id,
         waiter_fee=payload.waiter_fee,
         payment_type=payload.payment_type,
-        # status=payload.status,
     )
     db.add(order)
     db.flush()
@@ -85,6 +105,83 @@ def create_order(db: Session, payload: OrderCreate) -> tuple[Order, list[OrderIt
         db.refresh(item)
 
     return order, items
+
+
+def update_order(db: Session, order_id: int, payload: OrderCreate) -> Order:
+    discounted_total = max(0.0, min(payload.discounted_total, payload.total))
+    discount_amount = int(max(0, round(payload.total - discounted_total)))
+    order = (
+        db.query(Order)
+        .options(selectinload(Order.items))
+        .filter(Order.id == order_id)
+        .first()
+    )
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if order.status != OrderStatus.PENDING:
+        raise HTTPException(status_code=400, detail="Only pending orders can be updated")
+
+    order_table = (
+        db.query(OrderTable).filter(OrderTable.id == payload.order_table_id).first()
+    )
+    if not order_table:
+        raise HTTPException(status_code=400, detail="Invalid order table id")
+
+    conflicting_order = (
+        db.query(Order)
+        .filter(
+            Order.order_table_id == payload.order_table_id,
+            Order.status == OrderStatus.PENDING,
+            Order.id != order_id,
+        )
+        .first()
+    )
+    if conflicting_order:
+        raise HTTPException(status_code=400, detail="Ushbu stol band qilingan")
+
+    order.total_price = payload.total
+    order.discount_amount = discount_amount
+    order.user_id = payload.user_id
+    order.order_table_id = payload.order_table_id
+    order.waiter_fee = payload.waiter_fee
+    order.payment_type = payload.payment_type
+
+    existing_items = {item.product_id: item for item in order.items}
+    next_product_ids = {item.product for item in payload.items}
+
+    for item in payload.items:
+        existing = existing_items.get(item.product)
+        if existing:
+            existing.quantity = item.quantity
+            continue
+
+        db.add(
+            OrderItem(
+                order_id=order.id,
+                product_id=item.product,
+                quantity=item.quantity,
+            )
+        )
+
+    for product_id, item in existing_items.items():
+        if product_id in next_product_ids:
+            continue
+        db.delete(item)
+
+    db.commit()
+    return get_order_or_404(db, order.id)
+
+
+def complete_order(db: Session, order_id: int) -> Order:
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if order.status != OrderStatus.PENDING:
+        raise HTTPException(status_code=400, detail="Only pending orders can be completed")
+
+    order.status = OrderStatus.COMPLETED
+    db.commit()
+    return get_order_or_404(db, order.id)
 
 
 def get_order_history(
@@ -197,7 +294,11 @@ def get_food_sales_analytics(
 
 
 def get_my_order_history(
-    db: Session, user_id: int, params: Params, from_date: date | None = None, to_date: date | None = None
+    db: Session,
+    user_id: int,
+    params: Params,
+    from_date: date | None = None,
+    to_date: date | None = None,
 ) -> OrderHistoryResponseOut:
     def apply_filters(q):
         q = q.filter(Order.user_id == user_id)
@@ -213,7 +314,9 @@ def get_my_order_history(
     total_sum = float(total_sum_query.scalar() or 0.0)
 
     discount_sum_query = apply_filters(
-        db.query(func.coalesce(func.sum(func.coalesce(Order.discount_amount, 0)), 0)).select_from(Order)
+        db.query(
+            func.coalesce(func.sum(func.coalesce(Order.discount_amount, 0)), 0)
+        ).select_from(Order)
     )
     total_discount_sum = float(discount_sum_query.scalar() or 0.0)
 
@@ -223,8 +326,7 @@ def get_my_order_history(
                 func.sum(Order.total_price - func.coalesce(Order.discount_amount, 0)),
                 0.0,
             )
-        )
-        .select_from(Order)
+        ).select_from(Order)
     )
     total_net_sum = float(net_sum_query.scalar() or 0.0)
 
@@ -244,8 +346,7 @@ def get_my_order_history(
     total_waiter_fee_sum = float(waiter_fee_sum_query.scalar() or 0.0)
 
     query = apply_filters(
-        db.query(Order)
-        .options(
+        db.query(Order).options(
             selectinload(Order.items),
             selectinload(Order.user),
             selectinload(Order.order_table),
@@ -277,7 +378,6 @@ def get_order_or_404(db: Session, order_id: int) -> Order:
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
     return order
-
 
 
 def delete_order(db: Session, order_id: int) -> None:

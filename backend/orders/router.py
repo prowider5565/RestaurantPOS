@@ -9,6 +9,7 @@ from users.dependencies import get_current_user
 from users.models import User
 
 from .handlers import (
+    complete_order,
     create_order,
     create_order_table,
     delete_order,
@@ -16,7 +17,9 @@ from .handlers import (
     get_my_order_history,
     get_order_history,
     get_order_or_404,
+    get_pending_order_for_table,
     list_order_tables,
+    update_order,
 )
 from .schemas import (
     FoodAnalyticsResponseOut,
@@ -37,6 +40,18 @@ def create_order_api(payload: OrderCreate, db: Session = Depends(get_db)) -> Ord
     return get_order_or_404(db, order.id)
 
 
+@router.put("/{order_id}", response_model=OrderOut)
+def update_order_api(
+    order_id: int, payload: OrderCreate, db: Session = Depends(get_db)
+) -> OrderOut:
+    return update_order(db, order_id, payload)
+
+
+@router.post("/{order_id}/complete", response_model=OrderOut)
+def complete_order_api(order_id: int, db: Session = Depends(get_db)) -> OrderOut:
+    return complete_order(db, order_id)
+
+
 @router.get("/tables", response_model=list[OrderTableOut])
 def list_order_tables_api(db: Session = Depends(get_db)) -> list[OrderTableOut]:
     return list_order_tables(db)
@@ -47,6 +62,13 @@ def create_order_table_api(
     payload: OrderTableCreate, db: Session = Depends(get_db)
 ) -> OrderTableOut:
     return create_order_table(db, payload)
+
+
+@router.get("/tables/{table_id}/pending", response_model=OrderOut | None)
+def get_pending_order_for_table_api(
+    table_id: int, db: Session = Depends(get_db)
+) -> OrderOut | None:
+    return get_pending_order_for_table(db, table_id)
 
 
 @router.get("/history", response_model=OrderHistoryResponseOut)

@@ -21,6 +21,7 @@ function getTableTextColor(color: string) {
 }
 
 export default function PosCartPanel({
+  hasActiveOrder,
   cartCount,
   cartLines,
   cartItemsRef,
@@ -41,8 +42,10 @@ export default function PosCartPanel({
   onDiscountDigitsChange,
   onIncludeWaiterFeeChange,
   onPaymentTypeChange,
+  onCompleteOrder,
   onPlaceOrder,
 }: {
+  hasActiveOrder: boolean
   cartCount: number
   cartLines: CartLine[]
   cartItemsRef: MutableRefObject<HTMLDivElement | null>
@@ -63,6 +66,7 @@ export default function PosCartPanel({
   onDiscountDigitsChange: (value: string) => void
   onIncludeWaiterFeeChange: (value: boolean) => void
   onPaymentTypeChange: (value: PaymentType) => void
+  onCompleteOrder: () => void
   onPlaceOrder: () => void
 }) {
   const selectedTable = orderTables.find((table) => String(table.id) === selectedOrderTableId) ?? null
@@ -347,36 +351,51 @@ export default function PosCartPanel({
         ) : null}
       </Stack>
 
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: '1fr 1fr' },
-          gap: 0.75,
-        }}
-      >
-        <Button
-          color="success"
-          variant="contained"
-          disabled={cartCount === 0 || isPlacingOrder || !selectedOrderTableId}
-          onClick={onPlaceOrder}
-          startIcon={<CheckCircleOutlineIcon />}
-          sx={{ py: 1.5, borderRadius: 2, fontSize: 14 }}
-          fullWidth
+      <Stack spacing={0.75}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: '1fr 1fr' },
+            gap: 0.75,
+          }}
         >
-          Tayyor
-        </Button>
-        <Button
-          color="error"
-          variant="contained"
-          disabled={cartCount === 0 || isPlacingOrder}
-          onClick={onClearCart}
-          startIcon={<CloseIcon />}
-          sx={{ py: 1.5, borderRadius: 2, fontSize: 14 }}
-          fullWidth
-        >
-          Bekor qilish
-        </Button>
-      </Box>
+          <Button
+            color="success"
+            variant="contained"
+            disabled={cartCount === 0 || isPlacingOrder || !selectedOrderTableId}
+            onClick={onPlaceOrder}
+            startIcon={<CheckCircleOutlineIcon />}
+            sx={{ py: 1.5, borderRadius: 2, fontSize: 14 }}
+            fullWidth
+          >
+            Tayyor
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            disabled={cartCount === 0 || isPlacingOrder}
+            onClick={onClearCart}
+            startIcon={<CloseIcon />}
+            sx={{ py: 1.5, borderRadius: 2, fontSize: 14 }}
+            fullWidth
+          >
+            Bekor qilish
+          </Button>
+        </Box>
+
+        {hasActiveOrder ? (
+          <Button
+            color="warning"
+            variant="contained"
+            disabled={isPlacingOrder}
+            onClick={onCompleteOrder}
+            sx={{ py: 1.5, borderRadius: 2, fontSize: 14, fontWeight: 900 }}
+            fullWidth
+          >
+            Tugatish
+          </Button>
+        ) : null}
+      </Stack>
     </Paper>
   )
 }

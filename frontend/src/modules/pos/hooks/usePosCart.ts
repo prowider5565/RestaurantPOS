@@ -32,9 +32,18 @@ export function usePosCart() {
     })
   }
 
-  function clearCart() {
+  const clearCart = useCallback(() => {
     setCart({})
-  }
+  }, [])
+
+  const replaceCart = useCallback((lines: CartLine[]) => {
+    setCart(
+      lines.reduce<Record<string, CartLine>>((next, line) => {
+        next[String(line.product.id)] = line
+        return next
+      }, {}),
+    )
+  }, [])
 
   return {
     cartItemsRef,
@@ -43,5 +52,6 @@ export function usePosCart() {
     addToCart,
     setQty,
     clearCart,
+    replaceCart,
   }
 }

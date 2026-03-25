@@ -8,9 +8,6 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from products.types import ProductMeasure
 
-from .types import OrderStatus
-
-
 class OrderItemCreate(BaseModel):
     product: int
     quantity: int = Field(gt=0)
@@ -23,7 +20,6 @@ class OrderCreate(BaseModel):
     order_table_id: int
     waiter_fee: bool
     payment_type: Optional[str] = None
-    # status: OrderStatus = OrderStatus.PENDING
     items: list[OrderItemCreate] = Field(min_length=1)
 
 

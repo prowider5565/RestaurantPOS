@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import type { CartLine } from '../types'
 
@@ -46,6 +46,12 @@ export function usePosTotals(cartLines: CartLine[], cartCount: number) {
     setIsEditingTotal(false)
   }
 
+  const setDiscountedSubtotal = useCallback((value: number | null) => {
+    setIsEditingTotal(false)
+    setDiscountDigits('')
+    setDiscountedTotalOverride(value)
+  }, [])
+
   useEffect(() => {
     if (cartCount !== 0) return
     setIsEditingTotal(false)
@@ -63,6 +69,7 @@ export function usePosTotals(cartLines: CartLine[], cartCount: number) {
     discountedTotal,
     includeWaiterFee,
     setIncludeWaiterFee,
+    setDiscountedSubtotal,
     toggleEditTotal,
   }
 }

@@ -31,16 +31,17 @@ export default function PosPage({
   const cart = usePosCart()
   const totals = usePosTotals(cart.cartLines, cart.cartCount)
   const tables = usePosOrderTables()
-  const [paymentType, setPaymentType] = useState<'Karta' | 'Naqd'>('Karta')
   const [cashbackOpen, setCashbackOpen] = useState(false)
   const [cashbackPaidAmount, setCashbackPaidAmount] = useState(0)
   const page = usePosPageState({
     cartLines: cart.cartLines,
-    clearCart: cart.clearCart,
     discountedSubtotal: totals.discountedSubtotal,
     includeWaiterFee: totals.includeWaiterFee,
     orderTables: tables.orderTables,
+    replaceCart: cart.replaceCart,
     selectedOrderTableId: tables.selectedOrderTableId,
+    setDiscountedSubtotal: totals.setDiscountedSubtotal,
+    setIncludeWaiterFee: totals.setIncludeWaiterFee,
     subtotalInt: totals.subtotalInt,
   })
   const catalog = usePosCatalog(page.search)
@@ -68,7 +69,7 @@ export default function PosPage({
     waitressWage: totals.waitressWage,
     discountedTotal: totals.discountedTotal,
     includeWaiterFee: totals.includeWaiterFee,
-    paymentType,
+    paymentType: page.paymentType,
     isPlacingOrder: page.isPlacingOrder,
     orderTables: tables.orderTables,
     selectedOrderTableId: tables.selectedOrderTableId,
@@ -79,7 +80,7 @@ export default function PosPage({
     toggleEditTotal: totals.toggleEditTotal,
     setDiscountDigits: totals.setDiscountDigits,
     setIncludeWaiterFee: totals.setIncludeWaiterFee,
-    setPaymentType,
+    setPaymentType: page.setPaymentType,
     placeOrder: page.placeOrder,
     createTableOpen: tables.createTableOpen,
     newOrderTable: tables.newOrderTable,
@@ -235,6 +236,7 @@ export default function PosPage({
             </Box>
 
             <PosCartPanel
+              hasActiveOrder={Boolean(page.activeOrderId)}
               cartCount={pos.cartCount}
               cartLines={pos.cartLines}
               cartItemsRef={pos.cartItemsRef}
@@ -255,6 +257,7 @@ export default function PosPage({
               onDiscountDigitsChange={pos.setDiscountDigits}
               onIncludeWaiterFeeChange={pos.setIncludeWaiterFee}
               onPaymentTypeChange={pos.setPaymentType}
+              onCompleteOrder={page.completeOrder}
               onPlaceOrder={pos.placeOrder}
             />
           </Box>

@@ -21,6 +21,31 @@ export type ApiOrderTable = {
 
 export type PaymentType = 'Karta' | 'Naqd'
 
+export type ApiOrderProduct = {
+  id: number
+  name: string
+  price: number
+  image_path?: string | null
+  category_id?: number | null
+  measure?: 'unit' | 'gram' | 'portion' | null
+}
+
+export type ApiOrderDetail = {
+  id: number
+  total_price: number
+  payment_type?: string | null
+  waiter_fee: boolean
+  waitress_wage?: number | null
+  discount_amount?: number | null
+  created_at: string
+  order_table?: ApiOrderTable | null
+  user: { id: number; username: string; position: string | null }
+  items: Array<{
+    product: ApiOrderProduct
+    quantity: number
+  }>
+}
+
 export type UiProduct = {
   id: number
   name: string
@@ -63,17 +88,4 @@ export type NewOrderTableForm = {
   tableColor: string
 }
 
-export type ReceiptOrderData = {
-  id: number
-  total_price: number
-  waiter_fee: boolean
-  waitress_wage?: number | null
-  discount_amount?: number | null
-  created_at: string
-  order_table?: { id: number; table_number: number; table_color: string } | null
-  user: { id: number; username: string; position: string | null }
-  items: Array<{
-    product: { id: number; name: string; price: number }
-    quantity: number
-  }>
-}
+export type ReceiptOrderData = ApiOrderDetail

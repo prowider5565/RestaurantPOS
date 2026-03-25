@@ -4,6 +4,7 @@ from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
+    Enum,
     Float,
     ForeignKey,
     Integer,
@@ -22,6 +23,7 @@ class Order(Base):
     id = Column(Integer, primary_key=True, index=True)
     total_price = Column(Float, default=0.0)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    status = Column(Enum(OrderStatus), nullable=False, default=OrderStatus.PENDING)
     discount_amount = Column(Integer, nullable=True, default=0)
     user_id = Column(Integer, ForeignKey("users.id"))
     payment_type = Column(String(50), nullable=True, default="Boshqa")
