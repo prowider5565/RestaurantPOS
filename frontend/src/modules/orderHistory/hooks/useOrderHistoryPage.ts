@@ -14,9 +14,9 @@ async function getResponseError(response: Response, fallback: string) {
 export function useOrderHistoryPage() {
   const [search, setSearch] = useState('')
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null)
-  const [preset, setPreset] = useState<DateRangePreset>('daily')
-  const [fromDate, setFromDate] = useState<string>(toYmd(new Date()))
-  const [toDate, setToDate] = useState<string>(toYmd(new Date()))
+  const [preset, setPreset] = useState<DateRangePreset>('all')
+  const [fromDate, setFromDate] = useState<string>('')
+  const [toDate, setToDate] = useState<string>('')
   const [page, setPage] = useState(1)
   const size = 12
   const [history, setHistory] = useState<ApiOrderHistoryResponse | null>(null)
@@ -46,8 +46,10 @@ export function useOrderHistoryPage() {
         const params = new URLSearchParams()
         params.set('page', String(page))
         params.set('size', String(size))
-        if (fromDate) params.set('from_date', fromDate)
-        if (toDate) params.set('to_date', toDate)
+        if (preset !== 'all') {
+          if (fromDate) params.set('from_date', fromDate)
+          if (toDate) params.set('to_date', toDate)
+        }
 
         const response = await fetch(`${API_URL}/orders/history?${params.toString()}`, {
           headers: getAuthHeaders(),
@@ -65,7 +67,7 @@ export function useOrderHistoryPage() {
     return () => {
       cancelled = true
     }
-  }, [fromDate, hasCompleteRange, page, reloadKey, size, toDate])
+  }, [fromDate, hasCompleteRange, page, preset, reloadKey, size, toDate])
 
   useEffect(() => {
     let cancelled = false
@@ -80,8 +82,10 @@ export function useOrderHistoryPage() {
       setAnalyticsLoading(true)
       try {
         const params = new URLSearchParams()
-        if (fromDate) params.set('from_date', fromDate)
-        if (toDate) params.set('to_date', toDate)
+        if (preset !== 'all') {
+          if (fromDate) params.set('from_date', fromDate)
+          if (toDate) params.set('to_date', toDate)
+        }
 
         const response = await fetch(`${API_URL}/orders/food-analytics?${params.toString()}`, {
           headers: getAuthHeaders(),
@@ -99,7 +103,7 @@ export function useOrderHistoryPage() {
     return () => {
       cancelled = true
     }
-  }, [fromDate, hasCompleteRange, reloadKey, toDate])
+  }, [fromDate, hasCompleteRange, preset, reloadKey, toDate])
 
   const rows = useMemo(() => {
     const items = history?.page.items ?? []

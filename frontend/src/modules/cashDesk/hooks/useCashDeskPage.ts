@@ -21,16 +21,14 @@ async function getResponseError(response: Response, fallback: string) {
 export function useCashDeskPage() {
   const { me } = useAuth()
   const isAdmin = me?.is_admin === true || me?.is_admin === 1
-  const today = toYmd(new Date())
-
   const [summary, setSummary] = useState<CashDeskSummary | null>(null)
   const [summaryLoading, setSummaryLoading] = useState(false)
   const [summaryError, setSummaryError] = useState<string | null>(null)
 
   const [txPage, setTxPage] = useState<ApiPage<ApiCashDeskTransaction> | null>(null)
-  const [preset, setPreset] = useState<DateRangePreset>('daily')
-  const [fromDate, setFromDate] = useState(today)
-  const [toDate, setToDate] = useState(today)
+  const [preset, setPreset] = useState<DateRangePreset>('all')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
   const [createAmount, setCreateAmount] = useState('')
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
@@ -59,9 +57,13 @@ export function useCashDeskPage() {
       setSummaryError(null)
       try {
         const params = new URLSearchParams()
-        if (preset) params.set('preset', preset)
-        if (fromDate) params.set('from_date', fromDate)
-        if (toDate) params.set('to_date', toDate)
+        if (preset === 'all') {
+          params.set('preset', preset)
+        } else {
+          if (preset) params.set('preset', preset)
+          if (fromDate) params.set('from_date', fromDate)
+          if (toDate) params.set('to_date', toDate)
+        }
 
         const summaryUrl = params.size ? `${API_URL}/cash-desk/summary?${params.toString()}` : `${API_URL}/cash-desk/summary`
         const response = await fetch(summaryUrl)
@@ -98,9 +100,13 @@ export function useCashDeskPage() {
         const params = new URLSearchParams()
         params.set('page', String(page))
         params.set('size', String(size))
-        if (preset) params.set('preset', preset)
-        if (fromDate) params.set('from_date', fromDate)
-        if (toDate) params.set('to_date', toDate)
+        if (preset === 'all') {
+          params.set('preset', preset)
+        } else {
+          if (preset) params.set('preset', preset)
+          if (fromDate) params.set('from_date', fromDate)
+          if (toDate) params.set('to_date', toDate)
+        }
 
         const response = await fetch(`${API_URL}/cash-desk/transactions?${params.toString()}`, {
           headers: getAuthHeaders(),
