@@ -6,13 +6,6 @@ import type { DateRangePreset } from '../../../shared/components/DateRangeFilter
 import { useAuth } from '../../../shared/authContext'
 import type { ApiCashDeskTransaction, ApiDeleteOut, ApiPage, CashDeskSummary } from '../types'
 
-function toYmd(date: Date) {
-  const yyyy = date.getFullYear()
-  const mm = String(date.getMonth() + 1).padStart(2, '0')
-  const dd = String(date.getDate()).padStart(2, '0')
-  return `${yyyy}-${mm}-${dd}`
-}
-
 async function getResponseError(response: Response, fallback: string) {
   const payload = (await response.json().catch(() => null)) as { detail?: string } | null
   return payload?.detail || `${fallback} (${response.status})`
