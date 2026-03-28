@@ -3,12 +3,13 @@ from __future__ import annotations
 from datetime import date, datetime, time
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi_pagination import Page, Params
 from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
 
+from cash_desk.helpers import sync_transaction_to_supervisor
 from cash_desk.models import CashDesk
 from cash_desk.schemas import (
     CashDeskSummaryOut,
@@ -20,6 +21,7 @@ from config.database import get_db
 from misc.decorators import require_delete_password
 from orders.models import Order
 from users.dependencies import get_current_user
+from users.helpers import get_bearer_token
 from users.models import User
 from cash_desk.types import TransactionType
 
@@ -55,6 +57,7 @@ def resolve_date_range(
 @router.post("/transactions", response_model=CashDeskTransactionOut)
 def create_transaction_api(
     payload: CashDeskTransactionCreateIn,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> CashDeskTransactionOut:
@@ -64,6 +67,8 @@ def create_transaction_api(
         transaction_type=payload.transaction_type,
     )
     db.add(tx)
+    token = get_bearer_token(request.headers.get("Authorization"))
+    sync_transaction_to_supervisor(payload, token)
     db.commit()
     row = (
         db.query(CashDesk)

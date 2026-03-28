@@ -1,4 +1,4 @@
-from fastapi import Request
+from fastapi import Request, HTTPException
 
 from users.helpers import get_bearer_token, get_user_by_id, verify_token
 

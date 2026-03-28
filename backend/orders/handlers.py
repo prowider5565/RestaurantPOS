@@ -8,6 +8,7 @@ from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy import case, func
 from sqlalchemy.orm import Session, selectinload
 
+from .helpers import sync_order_table_to_supervisor, sync_order_to_supervisor
 from .models import Order, OrderItem, OrderTable
 from products.models import Product
 
@@ -43,6 +44,7 @@ def create_order_table(db: Session, payload: OrderTableCreate) -> OrderTable:
         table_color=table_color,
     )
     db.add(order_table)
+    sync_order_table_to_supervisor(payload)
     db.commit()
     db.refresh(order_table)
     return order_table
@@ -88,6 +90,7 @@ def create_order(db: Session, payload: OrderCreate) -> tuple[Order, list[OrderIt
         db.add(item)
         items.append(item)
 
+    sync_order_to_supervisor(payload)
     db.commit()
 
     # Refresh and eagerly load relationships
