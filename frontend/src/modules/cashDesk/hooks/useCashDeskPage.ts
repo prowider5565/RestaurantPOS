@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
 import { getAuthHeaders } from '../../../shared/auth'
+import type { DateRangePreset } from '../../../shared/components/DateRangeFilterCard'
 import { useAuth } from '../../../shared/authContext'
 import type { ApiCashDeskTransaction, ApiDeleteOut, ApiPage, CashDeskSummary } from '../types'
 
@@ -21,6 +22,9 @@ export function useCashDeskPage() {
   const [summaryError, setSummaryError] = useState<string | null>(null)
 
   const [txPage, setTxPage] = useState<ApiPage<ApiCashDeskTransaction> | null>(null)
+  const [preset, setPreset] = useState<DateRangePreset>('all')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
   const [createAmount, setCreateAmount] = useState('')
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
@@ -33,17 +37,32 @@ export function useCashDeskPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [deletePassword, setDeletePassword] = useState('')
   const [cashingOut, setCashingOut] = useState(false)
+  const hasCompleteRange = preset !== null || (!!fromDate && !!toDate)
 
   useEffect(() => {
     let cancelled = false
 
     async function loadSummary() {
+      if (!hasCompleteRange) {
+        setSummary(null)
+        setSummaryError(null)
+        setSummaryLoading(false)
+        return
+      }
+
       setSummaryLoading(true)
       setSummaryError(null)
       try {
         const params = new URLSearchParams()
         const cashoutAt = localStorage.getItem(CASHOUT_AT_STORAGE_KEY)
         if (cashoutAt) params.set('cashout_at', cashoutAt)
+        if (preset === 'all') {
+          params.set('preset', preset)
+        } else {
+          if (preset) params.set('preset', preset)
+          if (fromDate) params.set('from_date', fromDate)
+          if (toDate) params.set('to_date', toDate)
+        }
 
         const summaryUrl = params.size ? `${API_URL}/cash-desk/summary?${params.toString()}` : `${API_URL}/cash-desk/summary`
         const response = await fetch(summaryUrl)
@@ -65,16 +84,28 @@ export function useCashDeskPage() {
     return () => {
       cancelled = true
     }
-  }, [reloadKey])
+  }, [fromDate, hasCompleteRange, preset, reloadKey, toDate])
 
   useEffect(() => {
     let cancelled = false
 
     async function loadTransactions() {
+      if (!hasCompleteRange) {
+        setTxPage(null)
+        return
+      }
+
       try {
         const params = new URLSearchParams()
         params.set('page', String(page))
         params.set('size', String(size))
+        if (preset === 'all') {
+          params.set('preset', preset)
+        } else {
+          if (preset) params.set('preset', preset)
+          if (fromDate) params.set('from_date', fromDate)
+          if (toDate) params.set('to_date', toDate)
+        }
 
         const response = await fetch(`${API_URL}/cash-desk/transactions?${params.toString()}`, {
           headers: getAuthHeaders(),
@@ -96,7 +127,7 @@ export function useCashDeskPage() {
     return () => {
       cancelled = true
     }
-  }, [page, reloadKey, size])
+  }, [fromDate, hasCompleteRange, page, preset, reloadKey, size, toDate])
 
   const createAmountInt = useMemo(() => {
     const numeric = Number(createAmount)
@@ -177,6 +208,17 @@ export function useCashDeskPage() {
     // Backend-driven export will be wired here.
   }
 
+  function changePreset(next: DateRangePreset) {
+    setPreset(next)
+    setPage(1)
+  }
+
+  function changeDateRange(nextFromDate: string, nextToDate: string) {
+    setFromDate(nextFromDate)
+    setToDate(nextToDate)
+    setPage(1)
+  }
+
   async function cashOut() {
     if (cashingOut) return
 
@@ -204,6 +246,11 @@ export function useCashDeskPage() {
     summary,
     summaryLoading,
     summaryError,
+    preset,
+    changePreset,
+    fromDate,
+    toDate,
+    changeDateRange,
     page,
     setPage,
     pages: txPage?.pages ?? 1,

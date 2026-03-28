@@ -1,6 +1,6 @@
 import { Stack, TextField, ToggleButton, ToggleButtonGroup } from '@mui/material'
 
-export type DateRangePreset = 'daily' | 'weekly' | 'monthly' | null
+export type DateRangePreset = 'daily' | 'weekly' | 'monthly' | 'all' | null
 
 function toYmd(date: Date) {
   const yyyy = date.getFullYear()
@@ -10,6 +10,13 @@ function toYmd(date: Date) {
 }
 
 function getPresetRange(preset: Exclude<DateRangePreset, null>) {
+  if (preset === 'all') {
+    return {
+      fromDate: '',
+      toDate: '',
+    }
+  }
+
   const end = new Date()
   const start = new Date()
 
@@ -85,6 +92,7 @@ export default function DateRangeFilterCard({
         <ToggleButton value="daily">Kunlik</ToggleButton>
         <ToggleButton value="weekly">Haftalik</ToggleButton>
         <ToggleButton value="monthly">Oylik</ToggleButton>
+        <ToggleButton value="all">Barchasi</ToggleButton>
       </ToggleButtonGroup>
 
       <TextField

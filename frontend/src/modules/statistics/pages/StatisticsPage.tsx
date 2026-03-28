@@ -71,9 +71,9 @@ export default function StatisticsPage({
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
   const [size] = useState(12)
-  const [preset, setPreset] = useState<DateRangePreset>('daily')
-  const [fromDate, setFromDate] = useState(today)
-  const [toDate, setToDate] = useState(today)
+  const [preset, setPreset] = useState<DateRangePreset>('all')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
   const hasCompleteRange = preset !== null || (!!fromDate && !!toDate)
   const excludeDebtFromTotalSum = fromDate === today && toDate === today
 
@@ -92,8 +92,10 @@ export default function StatisticsPage({
         const params = new URLSearchParams()
         params.set('page', String(page))
         params.set('size', String(size))
-        if (fromDate) params.set('from_date', fromDate)
-        if (toDate) params.set('to_date', toDate)
+        if (preset !== 'all') {
+          if (fromDate) params.set('from_date', fromDate)
+          if (toDate) params.set('to_date', toDate)
+        }
         if (excludeDebtFromTotalSum) params.set('exclude_debt_from_total_sum', 'true')
         const res = await fetch(`${API_URL}/orders/my-history?${params.toString()}`, {
           headers: getAuthHeaders(),
@@ -111,7 +113,7 @@ export default function StatisticsPage({
     return () => {
       cancelled = true
     }
-  }, [excludeDebtFromTotalSum, fromDate, hasCompleteRange, page, size, toDate])
+  }, [excludeDebtFromTotalSum, fromDate, hasCompleteRange, page, preset, size, toDate])
 
   const rows = useMemo(() => stats?.page.items ?? [], [stats])
   const pages = stats?.page.pages ?? 1

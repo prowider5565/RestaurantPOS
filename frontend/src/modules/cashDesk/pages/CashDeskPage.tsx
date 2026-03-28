@@ -3,6 +3,7 @@ import SettingsIcon from '@mui/icons-material/Settings'
 import { Box, IconButton, Stack, Tooltip } from '@mui/material'
 
 import { logout } from '../../../shared/auth'
+import DateRangeFilterCard from '../../../shared/components/DateRangeFilterCard'
 import Navbar, { type NavItemId } from '../../../shared/components/Navbar'
 import CashDeskSummaryPanel from '../components/CashDeskSummaryPanel'
 import CashDeskTransactionsTable from '../components/CashDeskTransactionsTable'
@@ -99,8 +100,19 @@ export default function CashDeskPage({
               overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column',
+              gap: 2,
             }}
           >
+            <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2} flexWrap="wrap">
+              <DateRangeFilterCard
+                preset={cashDesk.preset}
+                fromDate={cashDesk.fromDate}
+                toDate={cashDesk.toDate}
+                onPresetChange={cashDesk.changePreset}
+                onDateRangeChange={cashDesk.changeDateRange}
+              />
+            </Stack>
+
             <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               <CashDeskTransactionsTable
                 isAdmin={cashDesk.isAdmin}
