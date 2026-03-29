@@ -5,7 +5,12 @@ from sqlalchemy.orm import Session
 
 from config.database import get_db
 from users.dependencies import get_current_user
-from users.helpers import authenticate_user, create_access_token, hash_password
+from users.helpers import (
+    authenticate_user,
+    create_access_token,
+    hash_password,
+    sync_user_to_supervisor,
+)
 from users.models import User
 from users.schemas import (
     AdminCredentialsUpdateIn,
@@ -151,6 +156,7 @@ def admin_create_user(
         is_active=True,
     )
     db.add(user)
+    sync_user_to_supervisor(payload)
     db.commit()
     db.refresh(user)
     return {
