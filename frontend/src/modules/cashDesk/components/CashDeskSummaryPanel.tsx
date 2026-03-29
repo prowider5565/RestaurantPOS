@@ -38,7 +38,7 @@ export default function CashDeskSummaryPanel({
       variant="outlined"
       sx={{
         borderRadius: 3,
-        p: { xs: 3, md: 2 },
+        p: { xs: 2, md: 1.5 },
         width: '100%',
         height: { xs: 'fit-content', md: '100%' },
         minHeight: 0,
@@ -47,11 +47,44 @@ export default function CashDeskSummaryPanel({
         overflow: 'hidden',
       }}
     >
-      <Stack spacing={2} sx={{ flex: '0 0 auto' }}>
-        <Box sx={{ textAlign: 'center', pb: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
-          <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 1 }}>Joriy summa</Typography>
-          <Typography sx={{ fontWeight: 1000, fontSize: 48, color: 'primary.main' }}>{formatInteger(summary.current_amount)}</Typography>
-          <Typography sx={{ fontWeight: 700, color: 'text.secondary', mt: 1, fontSize: 14 }}>so'm</Typography>
+      <Stack spacing={1.25} sx={{ flex: '0 0 auto' }}>
+        <Box sx={{ textAlign: 'center', pb: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+          <Stack spacing={1} sx={{ mt: 0.5 }}>
+            <Box
+              sx={{
+                flex: 1,
+                minWidth: 0,
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 2,
+                px: 1.5,
+                py: 1,
+                bgcolor: 'background.paper',
+              }}
+            >
+              <Typography sx={{ fontWeight: 700, color: 'text.secondary', fontSize: 12 }}>Naqd</Typography>
+              <Typography sx={{ fontWeight: 1000, fontSize: 20, color: 'primary.main', lineHeight: 1.2 }}>
+                {formatInteger(summary.current_cash_amount)}
+              </Typography>
+            </Box>
+            <Box
+              sx={{
+                flex: 1,
+                minWidth: 0,
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 2,
+                px: 1.5,
+                py: 1,
+                bgcolor: 'background.paper',
+              }}
+            >
+              <Typography sx={{ fontWeight: 700, color: 'text.secondary', fontSize: 12 }}>Kartada</Typography>
+              <Typography sx={{ fontWeight: 1000, fontSize: 20, color: 'primary.main', lineHeight: 1.2 }}>
+                {formatInteger(summary.current_card_amount)}
+              </Typography>
+            </Box>
+          </Stack>
           {summaryError ? (
             <Typography sx={{ mt: 1, fontSize: 12, color: 'error.main' }}>{summaryError}</Typography>
           ) : summaryLoading ? (
@@ -59,31 +92,31 @@ export default function CashDeskSummaryPanel({
           ) : null}
         </Box>
 
-        <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1.5, bgcolor: 'background.paper' }}>
-          <Stack direction="row" alignItems="stretch" divider={<Divider orientation="vertical" flexItem />} sx={{ mb: 1.5 }}>
-            <Box sx={{ flex: 1, pr: 2, textAlign: 'center' }}>
-              <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 14 }}>
+        <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1, bgcolor: 'background.paper' }}>
+          <Stack direction="row" alignItems="stretch" divider={<Divider orientation="vertical" flexItem />} sx={{ mb: 1 }}>
+            <Box sx={{ flex: 1, pr: 1, textAlign: 'center' }}>
+              <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 12 }}>
                 Bugungi daromad
               </Typography>
-              <Typography sx={{ fontWeight: 900, fontSize: 18, color: 'success.main' }}>
+              <Typography sx={{ fontWeight: 900, fontSize: 14, color: 'success.main' }}>
                 +{formatMoney(summary.total_order_income)}
               </Typography>
             </Box>
-            <Box sx={{ flex: 1, pl: 2, textAlign: 'center' }}>
-              <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 14 }}>
+            <Box sx={{ flex: 1, pl: 1, textAlign: 'center' }}>
+              <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 12 }}>
                 Bugungi Kirim
               </Typography>
-              <Typography sx={{ fontWeight: 900, fontSize: 18, color: 'success.main' }}>
+              <Typography sx={{ fontWeight: 900, fontSize: 14, color: 'success.main' }}>
                 +{formatMoney(summary.total_misc_income)}
               </Typography>
             </Box>
           </Stack>
 
-          <Divider sx={{ my: 1.5 }} />
+          <Divider sx={{ my: 1 }} />
 
           <Box sx={{ textAlign: 'center' }}>
-            <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 14 }}>Bugungi xarajatlar</Typography>
-            <Typography sx={{ fontWeight: 900, fontSize: 20, color: 'error.main' }}>-{formatMoney(summary.total_expense)}</Typography>
+            <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 0.5, fontSize: 12 }}>Bugungi xarajatlar</Typography>
+            <Typography sx={{ fontWeight: 900, fontSize: 16, color: 'error.main' }}>-{formatMoney(summary.total_expense)}</Typography>
           </Box>
         </Box>
       </Stack>
@@ -95,7 +128,7 @@ export default function CashDeskSummaryPanel({
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
-          gap: 2,
+          gap: 1.25,
         }}
       >
         <TextField
@@ -110,14 +143,14 @@ export default function CashDeskSummaryPanel({
           sx={{
             display: 'grid',
             gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: '1fr 1fr' },
-            gap: 1,
+            gap: 0.75,
           }}
         >
           <Button
             color="success"
             variant="contained"
             onClick={() => onCreateTransaction('in')}
-            sx={{ py: 2.2, borderRadius: 2, fontSize: 18 }}
+            sx={{ py: 1.4, borderRadius: 2, fontSize: 14 }}
             fullWidth
             disabled={creating || !createAmountInt}
           >
@@ -127,7 +160,7 @@ export default function CashDeskSummaryPanel({
             color="error"
             variant="contained"
             onClick={() => onCreateTransaction('out')}
-            sx={{ py: 2.2, borderRadius: 2, fontSize: 18 }}
+            sx={{ py: 1.4, borderRadius: 2, fontSize: 14 }}
             fullWidth
             disabled={creating || !createAmountInt}
           >
@@ -137,7 +170,7 @@ export default function CashDeskSummaryPanel({
             color="warning"
             variant="contained"
             onClick={onCashOut}
-            sx={{ py: 2.2, borderRadius: 2, fontSize: 18, gridColumn: { xs: 'auto', sm: '1 / -1' } }}
+            sx={{ py: 1.4, borderRadius: 2, fontSize: 14, gridColumn: { xs: 'auto', sm: '1 / -1' } }}
             fullWidth
             disabled={cashingOut}
           >
@@ -146,8 +179,8 @@ export default function CashDeskSummaryPanel({
         </Box>
 
         {createError ? (
-          <Paper variant="outlined" sx={{ borderRadius: 2, p: 1.25, borderColor: 'error.main', bgcolor: 'rgba(211, 47, 47, 0.06)' }}>
-            <Typography sx={{ fontWeight: 900, color: 'error.main', fontSize: 13 }}>{createError}</Typography>
+          <Paper variant="outlined" sx={{ borderRadius: 2, p: 1, borderColor: 'error.main', bgcolor: 'rgba(211, 47, 47, 0.06)' }}>
+            <Typography sx={{ fontWeight: 900, color: 'error.main', fontSize: 12 }}>{createError}</Typography>
           </Paper>
         ) : null}
       </Box>

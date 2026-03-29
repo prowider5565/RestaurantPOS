@@ -23,6 +23,8 @@ export function getSafeSummary(summary: CashDeskSummary | null): CashDeskSummary
   return (
     summary ?? {
       current_amount: 0,
+      current_cash_amount: 0,
+      current_card_amount: 0,
       total_order_income: 0,
       total_misc_income: 0,
       total_expense: 0,

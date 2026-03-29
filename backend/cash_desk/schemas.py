@@ -14,6 +14,8 @@ class CashDeskTransactionCreateIn(BaseModel):
 
 class CashDeskSummaryOut(BaseModel):
     current_amount: float
+    current_cash_amount: float
+    current_card_amount: float
     total_order_income: float
     total_misc_income: float
     total_expense: float

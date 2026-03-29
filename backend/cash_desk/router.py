@@ -130,6 +130,20 @@ def get_cash_desk_summary_api(
     start, end = resolve_date_range(preset, from_date, to_date)
     current_start = cashout_at
 
+    def apply_order_current_filters(query):
+        if end is not None:
+            query = query.filter(Order.created_at <= end)
+        if current_start is not None:
+            query = query.filter(Order.created_at >= current_start)
+        return query
+
+    def apply_cash_desk_current_filters(query):
+        if end is not None:
+            query = query.filter(CashDesk.created_at <= end)
+        if current_start is not None:
+            query = query.filter(CashDesk.created_at >= current_start)
+        return query
+
     total_order_income_query = db.query(func.coalesce(func.sum(Order.paid_amount), 0.0))
     if start is not None:
         total_order_income_query = total_order_income_query.filter(Order.created_at >= start)
@@ -155,43 +169,37 @@ def get_cash_desk_summary_api(
         total_expense_query = total_expense_query.filter(CashDesk.created_at <= end)
     total_expense = float(total_expense_query.scalar() or 0.0)
 
-    cumulative_order_income_query = db.query(
-        func.coalesce(func.sum(Order.paid_amount), 0.0)
+    cumulative_cash_order_income_query = apply_order_current_filters(
+        db.query(func.coalesce(func.sum(Order.paid_amount), 0.0)).filter(
+            Order.payment_type == "Naqd"
+        )
     )
-    if end is not None:
-        cumulative_order_income_query = cumulative_order_income_query.filter(Order.created_at <= end)
-    cumulative_misc_income_query = (
+    cumulative_card_order_income_query = apply_order_current_filters(
+        db.query(func.coalesce(func.sum(Order.paid_amount), 0.0)).filter(
+            Order.payment_type == "Karta"
+        )
+    )
+    cumulative_misc_income_query = apply_cash_desk_current_filters(
         db.query(func.coalesce(func.sum(CashDesk.amount), 0))
         .filter(CashDesk.transaction_type == TransactionType.IN)
     )
-    cumulative_expense_query = (
+    cumulative_expense_query = apply_cash_desk_current_filters(
         db.query(func.coalesce(func.sum(CashDesk.amount), 0))
         .filter(CashDesk.transaction_type == TransactionType.OUT)
     )
-    if end is not None:
-        cumulative_misc_income_query = cumulative_misc_income_query.filter(CashDesk.created_at <= end)
-        cumulative_expense_query = cumulative_expense_query.filter(CashDesk.created_at <= end)
 
-    if current_start is not None:
-        cumulative_order_income_query = cumulative_order_income_query.filter(
-            Order.created_at >= current_start
-        )
-        cumulative_misc_income_query = cumulative_misc_income_query.filter(
-            CashDesk.created_at >= current_start
-        )
-        cumulative_expense_query = cumulative_expense_query.filter(
-            CashDesk.created_at >= current_start
-        )
-
-    cumulative_order_income = float(cumulative_order_income_query.scalar() or 0.0)
+    cumulative_cash_order_income = float(cumulative_cash_order_income_query.scalar() or 0.0)
+    cumulative_card_order_income = float(cumulative_card_order_income_query.scalar() or 0.0)
     cumulative_misc_income = float(cumulative_misc_income_query.scalar() or 0.0)
     cumulative_expense = float(cumulative_expense_query.scalar() or 0.0)
 
-    current_amount = (
-        cumulative_order_income + cumulative_misc_income - cumulative_expense
-    )
+    current_cash_amount = cumulative_cash_order_income + cumulative_misc_income - cumulative_expense
+    current_card_amount = cumulative_card_order_income
+    current_amount = current_cash_amount + current_card_amount
     return CashDeskSummaryOut(
         current_amount=current_amount,
+        current_cash_amount=current_cash_amount,
+        current_card_amount=current_card_amount,
         total_order_income=total_order_income,
         total_misc_income=total_misc_income,
         total_expense=total_expense,

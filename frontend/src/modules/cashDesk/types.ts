@@ -27,6 +27,8 @@ export type ApiPage<T> = {
 
 export type CashDeskSummary = {
   current_amount: number
+  current_cash_amount: number
+  current_card_amount: number
   total_order_income: number
   total_misc_income: number
   total_expense: number

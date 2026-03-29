@@ -85,7 +85,7 @@ export default function CashDeskPage({
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1fr) 360px', lg: 'minmax(0, 1fr) 400px' },
+            gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1fr) 336px', lg: 'minmax(0, 1fr) 372px' },
             gap: 2,
             alignItems: { xs: 'start', md: 'stretch' },
             flex: 1,
