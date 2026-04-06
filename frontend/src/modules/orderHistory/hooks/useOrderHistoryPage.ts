@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
 import { getAuthHeaders } from '../../../shared/auth'
+import { useAuth } from '../../../shared/authContext'
 import type { DateRangePreset } from '../../../shared/components/DateRangeFilterCard'
 import type { ApiFoodAnalyticsResponse, ApiOrderHistoryResponse } from '../types'
 import { formatCreated, toYmd } from '../utils'
@@ -12,6 +13,9 @@ async function getResponseError(response: Response, fallback: string) {
 }
 
 export function useOrderHistoryPage() {
+  const { me } = useAuth()
+  const isAdmin = me?.is_admin === true || me?.is_admin === 1
+
   const [search, setSearch] = useState('')
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null)
   const [preset, setPreset] = useState<DateRangePreset>('all')
@@ -161,6 +165,7 @@ export function useOrderHistoryPage() {
   }
 
   function requestDeleteOrder(orderId: number) {
+    if (!isAdmin) return
     setDeleteError(null)
     setDeletePassword('')
     setDeleteTargetId(orderId)
@@ -205,6 +210,7 @@ export function useOrderHistoryPage() {
   }
 
   return {
+    isAdmin,
     search,
     setSearch,
     selectedOrderId,

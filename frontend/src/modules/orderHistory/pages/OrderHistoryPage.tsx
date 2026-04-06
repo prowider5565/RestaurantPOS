@@ -4,6 +4,7 @@ import { Box, IconButton, Stack, Tab, Tabs, Tooltip } from '@mui/material'
 import { useState } from 'react'
 
 import { logout } from '../../../shared/auth'
+import { useAuth } from '../../../shared/authContext'
 import DateRangeFilterCard from '../../../shared/components/DateRangeFilterCard'
 import Navbar, { type NavItemId } from '../../../shared/components/Navbar'
 import DeleteOrderDialog from '../components/DeleteOrderDialog'
@@ -21,6 +22,8 @@ export default function OrderHistoryPage({
   onNavigate: (next: NavItemId | 'settings') => void
   showUsers?: boolean
 }) {
+  const { me } = useAuth()
+  const isAdmin = me?.is_admin === true || me?.is_admin === 1
   const historyPage = useOrderHistoryPage()
   const [activeTab, setActiveTab] = useState<'orders' | 'food_analytics'>('orders')
 
@@ -115,6 +118,7 @@ export default function OrderHistoryPage({
         <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {activeTab === 'orders' ? (
             <OrderHistoryTable
+              isAdmin={historyPage.isAdmin}
               loading={historyPage.loading}
               rows={historyPage.rows}
               page={historyPage.page}
@@ -137,7 +141,7 @@ export default function OrderHistoryPage({
             onClose={() => historyPage.setSelectedOrderId(null)}
           />
           <DeleteOrderDialog
-            open={historyPage.deleteOpen}
+            open={isAdmin && historyPage.deleteOpen}
             orderId={historyPage.deleteTargetId}
             deleting={historyPage.deleting}
             error={historyPage.deleteError}

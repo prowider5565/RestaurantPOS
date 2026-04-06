@@ -21,7 +21,7 @@ import { DEFAULT_CATEGORY_IMAGE_SRC, toCategoryImageSrc, toImageSrc } from '../u
 const DEFAULT_WAITER_FEE_ENABLED_STORAGE_KEY = 'defaultWaiterFeeEnabled'
 
 function getDefaultWaiterFeeEnabled() {
-  return localStorage.getItem(DEFAULT_WAITER_FEE_ENABLED_STORAGE_KEY) !== 'false'
+  return localStorage.getItem(DEFAULT_WAITER_FEE_ENABLED_STORAGE_KEY) === 'true'
 }
 
 type ProductMenuState = {

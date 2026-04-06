@@ -7,6 +7,7 @@ import type { ApiOrderRow } from '../types'
 import { formatCreated, getOrderTotals, getTableTextColor } from '../utils'
 
 export function OrderHistoryTable({
+  isAdmin,
   loading,
   rows,
   page,
@@ -15,6 +16,7 @@ export function OrderHistoryTable({
   onOpenDetails,
   onDelete,
 }: {
+  isAdmin: boolean
   loading: boolean
   rows: ApiOrderRow[]
   page: number
@@ -104,7 +106,7 @@ export function OrderHistoryTable({
               </TableCell>
               <TableCell sx={{ fontWeight: 900 }}>Sana</TableCell>
               <TableCell sx={{ fontWeight: 900 }} align="right">
-                Amallar
+                {isAdmin ? 'Amallar' : 'Tafsilotlar'}
               </TableCell>
             </TableRow>
           </TableHead>
@@ -172,22 +174,24 @@ export function OrderHistoryTable({
                       <Button variant="outlined" onClick={() => onOpenDetails(order.id)}>
                         Tafsilotlar
                       </Button>
-                      <Tooltip title="O'chirish" placement="top">
-                        <IconButton
-                          aria-label="O'chirish"
-                          onClick={() => onDelete(order.id)}
-                          sx={{
-                            color: 'error.main',
-                            border: '1px solid',
-                            borderColor: 'divider',
-                            borderRadius: 2,
-                            width: 40,
-                            height: 40,
-                          }}
-                        >
-                          <DeleteOutlineIcon />
-                        </IconButton>
-                      </Tooltip>
+                      {isAdmin ? (
+                        <Tooltip title="O'chirish" placement="top">
+                          <IconButton
+                            aria-label="O'chirish"
+                            onClick={() => onDelete(order.id)}
+                            sx={{
+                              color: 'error.main',
+                              border: '1px solid',
+                              borderColor: 'divider',
+                              borderRadius: 2,
+                              width: 40,
+                              height: 40,
+                            }}
+                          >
+                            <DeleteOutlineIcon />
+                          </IconButton>
+                        </Tooltip>
+                      ) : null}
                     </Stack>
                   </TableCell>
                 </TableRow>
