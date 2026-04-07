@@ -227,7 +227,6 @@ def get_my_order_history(
     exclude_debt_from_total_sum: bool = False,
 ) -> OrderHistoryResponseOut:
     def apply_filters(q):
-        q = q.filter(Order.user_id == user_id)
         if from_date is not None:
             q = q.filter(Order.created_at >= datetime.combine(from_date, time.min))
         if to_date is not None:
