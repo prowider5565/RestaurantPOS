@@ -154,13 +154,14 @@ def generate_receipt(
     today = datetime.now().strftime("%d.%m.%Y")
     username = str(user.get("username") or "")
     position = str(user.get("position") or "-")
-    order_table = order_data.get("order_table") or {}
-    table_number = str(order_table.get("table_number") or "-")
+    payment_type = str(order_data.get("payment_type") or "-")
 
     lines.append(safe_line("Sana: ".ljust(table_width - len(today)) + today))
     lines.append(safe_line("Ism: ".ljust(table_width - len(username)) + username))
     lines.append(safe_line("Lavozimi: ".ljust(table_width - len(position)) + position))
-    lines.append(safe_line("Stol: ".ljust(table_width - len(table_number)-1) + f"#{table_number}"))
+    lines.append(
+        safe_line("To'lov turi: ".ljust(table_width - len(payment_type)) + payment_type)
+    )
     lines.append("")
     lines.append(top_separator())
     lines.append(framed_line(program_name))
