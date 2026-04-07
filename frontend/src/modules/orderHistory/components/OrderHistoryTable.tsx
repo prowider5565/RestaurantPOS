@@ -91,6 +91,7 @@ export function OrderHistoryTable({
               </TableCell>
               <TableCell sx={{ fontWeight: 900 }}>Xodim</TableCell>
               <TableCell sx={{ fontWeight: 900 }}>Lavozim</TableCell>
+              <TableCell sx={{ fontWeight: 900 }}>To'lov turi</TableCell>
               <TableCell sx={{ fontWeight: 900 }}>Stol</TableCell>
               <TableCell sx={{ fontWeight: 900 }} align="right">
                 Chegirma
@@ -115,6 +116,7 @@ export function OrderHistoryTable({
               const totals = getOrderTotals(order)
               const username = order.user?.username ?? '-'
               const position = order.user?.position ?? '-'
+              const paymentType = order.payment_type ?? '-'
               const table = order.order_table
               const finalTotal = totals.discountedTotal + (order.waiter_fee ? order.waitress_wage : 0)
 
@@ -134,6 +136,7 @@ export function OrderHistoryTable({
                   </TableCell>
                   <TableCell>{username}</TableCell>
                   <TableCell>{position}</TableCell>
+                  <TableCell>{paymentType}</TableCell>
                   <TableCell>
                     {table ? (
                       <Box
@@ -206,10 +209,11 @@ export function OrderHistoryTable({
                   },
                 }}
               >
-                <TableCell colSpan={4}>Jami</TableCell>
+                <TableCell colSpan={5}>Jami</TableCell>
                 <TableCell align="right">{formatMoney(totals.discountAmount)}</TableCell>
                 <TableCell align="right">{formatMoney(totals.waiterFee)}</TableCell>
                 <TableCell align="right">{formatMoney(totals.paidAmount)}</TableCell>
+                <TableCell align="right">-</TableCell>
                 <TableCell align="right">-</TableCell>
                 <TableCell align="right">-</TableCell>
               </TableRow>
