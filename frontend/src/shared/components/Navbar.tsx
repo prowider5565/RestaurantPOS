@@ -4,10 +4,13 @@ import BarChartIcon from '@mui/icons-material/BarChart'
 import HistoryIcon from '@mui/icons-material/History'
 import MoveToInboxOutlinedIcon from '@mui/icons-material/MoveToInboxOutlined'
 import PeopleIcon from '@mui/icons-material/People'
+import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew'
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu'
-import { API_URL } from '../../config/env'
+import SettingsIcon from '@mui/icons-material/Settings'
 import { AppBar, Button, IconButton, Stack, TextField, Toolbar, Tooltip, Typography } from '@mui/material'
 import { type ReactNode, useState } from 'react'
+
+import { API_URL } from '../../config/env'
 
 export type NavItemId = 'menu' | 'order_history' | 'users' | 'cash_desk' | 'statistics'
 
@@ -25,12 +28,16 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'statistics', label: 'Statistika', icon: <BarChartIcon /> },
 ]
 
+const ACTION_BUTTON_SIZE = 36
+
 export default function Navbar({
   title,
   active,
   onNavigate,
   onAdd,
   showUsers = true,
+  onSettings,
+  onLogout,
   settingsAction,
   rightActions,
   searchValue,
@@ -42,6 +49,8 @@ export default function Navbar({
   onNavigate: (next: NavItemId) => void
   onAdd?: (active: NavItemId) => void
   showUsers?: boolean
+  onSettings?: () => void
+  onLogout?: () => void
   settingsAction?: ReactNode
   rightActions?: ReactNode
   searchValue?: string
@@ -145,8 +154,6 @@ export default function Navbar({
               }}
             />
           ) : null}
-
-          {settingsAction}
         </Stack>
 
         <Stack
@@ -155,8 +162,8 @@ export default function Navbar({
           spacing={0.75}
           sx={{
             '& .MuiIconButton-root': {
-              width: 36,
-              height: 36,
+              width: ACTION_BUTTON_SIZE,
+              height: ACTION_BUTTON_SIZE,
               p: 0.75,
             },
             '& .MuiSvgIcon-root': {
@@ -164,6 +171,27 @@ export default function Navbar({
             },
           }}
         >
+          {onSettings ? (
+            <Tooltip title="Sozlamalar" placement="bottom">
+              <IconButton
+                aria-label="Sozlamalar"
+                onClick={onSettings}
+                sx={{
+                  border: '1px solid',
+                  borderColor: 'primary.main',
+                  borderRadius: 999,
+                  color: 'primary.main',
+                  '&:hover': {
+                    borderColor: 'primary.dark',
+                    bgcolor: 'rgba(249, 115, 22, 0.08)',
+                  },
+                }}
+              >
+                <SettingsIcon />
+              </IconButton>
+            </Tooltip>
+          ) : null}
+          {settingsAction}
           {onAdd && (active === 'menu' || active === 'users') ? (
             <Tooltip
               title={active === 'users' ? "Yangi foydalanuvchi qo'shish" : "Yangi taom va ichimlik qo'shish"}
@@ -172,7 +200,15 @@ export default function Navbar({
               <IconButton
                 color="primary"
                 onClick={() => onAdd(active)}
-                sx={{ border: '1px solid', borderColor: 'divider' }}
+                sx={{
+                  border: '1px solid',
+                  borderColor: 'primary.main',
+                  borderRadius: 999,
+                  '&:hover': {
+                    borderColor: 'primary.dark',
+                    bgcolor: 'rgba(249, 115, 22, 0.08)',
+                  },
+                }}
                 aria-label={active === 'users' ? "Yangi foydalanuvchi qo'shish" : "Yangi taom va ichimlik qo'shish"}
               >
                 <AddIcon />
@@ -184,7 +220,16 @@ export default function Navbar({
               <IconButton
                 onClick={openDrawer}
                 disabled={openingDrawer}
-                sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 999 }}
+                sx={{
+                  border: '1px solid',
+                  borderColor: 'primary.main',
+                  borderRadius: 999,
+                  color: 'primary.main',
+                  '&:hover': {
+                    borderColor: 'primary.dark',
+                    bgcolor: 'rgba(249, 115, 22, 0.08)',
+                  },
+                }}
                 aria-label="Tortmani ochish"
               >
                 <MoveToInboxOutlinedIcon />
@@ -192,6 +237,27 @@ export default function Navbar({
             </span>
           </Tooltip>
           {rightActions}
+          {onLogout ? (
+            <Tooltip title="Chiqish" placement="bottom">
+              <IconButton
+                aria-label="Chiqish"
+                onClick={onLogout}
+                sx={{
+                  border: '1px solid',
+                  borderColor: 'error.main',
+                  borderRadius: 999,
+                  color: 'error.main',
+                  '&:hover': {
+                    borderColor: 'error.main',
+                    color: 'error.main',
+                    bgcolor: 'rgba(211, 47, 47, 0.06)',
+                  },
+                }}
+              >
+                <PowerSettingsNewIcon />
+              </IconButton>
+            </Tooltip>
+          ) : null}
         </Stack>
       </Toolbar>
     </AppBar>

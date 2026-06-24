@@ -1,27 +1,32 @@
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import HistoryIcon from '@mui/icons-material/History'
-import { Box, Button, IconButton, Pagination, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography } from '@mui/material'
+import VisibilityIcon from '@mui/icons-material/Visibility'
+import { Box, CircularProgress, IconButton, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography } from '@mui/material'
 
 import { formatMoney } from '../../../shared/utils/formatters'
 import type { ApiOrderRow } from '../types'
 import { formatCreated, getOrderTotals, getTableTextColor } from '../utils'
 
+const LOAD_MORE_OFFSET = 280
+
+function formatMoneyValue(value: number) {
+  return formatMoney(value).replace(/\s*so'm$/, '')
+}
+
 export function OrderHistoryTable({
   isAdmin,
   loading,
   rows,
-  page,
-  totalPages,
-  onPageChange,
+  hasMore,
+  onLoadMore,
   onOpenDetails,
   onDelete,
 }: {
   isAdmin: boolean
   loading: boolean
   rows: ApiOrderRow[]
-  page: number
-  totalPages: number
-  onPageChange: (page: number) => void
+  hasMore: boolean
+  onLoadMore: () => void
   onOpenDetails: (orderId: number) => void
   onDelete: (orderId: number) => void
 }) {
@@ -69,9 +74,13 @@ export function OrderHistoryTable({
           minHeight: 0,
           overflow: 'auto',
           width: '100%',
-          '@media (min-width:900px) and (max-width:1199.95px) and (max-height:768px)': {
-            maxHeight: 390,
-          },
+        }}
+        onScroll={(e) => {
+          const node = e.currentTarget
+          const distanceToBottom = node.scrollHeight - node.scrollTop - node.clientHeight
+          if (distanceToBottom <= LOAD_MORE_OFFSET && hasMore && !loading) {
+            onLoadMore()
+          }
         }}
       >
         <Table
@@ -90,7 +99,6 @@ export function OrderHistoryTable({
                 ID
               </TableCell>
               <TableCell sx={{ fontWeight: 900 }}>Xodim</TableCell>
-              <TableCell sx={{ fontWeight: 900 }}>Lavozim</TableCell>
               <TableCell sx={{ fontWeight: 900 }}>To'lov turi</TableCell>
               <TableCell sx={{ fontWeight: 900 }}>Stol</TableCell>
               <TableCell sx={{ fontWeight: 900 }} align="right">
@@ -112,10 +120,27 @@ export function OrderHistoryTable({
             </TableRow>
           </TableHead>
           <TableBody>
+            {rows.length ? (
+              <TableRow
+                sx={{
+                  bgcolor: 'rgba(249, 115, 22, 0.08)',
+                  '& .MuiTableCell-root': {
+                    fontWeight: 1000,
+                  },
+                }}
+              >
+                <TableCell colSpan={4}>Jami</TableCell>
+                <TableCell align="right">{formatMoneyValue(totals.discountAmount)}</TableCell>
+                <TableCell align="right">{formatMoneyValue(totals.waiterFee)}</TableCell>
+                <TableCell align="right">{formatMoneyValue(totals.paidAmount)}</TableCell>
+                <TableCell align="right">-</TableCell>
+                <TableCell align="right">-</TableCell>
+                <TableCell align="right">-</TableCell>
+              </TableRow>
+            ) : null}
             {rows.map((order) => {
               const totals = getOrderTotals(order)
               const username = order.user?.username ?? '-'
-              const position = order.user?.position ?? '-'
               const paymentType = order.payment_type ?? '-'
               const table = order.order_table
               const finalTotal = totals.discountedTotal + (order.waiter_fee ? order.waitress_wage : 0)
@@ -135,7 +160,6 @@ export function OrderHistoryTable({
                     {order.id}
                   </TableCell>
                   <TableCell>{username}</TableCell>
-                  <TableCell>{position}</TableCell>
                   <TableCell>{paymentType}</TableCell>
                   <TableCell>
                     {table ? (
@@ -160,23 +184,36 @@ export function OrderHistoryTable({
                     )}
                   </TableCell>
                   <TableCell align="right" sx={{ fontWeight: 800 }}>
-                    {formatMoney(totals.discountAmount)}
+                    {formatMoneyValue(totals.discountAmount)}
                   </TableCell>
                   <TableCell align="right" sx={{ fontWeight: 800 }}>
                     {order.waiter_fee ? formatMoney(order.waitress_wage) : '-'}
                   </TableCell>
                   <TableCell align="right" sx={{ fontWeight: 900 }}>
-                    {formatMoney(order.paid_amount ?? 0)}
+                    {formatMoneyValue(order.paid_amount ?? 0)}
                   </TableCell>
                   <TableCell align="right" sx={{ fontWeight: 900 }}>
-                    {formatMoney(finalTotal)}
+                    {formatMoneyValue(finalTotal)}
                   </TableCell>
                   <TableCell>{formatCreated(order.created_at)}</TableCell>
                   <TableCell align="right">
                     <Stack direction="row" justifyContent="flex-end" spacing={1}>
-                      <Button variant="outlined" onClick={() => onOpenDetails(order.id)}>
-                        Tafsilotlar
-                      </Button>
+                      <Tooltip title="Tafsilotlar" placement="top">
+                        <IconButton
+                          aria-label="Tafsilotlar"
+                          onClick={() => onOpenDetails(order.id)}
+                          sx={{
+                            color: 'rgba(0, 0, 0, 0.68)',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: 999,
+                            width: 40,
+                            height: 40,
+                          }}
+                        >
+                          <VisibilityIcon />
+                        </IconButton>
+                      </Tooltip>
                       {isAdmin ? (
                         <Tooltip title="O'chirish" placement="top">
                           <IconButton
@@ -200,48 +237,16 @@ export function OrderHistoryTable({
                 </TableRow>
               )
             })}
-            {rows.length ? (
-              <TableRow
-                sx={{
-                  bgcolor: 'rgba(249, 115, 22, 0.08)',
-                  '& .MuiTableCell-root': {
-                    fontWeight: 1000,
-                  },
-                }}
-              >
-                <TableCell colSpan={5}>Jami</TableCell>
-                <TableCell align="right">{formatMoney(totals.discountAmount)}</TableCell>
-                <TableCell align="right">{formatMoney(totals.waiterFee)}</TableCell>
-                <TableCell align="right">{formatMoney(totals.paidAmount)}</TableCell>
-                <TableCell align="right">-</TableCell>
-                <TableCell align="right">-</TableCell>
-                <TableCell align="right">-</TableCell>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={10} align="center" sx={{ py: 2 }}>
+                  <CircularProgress size={24} />
+                </TableCell>
               </TableRow>
             ) : null}
           </TableBody>
         </Table>
       </TableContainer>
-
-      {totalPages > 1 ? (
-        <Stack direction="row" justifyContent="flex-end">
-          <Pagination
-            color="primary"
-            size="large"
-            page={page}
-            count={totalPages}
-            onChange={(_, next) => onPageChange(next)}
-            showFirstButton
-            showLastButton
-            sx={{
-              '& .MuiPaginationItem-root': {
-                fontSize: '1.4em',
-                minWidth: 45,
-                height: 45,
-              },
-            }}
-          />
-        </Stack>
-      ) : null}
     </Stack>
   )
 }

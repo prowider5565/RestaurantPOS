@@ -3,6 +3,7 @@ import { Box, Dialog, DialogContent, Divider, IconButton, List, ListItem, ListIt
 import { useEffect, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
+import { DEFAULT_PRODUCT_IMAGE_SRC } from '../../../shared/utils/images'
 import { formatMoney } from '../../../shared/utils/formatters'
 import type { ApiOrderDetail } from '../types'
 import { formatCreated, getOrderTotals, getTableTextColor, toOrderHistoryImageSrc } from '../utils'
@@ -110,6 +111,10 @@ export default function OrderDetailsDialog({
                     component="img"
                     src={toOrderHistoryImageSrc(item.product.image_path ?? null)}
                     alt={item.product.name}
+                    onError={(e) => {
+                      if (e.currentTarget.src.endsWith(DEFAULT_PRODUCT_IMAGE_SRC)) return
+                      e.currentTarget.src = DEFAULT_PRODUCT_IMAGE_SRC
+                    }}
                     sx={{
                       width: 44,
                       height: 44,

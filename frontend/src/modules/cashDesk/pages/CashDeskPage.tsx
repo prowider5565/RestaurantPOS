@@ -1,6 +1,4 @@
-import LogoutIcon from '@mui/icons-material/Logout'
-import SettingsIcon from '@mui/icons-material/Settings'
-import { Box, IconButton, Stack, Tooltip } from '@mui/material'
+import { Box, Stack } from '@mui/material'
 
 import { logout } from '../../../shared/auth'
 import DateRangeFilterCard from '../../../shared/components/DateRangeFilterCard'
@@ -29,45 +27,8 @@ export default function CashDeskPage({
         active={active}
         onNavigate={onNavigate}
         showUsers={showUsers}
-        rightActions={
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <Tooltip title="Sozlamalar" placement="bottom">
-              <IconButton
-                aria-label="Sozlamalar"
-                onClick={() => onNavigate('settings')}
-                sx={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 999,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                }}
-              >
-                <SettingsIcon />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Chiqish" placement="bottom">
-              <IconButton
-                aria-label="Chiqish"
-                onClick={() => logout()}
-                sx={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 999,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  '&:hover': {
-                    borderColor: 'error.main',
-                    color: 'error.main',
-                    bgcolor: 'rgba(211, 47, 47, 0.06)',
-                  },
-                }}
-              >
-                <LogoutIcon />
-              </IconButton>
-            </Tooltip>
-          </Stack>
-        }
+        onSettings={() => onNavigate('settings')}
+        onLogout={() => logout()}
       />
 
       <Box

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
 import { getAuthHeaders } from '../../../shared/auth'
@@ -61,7 +61,16 @@ export function useOrderHistoryPage() {
         if (!response.ok) return
         const data = (await response.json()) as ApiOrderHistoryResponse
         if (cancelled) return
-        setHistory(data)
+        setHistory((prev) => {
+          if (data.page.page <= 1 || !prev) return data
+          return {
+            ...data,
+            page: {
+              ...data.page,
+              items: [...prev.page.items, ...data.page.items],
+            },
+          }
+        })
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -124,17 +133,15 @@ export function useOrderHistoryPage() {
   }, [foodAnalytics?.items, search])
 
   function exportToExcelCsv() {
-    const header = ['ID', 'Foydalanuvchi', 'Lavozim', 'Stol', 'Jami summa', 'Sana']
+    const header = ['ID', 'Foydalanuvchi', 'Stol', 'Jami summa', 'Sana']
     const lines = rows.map((order) => {
       const total = order.total_price
       const username = order.user?.username ?? '-'
-      const position = order.user?.position ?? '-'
       const tableLabel = order.order_table ? `Stol ${order.order_table.table_number}` : '-'
 
       return [
         order.id,
         username,
-        position,
         tableLabel,
         total.toFixed(2),
         formatCreated(order.created_at),
@@ -163,6 +170,12 @@ export function useOrderHistoryPage() {
     setToDate(nextToDate)
     setPage(1)
   }
+
+  const loadNextPage = useCallback(() => {
+    const pageInfo = history?.page
+    if (loading || !pageInfo || pageInfo.page >= pageInfo.pages) return
+    setPage(pageInfo.page + 1)
+  }, [history?.page, loading])
 
   function requestDeleteOrder(orderId: number) {
     if (!isAdmin) return
@@ -201,6 +214,7 @@ export function useOrderHistoryPage() {
       setDeleteOpen(false)
       setDeleteTargetId(null)
       setDeletePassword('')
+      setPage(1)
       setReloadKey((value) => value + 1)
     } catch (nextError) {
       setDeleteError(nextError instanceof Error ? nextError.message : "Buyurtmani o'chirib bo'lmadi")
@@ -221,7 +235,8 @@ export function useOrderHistoryPage() {
     toDate,
     changeDateRange,
     page,
-    setPage,
+    loadNextPage,
+    hasMoreHistory: history ? history.page.page < history.page.pages : false,
     history,
     loading,
     rows,

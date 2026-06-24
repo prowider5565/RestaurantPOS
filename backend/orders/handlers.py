@@ -90,7 +90,7 @@ def create_order(db: Session, payload: OrderCreate) -> tuple[Order, list[OrderIt
         db.add(item)
         items.append(item)
 
-    sync_order_to_supervisor(payload)
+    # sync_order_to_supervisor(payload)
     db.commit()
 
     # Refresh and eagerly load relationships
