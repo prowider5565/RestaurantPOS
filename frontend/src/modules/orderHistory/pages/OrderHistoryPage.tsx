@@ -26,7 +26,7 @@ export default function OrderHistoryPage({
   const [activeTab, setActiveTab] = useState<'orders' | 'food_analytics'>('orders')
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ height: '100dvh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <Navbar
         active={active}
         onNavigate={onNavigate}
@@ -41,10 +41,10 @@ export default function OrderHistoryPage({
       <Box
         sx={{
           p: 2,
-          pb: { xs: 6, md: 2, lg: 6 },
-          height: { xs: 'calc(100dvh - 56px)', sm: 'calc(100dvh - 64px)' },
-          display: 'flex',
-          flexDirection: 'column',
+          pb: 0,
+          height: '100%',
+          display: 'grid',
+          gridTemplateRows: 'auto minmax(0, 1fr)',
           gap: 2,
           flex: 1,
           minHeight: 0,
@@ -76,7 +76,7 @@ export default function OrderHistoryPage({
           />
         </Stack>
 
-        <Box sx={{ flex: 1, minHeight: 0, height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <Box sx={{ height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {activeTab === 'orders' ? (
             <OrderHistoryTable
               isAdmin={historyPage.isAdmin}
