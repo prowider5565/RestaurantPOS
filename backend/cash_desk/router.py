@@ -131,6 +131,8 @@ def get_cash_desk_summary_api(
     current_start = cashout_at
 
     def apply_order_current_filters(query):
+        if start is not None:
+            query = query.filter(Order.created_at >= start)
         if end is not None:
             query = query.filter(Order.created_at <= end)
         if current_start is not None:
@@ -138,6 +140,8 @@ def get_cash_desk_summary_api(
         return query
 
     def apply_cash_desk_current_filters(query):
+        if start is not None:
+            query = query.filter(CashDesk.created_at >= start)
         if end is not None:
             query = query.filter(CashDesk.created_at <= end)
         if current_start is not None:

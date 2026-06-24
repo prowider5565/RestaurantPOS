@@ -261,7 +261,7 @@ def generate_receipt(
 
 if __name__ == "__main__":
 
-    program_name = "Parhez Plyus"
+    program_name = "VPOS"
 
     requisites = {
         "company_name": "PARHEZ PLYUS MCHJ",
