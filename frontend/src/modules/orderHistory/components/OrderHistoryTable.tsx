@@ -64,15 +64,18 @@ export function OrderHistoryTable({
   }
 
   return (
-    <Stack sx={{ flex: 1, minHeight: 0 }} spacing={2}>
+    <Stack sx={{ flex: 1, minHeight: 0, height: '100%' }} spacing={2}>
       <TableContainer
         component={Paper}
         variant="outlined"
         sx={{
           borderRadius: 3,
           flex: 1,
+          height: '100%',
+          maxHeight: '100%',
           minHeight: 0,
           overflow: 'auto',
+          overscrollBehavior: 'contain',
           width: '100%',
         }}
         onScroll={(e) => {

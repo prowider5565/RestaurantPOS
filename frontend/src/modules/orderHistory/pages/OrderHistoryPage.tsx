@@ -42,7 +42,7 @@ export default function OrderHistoryPage({
         sx={{
           p: 2,
           pb: { xs: 6, md: 2, lg: 6 },
-          height: { xs: 'calc(100vh - 56px)', sm: 'calc(100vh - 64px)' },
+          height: { xs: 'calc(100dvh - 56px)', sm: 'calc(100dvh - 64px)' },
           display: 'flex',
           flexDirection: 'column',
           gap: 2,
@@ -76,7 +76,7 @@ export default function OrderHistoryPage({
           />
         </Stack>
 
-        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <Box sx={{ flex: 1, minHeight: 0, height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {activeTab === 'orders' ? (
             <OrderHistoryTable
               isAdmin={historyPage.isAdmin}

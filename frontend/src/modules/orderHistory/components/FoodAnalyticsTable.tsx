@@ -40,8 +40,11 @@ export default function FoodAnalyticsTable({
       sx={{
         borderRadius: 3,
         flex: 1,
+        height: '100%',
+        maxHeight: '100%',
         minHeight: 0,
         overflow: 'auto',
+        overscrollBehavior: 'contain',
         width: '100%',
         '@media (min-width:900px) and (max-width:1199.95px) and (max-height:768px)': {
           maxHeight: 500,
