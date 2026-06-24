@@ -1,5 +1,5 @@
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
-import { Box, IconButton, Pagination, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip } from '@mui/material'
+import { Box, CircularProgress, IconButton, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Typography } from '@mui/material'
 
 import type { ApiCashDeskTransaction } from '../types'
 import { formatInteger, formatTransactionDate } from '../utils'
@@ -30,123 +30,131 @@ function TransactionTypeBadge({ type }: { type: ApiCashDeskTransaction['transact
 export default function CashDeskTransactionsTable({
   isAdmin,
   rows,
-  page,
-  pages,
-  onPageChange,
+  loading,
+  hasMore,
+  onLoadMore,
   onDelete,
 }: {
   isAdmin: boolean
   rows: ApiCashDeskTransaction[]
-  page: number
-  pages: number
-  onPageChange: (page: number) => void
+  loading: boolean
+  hasMore: boolean
+  onLoadMore: () => void
   onDelete: (transaction: ApiCashDeskTransaction) => void
 }) {
   return (
-    <Stack sx={{ flex: 1, minHeight: 0 }} spacing={2}>
-      <TableContainer
-        component={Paper}
+    <Stack sx={{ flex: 1, minHeight: 0, height: '100%' }} spacing={2}>
+      <Paper
         variant="outlined"
         sx={{
           borderRadius: 1,
           flex: 1,
+          height: '100%',
           minHeight: 0,
-          overflow: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
           width: '100%',
-          '@media (min-width:900px) and (max-width:1199.95px) and (max-height:768px)': {
-            maxHeight: 500,
-          },
         }}
       >
-        <Table
-          size="small"
-          stickyHeader
+        <Box
           sx={{
-            '& .MuiTableCell-root': {
-              fontSize: '0.9em',
-              py: 1.1,
-            },
+            flex: 1,
+            height: '100%',
+            minHeight: 0,
+            overflowY: 'auto',
+            overscrollBehavior: 'contain',
+            width: '100%',
+          }}
+          onScroll={(e) => {
+            const node = e.currentTarget
+            const distanceToBottom = node.scrollHeight - node.scrollTop - node.clientHeight
+            if (distanceToBottom <= 280 && hasMore && !loading) {
+              onLoadMore()
+            }
           }}
         >
-          <TableHead>
-            <TableRow sx={{ bgcolor: 'background.default' }}>
-              <TableCell sx={{ fontWeight: 900 }}>Foydalanuvchi</TableCell>
-              <TableCell align="right" sx={{ fontWeight: 900 }}>
-                Miqdor
-              </TableCell>
-              <TableCell sx={{ fontWeight: 900 }}>Turi</TableCell>
-              <TableCell sx={{ fontWeight: 900 }}>Sana</TableCell>
-              {isAdmin ? (
+          {!loading && rows.length === 0 ? (
+            <Box sx={{ minHeight: 260, display: 'grid', placeItems: 'center', px: 2, py: 4 }}>
+              <Typography sx={{ fontWeight: 900, color: 'text.secondary' }}>Tranzaksiyalar yo'q</Typography>
+            </Box>
+          ) : null}
+          <Table
+            size="small"
+            stickyHeader
+            sx={{
+              '& .MuiTableCell-root': {
+                fontSize: '0.9em',
+                py: 1.1,
+              },
+            }}
+          >
+            <TableHead>
+              <TableRow sx={{ bgcolor: 'background.default' }}>
+                <TableCell sx={{ fontWeight: 900 }}>Foydalanuvchi</TableCell>
                 <TableCell align="right" sx={{ fontWeight: 900 }}>
-                  Amallar
+                  Miqdor
                 </TableCell>
-              ) : null}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {rows.map((transaction) => (
-              <TableRow key={transaction.id} hover>
-                <TableCell>{transaction.user?.username ?? '-'}</TableCell>
-                <TableCell
-                  align="right"
-                  sx={{
-                    color: transaction.transaction_type === 'in' ? 'success.main' : 'error.main',
-                    fontWeight: 700,
-                  }}
-                >
-                  {(transaction.transaction_type === 'in' ? '+' : '-') + formatInteger(transaction.amount)}
-                </TableCell>
-                <TableCell>
-                  <TransactionTypeBadge type={transaction.transaction_type} />
-                </TableCell>
-                <TableCell>{formatTransactionDate(transaction.created_at)}</TableCell>
+                <TableCell sx={{ fontWeight: 900 }}>Turi</TableCell>
+                <TableCell sx={{ fontWeight: 900 }}>Sana</TableCell>
                 {isAdmin ? (
-                  <TableCell align="right">
-                    <Tooltip title="O'chirish" placement="top">
-                      <IconButton
-                        aria-label="O'chirish"
-                        onClick={() => onDelete(transaction)}
-                        sx={{
-                          color: 'error.main',
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          borderRadius: 2,
-                          width: 52,
-                          height: 52,
-                          '& .MuiSvgIcon-root': { fontSize: 32 },
-                        }}
-                      >
-                        <DeleteOutlineIcon />
-                      </IconButton>
-                    </Tooltip>
+                  <TableCell align="right" sx={{ fontWeight: 900 }}>
+                    Amallar
                   </TableCell>
                 ) : null}
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      {pages > 1 ? (
-        <Stack direction="row" justifyContent="flex-end">
-          <Pagination
-            color="primary"
-            size="large"
-            page={page}
-            count={pages}
-            onChange={(_, next) => onPageChange(next)}
-            showFirstButton
-            showLastButton
-            sx={{
-              '& .MuiPaginationItem-root': {
-                fontSize: '1.4em',
-                minWidth: 45,
-                height: 45,
-              },
-            }}
-          />
-        </Stack>
-      ) : null}
+            </TableHead>
+            <TableBody>
+              {rows.map((transaction) => (
+                <TableRow key={transaction.id} hover>
+                  <TableCell>{transaction.user?.username ?? '-'}</TableCell>
+                  <TableCell
+                    align="right"
+                    sx={{
+                      color: transaction.transaction_type === 'in' ? 'success.main' : 'error.main',
+                      fontWeight: 700,
+                    }}
+                  >
+                    {(transaction.transaction_type === 'in' ? '+' : '-') + formatInteger(transaction.amount)}
+                  </TableCell>
+                  <TableCell>
+                    <TransactionTypeBadge type={transaction.transaction_type} />
+                  </TableCell>
+                  <TableCell>{formatTransactionDate(transaction.created_at)}</TableCell>
+                  {isAdmin ? (
+                    <TableCell align="right">
+                      <Tooltip title="O'chirish" placement="top">
+                        <IconButton
+                          aria-label="O'chirish"
+                          onClick={() => onDelete(transaction)}
+                          sx={{
+                            color: 'error.main',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: 2,
+                            width: 52,
+                            height: 52,
+                            '& .MuiSvgIcon-root': { fontSize: 32 },
+                          }}
+                        >
+                          <DeleteOutlineIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  ) : null}
+                </TableRow>
+              ))}
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={isAdmin ? 5 : 4} align="center" sx={{ py: 2 }}>
+                    <CircularProgress size={24} />
+                  </TableCell>
+                </TableRow>
+              ) : null}
+            </TableBody>
+          </Table>
+        </Box>
+      </Paper>
     </Stack>
   )
 }

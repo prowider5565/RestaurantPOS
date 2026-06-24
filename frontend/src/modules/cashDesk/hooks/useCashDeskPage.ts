@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
 import { getAuthHeaders } from '../../../shared/auth'
@@ -22,6 +22,7 @@ export function useCashDeskPage() {
   const [summaryError, setSummaryError] = useState<string | null>(null)
 
   const [txPage, setTxPage] = useState<ApiPage<ApiCashDeskTransaction> | null>(null)
+  const [txLoading, setTxLoading] = useState(false)
   const [preset, setPreset] = useState<DateRangePreset>('all')
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
@@ -92,9 +93,11 @@ export function useCashDeskPage() {
     async function loadTransactions() {
       if (!hasCompleteRange) {
         setTxPage(null)
+        setTxLoading(false)
         return
       }
 
+      setTxLoading(true)
       try {
         const params = new URLSearchParams()
         params.set('page', String(page))
@@ -116,10 +119,18 @@ export function useCashDeskPage() {
 
         const data = (await response.json()) as ApiPage<ApiCashDeskTransaction>
         if (cancelled) return
-        setTxPage(data)
+        setTxPage((prev) => {
+          if (page <= 1 || !prev) return data
+          return {
+            ...data,
+            items: [...prev.items, ...data.items],
+          }
+        })
         if (data.pages && page > data.pages) setPage(data.pages)
       } catch {
         if (!cancelled) setTxPage(null)
+      } finally {
+        if (!cancelled) setTxLoading(false)
       }
     }
 
@@ -219,6 +230,12 @@ export function useCashDeskPage() {
     setPage(1)
   }
 
+  const loadNextPage = useCallback(() => {
+    const nextPage = txPage?.page ?? 0
+    if (txLoading || !txPage || nextPage >= txPage.pages) return
+    setPage(nextPage + 1)
+  }, [txPage, txLoading])
+
   async function cashOut() {
     if (cashingOut) return
 
@@ -253,6 +270,9 @@ export function useCashDeskPage() {
     changeDateRange,
     page,
     setPage,
+    loadNextPage,
+    hasMoreTransactions: txPage ? txPage.page < txPage.pages : false,
+    transactionsLoading: txLoading,
     pages: txPage?.pages ?? 1,
     pagedTransactions: txPage?.items ?? [],
     createAmount,

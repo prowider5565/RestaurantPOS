@@ -2,18 +2,16 @@ import {
   Box,
   Card,
   Divider,
-  Pagination,
   Paper,
   Stack,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   Typography,
 } from '@mui/material'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
 import { getAuthHeaders, logout } from '../../../shared/auth'
@@ -99,7 +97,16 @@ export default function StatisticsPage({
         if (!res.ok) return
         const data = (await res.json()) as ApiOrderHistoryResponse
         if (cancelled) return
-        setStats(data)
+        setStats((prev) => {
+          if (page <= 1 || !prev) return data
+          return {
+            ...data,
+            page: {
+              ...data.page,
+              items: [...prev.page.items, ...data.page.items],
+            },
+          }
+        })
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -112,11 +119,15 @@ export default function StatisticsPage({
   }, [excludeDebtFromTotalSum, fromDate, hasCompleteRange, page, preset, size, toDate])
 
   const rows = useMemo(() => stats?.page.items ?? [], [stats])
-  const pages = stats?.page.pages ?? 1
+  const hasMore = stats ? stats.page.page < stats.page.pages : false
   const overview = stats?.overview ?? { total_orders: 0, total_sum: 0, total_waiter_fee_sum: 0 }
+  const loadNextPage = useCallback(() => {
+    if (loading || !stats || stats.page.page >= stats.page.pages) return
+    setPage(stats.page.page + 1)
+  }, [loading, stats])
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ height: '100dvh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <Navbar
         active={active}
         onNavigate={onNavigate}
@@ -128,12 +139,12 @@ export default function StatisticsPage({
       <Box
         sx={{
           p: 2,
-          pb: { xs: 12, md: 2, lg: 12 },
-          display: 'flex',
-          flexDirection: 'column',
+          pb: 0,
+          display: 'grid',
+          gridTemplateRows: 'auto minmax(0, 1fr)',
           minHeight: 0,
           flex: 1,
-          height: { xs: 'calc(100dvh - 56px)', sm: 'calc(100dvh - 64px)' },
+          height: '100%',
           overflow: 'hidden',
         }}
       >
@@ -151,7 +162,7 @@ export default function StatisticsPage({
           <Box
             sx={{
               minHeight: 0,
-              height: { sm: '100%' },
+              height: '100%',
               overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column',
@@ -178,81 +189,82 @@ export default function StatisticsPage({
               />
             </Stack>
 
-            <Stack sx={{ flex: 1, minHeight: 0 }} spacing={2}>
-              <TableContainer
-                component={Paper}
+            <Stack sx={{ flex: 1, minHeight: 0, height: '100%' }} spacing={2}>
+              <Paper
                 variant="outlined"
                 sx={{
                   borderRadius: 1,
                   flex: 1,
+                  height: '100%',
                   minHeight: 0,
-                  overflow: 'auto',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  overflow: 'hidden',
                   width: '100%',
-                  '@media (min-width:900px) and (max-width:1199.95px) and (max-height:768px)': {
-                    maxHeight: 500,
-                  },
                 }}
               >
-                <Table
-                  size="small"
-                  stickyHeader
+                <Box
                   sx={{
-                    '& .MuiTableCell-root': {
-                      fontSize: '0.9em',
-                      py: 1.1,
-                    },
+                    flex: 1,
+                    height: '100%',
+                    minHeight: 0,
+                    overflowY: 'auto',
+                    overscrollBehavior: 'contain',
+                    width: '100%',
+                  }}
+                  onScroll={(e) => {
+                    const node = e.currentTarget
+                    const distanceToBottom = node.scrollHeight - node.scrollTop - node.clientHeight
+                    if (distanceToBottom <= 280 && hasMore && !loading) {
+                      loadNextPage()
+                    }
                   }}
                 >
-                  <TableHead>
-                    <TableRow sx={{ bgcolor: 'background.default' }}>
-                      <TableCell sx={{ fontWeight: 900 }}>Buyurtma ID</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 900 }}>
-                        Jami
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 900 }}>Sana</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {rows.map((o) => (
-                      <TableRow key={o.id} hover>
-                        <TableCell sx={{ fontWeight: 800 }}>#{o.id}</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 900 }}>
-                          {formatMoney(o.total_price)}
-                        </TableCell>
-                        <TableCell>{formatCreated(o.created_at)}</TableCell>
-                      </TableRow>
-                    ))}
-                    {loading && rows.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={3} sx={{ py: 6, textAlign: 'center', color: 'text.secondary', fontWeight: 800 }}>
-                          Yuklanmoqda...
-                        </TableCell>
-                      </TableRow>
-                    ) : null}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-
-              {pages > 1 ? (
-                <Stack direction="row" justifyContent="flex-end">
-                  <Pagination
-                    color="primary"
-                    size="large"
-                    page={page}
-                    count={pages}
-                    onChange={(_, next) => setPage(next)}
-                    showFirstButton
-                    showLastButton
+                  {loading && rows.length === 0 ? (
+                    <Box sx={{ minHeight: 260, display: 'grid', placeItems: 'center', px: 2, py: 4 }}>
+                      <Typography sx={{ fontWeight: 800, color: 'text.secondary' }}>Yuklanmoqda...</Typography>
+                    </Box>
+                  ) : null}
+                  <Table
+                    size="small"
+                    stickyHeader
                     sx={{
-                      '& .MuiPaginationItem-root': {
-                        fontSize: '1.4em',
-                        minWidth: 45,
-                        height: 45,
+                      '& .MuiTableCell-root': {
+                        fontSize: '0.9em',
+                        py: 1.1,
                       },
                     }}
-                  />
-                </Stack>
-              ) : null}
+                  >
+                    <TableHead>
+                      <TableRow sx={{ bgcolor: 'background.default' }}>
+                        <TableCell sx={{ fontWeight: 900 }}>Buyurtma ID</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 900 }}>
+                          Jami
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 900 }}>Sana</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {rows.map((o) => (
+                        <TableRow key={o.id} hover>
+                          <TableCell sx={{ fontWeight: 800 }}>#{o.id}</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 900 }}>
+                            {formatMoney(o.total_price)}
+                          </TableCell>
+                          <TableCell>{formatCreated(o.created_at)}</TableCell>
+                        </TableRow>
+                      ))}
+                      {loading ? (
+                        <TableRow>
+                          <TableCell colSpan={3} align="center" sx={{ py: 2 }}>
+                            Yuklanmoqda...
+                          </TableCell>
+                        </TableRow>
+                      ) : null}
+                    </TableBody>
+                  </Table>
+                </Box>
+              </Paper>
             </Stack>
           </Box>
 

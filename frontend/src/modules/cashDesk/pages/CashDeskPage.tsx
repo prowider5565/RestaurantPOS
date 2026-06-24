@@ -22,7 +22,7 @@ export default function CashDeskPage({
   const safeSummary = getSafeSummary(cashDesk.summary)
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ height: '100dvh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <Navbar
         active={active}
         onNavigate={onNavigate}
@@ -34,12 +34,12 @@ export default function CashDeskPage({
       <Box
         sx={{
           p: 2,
-          pb: { xs: 12, md: 2, lg: 12 },
-          display: 'flex',
-          flexDirection: 'column',
+          pb: 0,
+          display: 'grid',
+          gridTemplateRows: 'auto minmax(0, 1fr)',
           minHeight: 0,
           flex: 1,
-          height: { xs: 'calc(100dvh - 56px)', sm: 'calc(100dvh - 64px)' },
+          height: '100%',
           overflow: 'hidden',
         }}
       >
@@ -57,7 +57,7 @@ export default function CashDeskPage({
           <Box
             sx={{
               minHeight: 0,
-              height: { md: '100%' },
+              height: '100%',
               overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column',
@@ -78,9 +78,9 @@ export default function CashDeskPage({
               <CashDeskTransactionsTable
                 isAdmin={cashDesk.isAdmin}
                 rows={cashDesk.pagedTransactions}
-                page={cashDesk.page}
-                pages={cashDesk.pages}
-                onPageChange={cashDesk.setPage}
+                loading={cashDesk.transactionsLoading}
+                hasMore={cashDesk.hasMoreTransactions}
+                onLoadMore={cashDesk.loadNextPage}
                 onDelete={cashDesk.requestDeleteTransaction}
               />
             </Box>
