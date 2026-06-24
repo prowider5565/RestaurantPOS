@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
+from config.timezone import now_tashkent
+
 
 def wrap_text(text: str, max_width: int) -> list[str]:
     words = text.split(" ")
@@ -151,7 +153,7 @@ def generate_receipt(
         for line in wrap_text(combined, table_width):
             lines.append(line)
 
-    today = datetime.now().strftime("%d.%m.%Y")
+    today = now_tashkent().strftime("%d.%m.%Y")
     username = str(user.get("username") or "")
     position = str(user.get("position") or "-")
     payment_type = str(order_data.get("payment_type") or "-")

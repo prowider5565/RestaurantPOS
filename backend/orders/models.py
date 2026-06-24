@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from sqlalchemy import (
     Boolean,
     Column,
@@ -12,6 +10,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 
 from config.database import Base
+from config.timezone import now_tashkent
 from products.models import Product  # noqa: F401
 
 
@@ -21,7 +20,7 @@ class Order(Base):
     id = Column(Integer, primary_key=True, index=True)
     total_price = Column(Integer, default=0, nullable=False)
     paid_amount = Column(Integer, default=0, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    created_at = Column(DateTime, default=now_tashkent, nullable=False, index=True)
     discount_amount = Column(Integer, nullable=True, default=0)
     user_id = Column(Integer, ForeignKey("users.id"))
     payment_type = Column(String(50), nullable=True, default="Boshqa")
