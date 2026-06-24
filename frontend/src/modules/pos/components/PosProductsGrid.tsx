@@ -4,6 +4,7 @@ import { memo, type MutableRefObject, useEffect, useMemo, useRef, useState } fro
 
 import { formatMoney } from '../../../shared/utils/formatters'
 import type { UiProduct } from '../types'
+import { DEFAULT_PRODUCT_IMAGE_SRC } from '../utils'
 
 const CARD_HEIGHT = 140
 const MOBILE_GAP = 16
@@ -84,6 +85,10 @@ const ProductCard = memo(function ProductCard({
           loading="lazy"
           decoding="async"
           draggable={false}
+          onError={(e) => {
+            if (e.currentTarget.src.endsWith(DEFAULT_PRODUCT_IMAGE_SRC)) return
+            e.currentTarget.src = DEFAULT_PRODUCT_IMAGE_SRC
+          }}
           sx={{
             display: 'block',
             width: '100%',

@@ -1,4 +1,5 @@
 import { API_URL } from '../../config/env'
+import { DEFAULT_PRODUCT_IMAGE_SRC } from '../../shared/utils/images'
 import type { ApiOrderRow } from './types'
 
 export function toYmd(date: Date) {
@@ -28,9 +29,10 @@ export function getOrderTotals(order: Pick<ApiOrderRow, 'total_price' | 'discoun
 }
 
 export function toOrderHistoryImageSrc(raw?: string | null) {
-  if (!raw) return '/mock-images/photo_1_2026-03-11_22-51-02.jpg'
+  if (!raw) return DEFAULT_PRODUCT_IMAGE_SRC
 
   const trimmed = raw.trim()
+  if (!trimmed) return DEFAULT_PRODUCT_IMAGE_SRC
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed
 
   const normalized = trimmed.replaceAll('\\', '/')
@@ -51,7 +53,7 @@ export function toOrderHistoryImageSrc(raw?: string | null) {
   const filename = normalized.split('/').filter(Boolean).at(-1)
   if (filename) return `${API_URL}/media/products/${filename}`
 
-  return '/mock-images/photo_1_2026-03-11_22-51-02.jpg'
+  return DEFAULT_PRODUCT_IMAGE_SRC
 }
 
 export function getTableTextColor(color: string) {

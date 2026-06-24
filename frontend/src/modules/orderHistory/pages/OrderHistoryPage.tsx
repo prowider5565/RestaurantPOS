@@ -1,6 +1,4 @@
-import LogoutIcon from '@mui/icons-material/Logout'
-import SettingsIcon from '@mui/icons-material/Settings'
-import { Box, IconButton, Stack, Tab, Tabs, Tooltip } from '@mui/material'
+import { Box, Stack, Tab, Tabs } from '@mui/material'
 import { useState } from 'react'
 
 import { logout } from '../../../shared/auth'
@@ -36,45 +34,8 @@ export default function OrderHistoryPage({
         searchValue={historyPage.search}
         onSearchChange={historyPage.setSearch}
         searchPlaceholder={activeTab === 'orders' ? 'Buyurtma qidirish...' : 'Ovqat qidirish...'}
-        settingsAction={
-          <Tooltip title="Sozlamalar" placement="bottom">
-            <IconButton
-              aria-label="Sozlamalar"
-              onClick={() => onNavigate('settings')}
-              sx={{
-                width: 36,
-                height: 36,
-                borderRadius: 999,
-                border: '1px solid',
-                borderColor: 'divider',
-              }}
-            >
-              <SettingsIcon />
-            </IconButton>
-          </Tooltip>
-        }
-        rightActions={
-          <Tooltip title="Chiqish" placement="bottom">
-            <IconButton
-              aria-label="Chiqish"
-              onClick={() => logout()}
-              sx={{
-                width: 36,
-                height: 36,
-                borderRadius: 999,
-                border: '1px solid',
-                borderColor: 'divider',
-                '&:hover': {
-                  borderColor: 'error.main',
-                  color: 'error.main',
-                  bgcolor: 'rgba(211, 47, 47, 0.06)',
-                },
-              }}
-            >
-              <LogoutIcon />
-            </IconButton>
-          </Tooltip>
-        }
+        onSettings={() => onNavigate('settings')}
+        onLogout={() => logout()}
       />
 
       <Box
@@ -121,9 +82,8 @@ export default function OrderHistoryPage({
               isAdmin={historyPage.isAdmin}
               loading={historyPage.loading}
               rows={historyPage.rows}
-              page={historyPage.page}
-              totalPages={historyPage.history?.page.pages ?? 0}
-              onPageChange={historyPage.setPage}
+              hasMore={historyPage.hasMoreHistory}
+              onLoadMore={historyPage.loadNextPage}
               onOpenDetails={historyPage.setSelectedOrderId}
               onDelete={historyPage.requestDeleteOrder}
             />

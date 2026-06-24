@@ -1,8 +1,6 @@
-import LogoutIcon from '@mui/icons-material/Logout'
-import SettingsIcon from '@mui/icons-material/Settings'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
-import { Alert, Box, Button, IconButton, Stack, TextField, Tooltip, Typography } from '@mui/material'
+import { Alert, Box, Button, IconButton, Stack, TextField, Typography } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
@@ -100,45 +98,8 @@ export default function SettingsPage({
         active="menu"
         onNavigate={onNavigate}
         showUsers={showUsers}
-        rightActions={
-          <Stack direction="row" alignItems="center" spacing={0.75}>
-            <Tooltip title="Sozlamalar" placement="bottom">
-              <IconButton
-                aria-label="Sozlamalar"
-                onClick={() => onNavigate('settings')}
-                sx={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 999,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                }}
-              >
-                <SettingsIcon />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Chiqish" placement="bottom">
-              <IconButton
-                aria-label="Chiqish"
-                onClick={() => logout()}
-                sx={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 999,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  '&:hover': {
-                    borderColor: 'error.main',
-                    color: 'error.main',
-                    bgcolor: 'rgba(211, 47, 47, 0.06)',
-                  },
-                }}
-              >
-                <LogoutIcon />
-              </IconButton>
-            </Tooltip>
-          </Stack>
-        }
+        onSettings={() => onNavigate('settings')}
+        onLogout={() => logout()}
       />
 
       <Box

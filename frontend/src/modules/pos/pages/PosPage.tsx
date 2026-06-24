@@ -1,6 +1,4 @@
-import LogoutIcon from '@mui/icons-material/Logout'
-import SettingsIcon from '@mui/icons-material/Settings'
-import { Box, IconButton, Tooltip } from '@mui/material'
+import { Box } from '@mui/material'
 
 import { logout } from '../../../shared/auth'
 import Navbar, { type NavItemId } from '../../../shared/components/Navbar'
@@ -47,48 +45,11 @@ export default function PosPage({
           onNavigate={onNavigate}
           showUsers={showUsers}
           onAdd={pos.openCreateFood}
-          rightActions={
-            <Tooltip title="Chiqish" placement="bottom">
-              <IconButton
-                aria-label="Chiqish"
-                onClick={() => logout()}
-                sx={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 999,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  '&:hover': {
-                    borderColor: 'error.main',
-                    color: 'error.main',
-                    bgcolor: 'rgba(211, 47, 47, 0.06)',
-                  },
-                }}
-              >
-                <LogoutIcon />
-              </IconButton>
-            </Tooltip>
-          }
+          onSettings={() => onNavigate('settings')}
+          onLogout={() => logout()}
           searchValue={pos.search}
           onSearchChange={pos.setSearch}
           searchPlaceholder="Mahsulot qidirish..."
-          settingsAction={
-            <Tooltip title="Sozlamalar" placement="bottom">
-              <IconButton
-                aria-label="Sozlamalar"
-                onClick={() => onNavigate('settings')}
-                sx={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 999,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                }}
-              >
-                <SettingsIcon />
-              </IconButton>
-            </Tooltip>
-          }
         />
 
         <Box

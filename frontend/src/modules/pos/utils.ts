@@ -1,7 +1,9 @@
 import { API_URL } from '../../config/env'
+import { DEFAULT_PRODUCT_IMAGE_SRC } from '../../shared/utils/images'
 import type { ApiCategory, ApiProduct } from './types'
 
 export const DEFAULT_CATEGORY_IMAGE_SRC = '/category-default.svg'
+export { DEFAULT_PRODUCT_IMAGE_SRC }
 
 export function formatIntegerForInput(digits: string) {
   if (!digits) return ''
@@ -16,9 +18,10 @@ export function formatIntegerForInput(digits: string) {
 
 export function toImageSrc(apiProduct: ApiProduct) {
   const raw = apiProduct.image_path
-  if (!raw) return '/mock-images/photo_1_2026-03-11_22-51-02.jpg'
+  if (!raw) return DEFAULT_PRODUCT_IMAGE_SRC
 
   const trimmed = raw.trim()
+  if (!trimmed) return DEFAULT_PRODUCT_IMAGE_SRC
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed
 
   const normalized = trimmed.replaceAll('\\', '/')
@@ -40,7 +43,7 @@ export function toImageSrc(apiProduct: ApiProduct) {
   const filename = normalized.split('/').filter(Boolean).at(-1)
   if (filename) return `${API_URL}/media/products/${filename}`
 
-  return '/mock-images/photo_1_2026-03-11_22-51-02.jpg'
+  return DEFAULT_PRODUCT_IMAGE_SRC
 }
 
 export function toCategoryImageSrc(apiCategory: ApiCategory) {

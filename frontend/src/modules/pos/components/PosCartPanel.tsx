@@ -2,11 +2,12 @@ import AddIcon from '@mui/icons-material/Add'
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import CloseIcon from '@mui/icons-material/Close'
 import RemoveIcon from '@mui/icons-material/Remove'
-import { Box, Button, Checkbox, Divider, FormControl, FormControlLabel, IconButton, List, MenuItem, Paper, Select, Stack, Tab, Tabs, TextField, Tooltip, Typography } from '@mui/material'
+import { Box, Button, ButtonBase, Divider, FormControl, IconButton, List, MenuItem, Paper, Select, Stack, Tab, Tabs, TextField, Tooltip, Typography } from '@mui/material'
 import type { MutableRefObject } from 'react'
 
 import { formatMoney } from '../../../shared/utils/formatters'
 import type { ApiOrderTable, CartLine, PaymentType } from '../types'
+import { DEFAULT_PRODUCT_IMAGE_SRC } from '../utils'
 import SwipeToDeleteRow from './SwipeToDeleteRow'
 
 function getTableTextColor(color: string) {
@@ -18,6 +19,77 @@ function getTableTextColor(color: string) {
   const blue = Number.parseInt(hex.slice(4, 6), 16)
   const brightness = red * 0.299 + green * 0.587 + blue * 0.114
   return brightness > 186 ? '#1F2937' : '#FFFFFF'
+}
+
+function BarSwitch({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string
+  checked: boolean
+  onChange: (checked: boolean) => void
+}) {
+  return (
+    <Stack spacing={0.45} sx={{ flex: 1, minWidth: 0 }}>
+      <Typography sx={{ fontWeight: 900, fontSize: 13, color: 'text.secondary' }}>{label}</Typography>
+      <ButtonBase
+        role="switch"
+        aria-checked={checked}
+        onClick={() => onChange(!checked)}
+        sx={{
+          position: 'relative',
+          width: '100%',
+          height: 42,
+          borderRadius: 1,
+          border: '1px solid',
+          borderColor: checked ? 'primary.main' : 'divider',
+          bgcolor: checked ? 'rgba(249, 115, 22, 0.08)' : 'background.paper',
+          overflow: 'hidden',
+          transition: 'border-color 140ms ease, background-color 140ms ease',
+        }}
+      >
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 4,
+            bottom: 4,
+            left: checked ? 'calc(50% + 2px)' : 4,
+            width: 'calc(50% - 6px)',
+            borderRadius: 0.75,
+            bgcolor: checked ? 'primary.main' : 'action.selected',
+            transition: 'left 160ms ease, background-color 140ms ease',
+          }}
+        />
+        <Stack direction="row" sx={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
+          <Box
+            sx={{
+              flex: 1,
+              display: 'grid',
+              placeItems: 'center',
+              fontWeight: 1000,
+              fontSize: 12,
+              color: checked ? 'text.secondary' : 'text.primary',
+            }}
+          >
+            OFF
+          </Box>
+          <Box
+            sx={{
+              flex: 1,
+              display: 'grid',
+              placeItems: 'center',
+              fontWeight: 1000,
+              fontSize: 12,
+              color: checked ? 'common.white' : 'text.secondary',
+            }}
+          >
+            ON
+          </Box>
+        </Stack>
+      </ButtonBase>
+    </Stack>
+  )
 }
 
 export default function PosCartPanel({
@@ -90,15 +162,6 @@ export default function PosCartPanel({
         alignSelf: 'stretch',
       }}
     >
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 0.75 }}>
-        <Typography sx={{ fontWeight: 900, fontSize: 18 }}>Savat</Typography>
-        <IconButton aria-label="Buyurtmani tozalash" onClick={onClearCart} disabled={cartCount === 0}>
-          <CloseIcon />
-        </IconButton>
-      </Stack>
-
-      <Divider sx={{ my: 0.75 }} />
-
       <Box ref={cartItemsRef} sx={{ flex: 1, minHeight: 0, overflow: 'visible', position: 'relative' }}>
         <List dense disablePadding sx={{ height: '100%', overflow: 'auto' }}>
           {cartLines.length === 0 ? (
@@ -124,6 +187,10 @@ export default function PosCartPanel({
                     component="img"
                     src={line.product.imageSrc}
                     alt={line.product.name}
+                    onError={(e) => {
+                      if (e.currentTarget.src.endsWith(DEFAULT_PRODUCT_IMAGE_SRC)) return
+                      e.currentTarget.src = DEFAULT_PRODUCT_IMAGE_SRC
+                    }}
                     sx={{
                       width: 34,
                       height: 34,
@@ -290,25 +357,10 @@ export default function PosCartPanel({
           <Tab value="Naqd" label="Naqd" />
         </Tabs>
 
-        <FormControlLabel
-          control={<Checkbox size="small" checked={includeWaiterFee} onChange={(e) => onIncludeWaiterFeeChange(e.target.checked)} />}
-          label={
-            <Typography sx={{ fontWeight: 800, fontSize: 13 }}>
-              Ofitsiant xizmati
-            </Typography>
-          }
-          sx={{ mb: 0.5, ml: -0.75 }}
-        />
-
-        <FormControlLabel
-          control={<Checkbox size="small" checked={isDebt} onChange={(e) => onIsDebtChange(e.target.checked)} />}
-          label={
-            <Typography sx={{ fontWeight: 800, fontSize: 13 }}>
-              Nasiya savdo
-            </Typography>
-          }
-          sx={{ mb: isDebt ? 1 : 0.5, ml: -0.75 }}
-        />
+        <Stack direction="row" gap={1} sx={{ mb: isDebt ? 1 : 0.5 }}>
+          <BarSwitch label="Nasiya" checked={isDebt} onChange={onIsDebtChange} />
+          <BarSwitch label="Usluga" checked={includeWaiterFee} onChange={onIncludeWaiterFeeChange} />
+        </Stack>
 
         {isDebt ? (
           <TextField
