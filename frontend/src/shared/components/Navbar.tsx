@@ -115,14 +115,27 @@ export default function Navbar({
                 py: 0.7,
                 textTransform: 'none',
                 whiteSpace: 'nowrap',
-                bgcolor: item.id === active ? 'primary.main' : 'transparent',
-                color: item.id === active ? 'common.white' : 'inherit',
+                bgcolor: 'transparent',
+                color: item.id === active ? 'primary.main' : 'inherit',
+                position: 'relative',
+                '&::after': item.id === active
+                  ? {
+                      content: '""',
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      height: 3,
+                      borderRadius: '3px 3px 0 0',
+                      bgcolor: 'primary.main',
+                    }
+                  : undefined,
                 '&:hover': {
-                  bgcolor: item.id === active ? 'primary.dark' : 'action.hover',
+                  bgcolor: 'action.hover',
                 },
                 '& .MuiButton-startIcon': {
                   mr: 0.6,
-                  color: item.id === active ? 'common.white' : 'inherit',
+                  color: item.id === active ? 'primary.main' : 'inherit',
                   '& > *:first-of-type': {
                     fontSize: 18,
                   },
