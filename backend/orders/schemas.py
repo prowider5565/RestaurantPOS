@@ -24,13 +24,6 @@ class OrderCreate(BaseModel):
     paid_amount: Optional[int] = Field(ge=0)
 
 
-class OrderItemOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-    product_id: int
-    price: Optional[int] = None
-    quantity: int
-
-
 class ProductSummaryOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

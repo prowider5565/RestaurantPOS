@@ -1,14 +1,14 @@
 from __future__ import annotations
 
+from datetime import date, datetime, time
+
 from fastapi_pagination import Params
 from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
-from datetime import date, datetime, time
 
 from .models import Order
 from .schemas import OrderHistoryOverviewOut, OrderHistoryResponseOut
-from orders.models import Order
 
 
 def get_date_range(preset: str | None, from_date: date | None, to_date: date | None):

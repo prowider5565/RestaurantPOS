@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from cash_desk.types import TransactionType
 
@@ -22,24 +22,22 @@ class CashDeskSummaryOut(BaseModel):
 
 
 class CashDeskUserOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     username: str
     position: str | None = None
 
-    class Config:
-        from_attributes = True
-
 
 class CashDeskTransactionOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     amount: int
     transaction_type: TransactionType
     user_id: int
     user: CashDeskUserOut
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 class DeleteOut(BaseModel):

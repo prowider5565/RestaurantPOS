@@ -1,16 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
-from sqlalchemy.orm import Session, selectinload
-from datetime import date
-from fastapi_pagination import Params
 import asyncio
+from datetime import date
 
-from products.models import Product
-from config.settings import settings
-from cheque.helpers.printer import print_cheque
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi_pagination import Params
+from sqlalchemy.orm import Session, selectinload
+
 from cheque.helpers.generator import generate_receipt
-from orders.models import Order, OrderItem
+from cheque.helpers.printer import print_cheque
 from config.database import get_db
+from config.settings import settings
 from misc.decorators import require_delete_password
+from orders.models import Order, OrderItem
+from products.models import Product
 from users.dependencies import get_current_user
 from users.models import User
 
@@ -20,13 +21,12 @@ from .schemas import OrderCreate, OrderHistoryResponseOut, OrderOut
 router = APIRouter(prefix="/orders", tags=["orders"])
 
 
-@router.post("", response_model=OrderOut)
+@router.post("", response_model=OrderOut, status_code=status.HTTP_201_CREATED)
 async def create_order_api(
     payload: OrderCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> OrderOut:
-    receipt_content = {}
     total_price = int(max(0, round(payload.total)))
     final_total = int(max(0, min(round(payload.discounted_total), total_price)))
     discount_amount = max(0, total_price - final_total)
@@ -40,16 +40,17 @@ async def create_order_api(
     elif paid_amount >= final_total:
         is_debt = False
 
-    # Add user details, total price and discount amount in receipt content
-    receipt_content["total_price"] = total_price
-    receipt_content["discount_amount"] = discount_amount
-    receipt_content["user"] = {
-        "username": current_user.username,
-        "position": current_user.position,
+    product_ids = [i.product for i in payload.items]
+    products = {
+        p.id: p for p in db.query(Product).filter(Product.id.in_(product_ids)).all()
     }
-    receipt_content["payment_type"] = payload.payment_type
-    # Add items in receipt content
-    receipt_content["items"] = []
+
+    missing = [pid for pid in product_ids if pid not in products]
+    if missing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Products not found: {missing}",
+        )
 
     order = Order(
         total_price=total_price,
@@ -61,17 +62,12 @@ async def create_order_api(
     )
     db.add(order)
     db.flush()
-    # Preload products beforehand.
-    product_ids = [i.product for i in payload.items]
-    products = {
-        p.id: p for p in db.query(Product).filter(Product.id.in_(product_ids)).all()
-    }
 
+    receipt_items = []
     for i in payload.items:
-        product = products.get(i.product)
-        item = OrderItem(order=order, product=product, quantity=i.quantity)
-        db.add(item)
-        receipt_content["items"].append(
+        product = products[i.product]
+        db.add(OrderItem(order=order, product=product, quantity=i.quantity))
+        receipt_items.append(
             {
                 "name": product.name,
                 "price": product.price,
@@ -79,13 +75,26 @@ async def create_order_api(
                 "subtotal": product.price * i.quantity,
             }
         )
+
     db.commit()
-    generated_receipt_content = generate_receipt(
+
+    receipt_content = {
+        "total_price": total_price,
+        "discount_amount": discount_amount,
+        "user": {
+            "username": current_user.username,
+            "position": current_user.position,
+        },
+        "payment_type": payload.payment_type,
+        "items": receipt_items,
+    }
+    generated = generate_receipt(
         order_data=receipt_content, program_name=settings.COMPANY_NAME
     )
-    print(generated_receipt_content)
-    await asyncio.to_thread(print_cheque, generated_receipt_content)
-    return Response(status_code=status.HTTP_201_CREATED)
+    await asyncio.to_thread(print_cheque, generated)
+
+    db.refresh(order)
+    return order
 
 
 @router.get("/history", response_model=OrderHistoryResponseOut)
@@ -129,7 +138,7 @@ def get_order_api(order_id: int, db: Session = Depends(get_db)) -> OrderOut:
     return order
 
 
-@router.delete("/delete/{order_id}")
+@router.delete("/delete/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
 @require_delete_password
 async def delete_order_api(
     order_id: int,
@@ -142,4 +151,3 @@ async def delete_order_api(
 
     db.delete(order)
     db.commit()
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
