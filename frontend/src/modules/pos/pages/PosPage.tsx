@@ -53,8 +53,6 @@ export default function PosPage({
 
         <Box
           sx={{
-            pl: 2,
-            pr: { xs: 2, md: 0 },
             pt: 0,
             pb: 0,
             display: 'flex',
@@ -64,8 +62,17 @@ export default function PosPage({
             overflow: 'hidden',
           }}
         >
+          <PosCategoryStrip
+            categories={pos.menuCategories}
+            selectedCategoryId={pos.selectedCategoryId}
+            onSelect={pos.setSelectedCategoryId}
+          />
+
           <Box
             sx={{
+              pl: 2,
+              pr: { xs: 2, md: 0 },
+              pt: 1,
               display: 'grid',
               gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1fr) 276px', lg: 'minmax(0, 1fr) 292px' },
               gap: 2,
@@ -80,20 +87,11 @@ export default function PosPage({
               sx={{
                 minHeight: 0,
                 height: '100%',
-                overflow: { xs: 'visible', md: 'hidden' },
-                pr: { md: 1 },
-                pt: 2,
-                pb: { xs: 12, md: 0 },
+                overflow: 'hidden',
                 display: 'flex',
                 flexDirection: 'column',
               }}
             >
-              <PosCategoryStrip
-                categories={pos.menuCategories}
-                selectedCategoryId={pos.selectedCategoryId}
-                onSelect={pos.setSelectedCategoryId}
-              />
-
               <Box
                 sx={{
                   minHeight: 0,

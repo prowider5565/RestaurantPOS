@@ -38,7 +38,7 @@ export function OrderHistoryTable({
       <Paper
         variant="outlined"
         sx={{
-          borderRadius: 3,
+          borderRadius: 2,
           flex: 1,
           display: 'grid',
           placeItems: 'center',
@@ -60,7 +60,7 @@ export function OrderHistoryTable({
       <Paper
         variant="outlined"
         sx={{
-          borderRadius: 3,
+          borderRadius: 2,
           flex: 1,
           height: '100%',
           minHeight: 0,

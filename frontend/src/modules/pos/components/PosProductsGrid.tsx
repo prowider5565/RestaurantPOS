@@ -12,8 +12,8 @@ const DESKTOP_GAP = 10
 const OVERSCAN_ROWS = 2
 
 function getColumnCount(width: number) {
-  if (width >= 900) return 4
-  if (width >= 600) return 2
+  if (width >= 600) return 4
+  if (width >= 400) return 2
   return 1
 }
 

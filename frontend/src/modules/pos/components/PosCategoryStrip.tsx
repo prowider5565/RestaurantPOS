@@ -1,4 +1,4 @@
-import { Box, Paper, Typography } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 import type { Category } from '../types'
 
 export default function PosCategoryStrip({
@@ -13,60 +13,53 @@ export default function PosCategoryStrip({
   return (
     <Box
       sx={{
-        mb: 1.25,
-        overflowX: 'auto',
-        pb: 0.25,
         display: 'flex',
-        gap: 1,
-        alignItems: 'flex-start',
-        WebkitOverflowScrolling: 'touch',
+        overflowX: 'auto',
+        overflowY: 'hidden',
         flex: '0 0 auto',
         scrollbarWidth: 'none',
-        '&::-webkit-scrollbar': {
-          display: 'none',
-        },
+        borderBottom: '1px solid',
+        borderColor: 'divider',
+        '&::-webkit-scrollbar': { display: 'none' },
       }}
     >
-      {categories.map((category) => {
+      {categories.map((category, idx) => {
         const selected = category.id === selectedCategoryId
         return (
-          <Paper
+          <Box
             key={category.id}
             onClick={() => onSelect(category.id)}
-            variant="outlined"
             sx={{
               cursor: 'pointer',
               userSelect: 'none',
               flex: '0 0 auto',
-              minWidth: 108,
-              minHeight: 36,
-              px: 1.5,
-              py: 0.65,
-              borderRadius: 2,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              borderColor: selected ? 'primary.main' : 'divider',
-              boxShadow: 'none',
-              bgcolor: selected ? 'rgba(255, 152, 0, 0.08)' : 'background.paper',
-              transition: 'border-color 140ms ease, background-color 140ms ease',
+              px: 2,
+              py: 1.25,
+              bgcolor: selected ? 'rgba(255, 152, 0, 0.12)' : 'transparent',
+              borderRight: idx < categories.length - 1 ? '1px solid' : 'none',
+              borderColor: 'divider',
+              transition: 'background-color 140ms ease',
+              '&:hover': {
+                bgcolor: selected ? 'rgba(255, 152, 0, 0.18)' : 'action.hover',
+              },
             }}
           >
             <Typography
               variant="body2"
               sx={{
                 fontWeight: selected ? 1000 : 800,
-                lineHeight: 1.2,
-                fontSize: 13,
+                fontSize: 12,
                 textAlign: 'center',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
+                lineHeight: 1.2,
                 whiteSpace: 'nowrap',
               }}
             >
               {category.label}
             </Typography>
-          </Paper>
+          </Box>
         )
       })}
     </Box>
