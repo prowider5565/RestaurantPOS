@@ -1,6 +1,6 @@
 import win32print
 from config.settings import settings
-from scripts.generator import generate_receipt
+from .generator import generate_receipt
 
 CUT_PAPER = b"\x1d\x56\x00"
 LINE_FEEDS_AFTER_PRINT = 8

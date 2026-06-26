@@ -96,9 +96,6 @@ export default function LoginPage({ onSuccess }: { onSuccess: () => void }) {
           <Typography variant="h5" sx={{ fontWeight: 900, textAlign: 'center' }}>
             Kirish
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
-            Davom etish uchun tizimga kiring.
-          </Typography>
 
           {error ? <Alert severity="error">{error}</Alert> : null}
 

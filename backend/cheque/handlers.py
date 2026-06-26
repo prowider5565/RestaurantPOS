@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Response
 
-from cheque.helpers import generate_cheque_content, open_drawer, print_cheque
+from cheque.helpers.printer import generate_cheque_content, open_drawer, print_cheque
 from cheque.schemas import PrintChequeRequest
 
 router = APIRouter(prefix="/cheque", tags=["printer"])
@@ -11,6 +11,7 @@ async def print_cheque_handler(payload: PrintChequeRequest):
         order_data=payload.order_data,
         program_name=payload.program_name,
     )
+    print(content)
     print_cheque(content)
     return Response(status_code=204)
 

@@ -3,19 +3,18 @@ import datetime
 from datetime import date, datetime, time
 
 from fastapi import HTTPException
-from fastapi_pagination import Page, Params
+from fastapi_pagination import Params
 from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy import case, func
 from sqlalchemy.orm import Session, selectinload
 
-from .helpers import sync_order_table_to_supervisor, sync_order_to_supervisor
+from .helpers import sync_order_table_to_supervisor 
 from .models import Order, OrderItem, OrderTable
 from products.models import Product
 
 from .schemas import (
     FoodAnalyticsResponseOut,
     FoodAnalyticsRowOut,
-    OrderCreate,
     OrderHistoryOverviewOut,
     OrderHistoryResponseOut,
     OrderTableCreate,
@@ -49,56 +48,6 @@ def create_order_table(db: Session, payload: OrderTableCreate) -> OrderTable:
     db.refresh(order_table)
     return order_table
 
-
-def create_order(db: Session, payload: OrderCreate) -> tuple[Order, list[OrderItem]]:
-    total_price = int(max(0, round(payload.total)))
-    discounted_total = int(max(0, min(round(payload.discounted_total), total_price)))
-    discount_amount = max(0, total_price - discounted_total)
-    waitress_wage = int(round(total_price * 0.1)) if payload.waiter_fee else 0
-    final_total = discounted_total + waitress_wage
-    paid_amount = int(max(0, round(payload.paid_amount or 0)))
-    if paid_amount > final_total:
-        paid_amount = final_total
-    is_debt = bool(payload.is_debt)
-    if not is_debt:
-        paid_amount = final_total
-    elif paid_amount >= final_total:
-        is_debt = False
-
-    order_table = (
-        db.query(OrderTable).filter(OrderTable.id == payload.order_table_id).first()
-    )
-    if not order_table:
-        raise HTTPException(status_code=400, detail="Invalid order table id")
-
-    order = Order(
-        total_price=total_price,
-        discount_amount=discount_amount,
-        user_id=payload.user_id,
-        order_table_id=payload.order_table_id,
-        waiter_fee=payload.waiter_fee,
-        payment_type=payload.payment_type,
-        paid_amount=paid_amount,
-        is_debt=is_debt,
-    )
-    db.add(order)
-    db.flush()
-
-    items: list[OrderItem] = []
-    for i in payload.items:
-        item = OrderItem(order_id=order.id, product_id=i.product, quantity=i.quantity)
-        db.add(item)
-        items.append(item)
-
-    # sync_order_to_supervisor(payload)
-    db.commit()
-
-    # Refresh and eagerly load relationships
-    db.refresh(order, ["user", "items", "order_table"])
-    for item in items:
-        db.refresh(item)
-
-    return order, items
 
 
 def get_order_history(
