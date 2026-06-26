@@ -7,7 +7,6 @@ import PosCategoryStrip from '../components/PosCategoryStrip'
 import PosCashbackDialog from '../components/PosCashbackDialog'
 import PosFoodDialogs from '../components/PosFoodDialogs'
 import PosProductsGrid from '../components/PosProductsGrid'
-import PosTableDialog from '../components/PosTableDialog'
 import { usePosPage } from '../hooks/usePosPage'
 
 export default function PosPage({
@@ -121,22 +120,15 @@ export default function PosPage({
               cartItemsRef={pos.cartItemsRef}
               isEditingTotal={pos.isEditingTotal}
               discountDigits={pos.discountDigits}
-              waitressWage={pos.waitressWage}
               discountedTotal={pos.discountedTotal}
-              includeWaiterFee={pos.includeWaiterFee}
               isDebt={pos.isDebt}
               debtPaidAmountDigits={pos.debtPaidAmountDigits}
               paymentType={pos.paymentType}
               isPlacingOrder={pos.isPlacingOrder}
-              orderTables={pos.orderTables}
-              selectedOrderTableId={pos.selectedOrderTableId}
               onClearCart={pos.clearCart}
-              onSelectOrderTable={pos.setSelectedOrderTableId}
-              onOpenCreateTable={pos.openCreateTable}
               onSetQty={pos.setQty}
               onToggleEditTotal={pos.toggleEditTotal}
               onDiscountDigitsChange={pos.setDiscountDigits}
-              onIncludeWaiterFeeChange={pos.setIncludeWaiterFee}
               onIsDebtChange={pos.setIsDebt}
               onDebtPaidAmountDigitsChange={pos.setDebtPaidAmountDigits}
               onPaymentTypeChange={pos.setPaymentType}
@@ -170,14 +162,6 @@ export default function PosPage({
           productMenu={pos.productMenu}
           onCloseProductMenu={() => pos.setProductMenu(null)}
           onEditFromMenu={pos.openEditFood}
-        />
-
-        <PosTableDialog
-          open={pos.createTableOpen}
-          value={pos.newOrderTable}
-          onClose={pos.closeCreateTable}
-          onChange={pos.setNewOrderTable}
-          onSubmit={pos.createOrderTable}
         />
 
         <PosCashbackDialog

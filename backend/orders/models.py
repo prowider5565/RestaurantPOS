@@ -25,35 +25,14 @@ class Order(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     payment_type = Column(String(50), nullable=True, default="Boshqa")
     note = Column(String(800), nullable=True)
-    order_table_id = Column(
-        Integer, ForeignKey("order_tables.id"), nullable=False, index=True
-    )
     items = relationship(
         "OrderItem",
         back_populates="order",
         lazy="selectin",
         cascade="all, delete-orphan",
     )
-    waiter_fee = Column(Boolean, default=False)
     is_debt = Column(Boolean, default=False)
     user = relationship("User", back_populates="orders", lazy="selectin")
-    order_table = relationship("OrderTable", back_populates="orders", lazy="selectin")
-
-    @property
-    def waitress_wage(self) -> float:
-        if not bool(self.waiter_fee):
-            return 0.0
-        return float(self.total_price or 0.0) * 0.1
-
-
-class OrderTable(Base):
-    __tablename__ = "order_tables"
-
-    id = Column(Integer, primary_key=True, index=True)
-    table_number = Column(Integer, nullable=False, unique=True, index=True)
-    table_color = Column(String(50), nullable=False)
-
-    orders = relationship("Order", back_populates="order_table")
 
 
 class OrderItem(Base):

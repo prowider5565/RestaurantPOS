@@ -18,7 +18,7 @@ from products.router import router as products_router
 from users.handlers import router as users_router
 
 from cash_desk.models import CashDesk  # noqa: F401
-from orders.models import Order, OrderItem, OrderTable  # noqa: F401
+from orders.models import Order, OrderItem  # noqa: F401
 from products.models import Product, ProductCategory  # noqa: F401
 from users.models import User  # noqa: F401
 

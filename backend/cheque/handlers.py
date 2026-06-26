@@ -7,6 +7,8 @@ router = APIRouter(prefix="/cheque", tags=["printer"])
 
 @router.post("/print")
 async def print_cheque_handler(payload: PrintChequeRequest):
+    print("In print_cheque_handler")
+    print(payload.model_dump())
     content = generate_cheque_content(
         order_data=payload.order_data,
         program_name=payload.program_name,

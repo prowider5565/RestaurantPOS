@@ -56,13 +56,4 @@ export function toOrderHistoryImageSrc(raw?: string | null) {
   return DEFAULT_PRODUCT_IMAGE_SRC
 }
 
-export function getTableTextColor(color: string) {
-  const hex = color.replace('#', '')
-  if (hex.length !== 6) return '#1F2937'
 
-  const red = Number.parseInt(hex.slice(0, 2), 16)
-  const green = Number.parseInt(hex.slice(2, 4), 16)
-  const blue = Number.parseInt(hex.slice(4, 6), 16)
-  const brightness = red * 0.299 + green * 0.587 + blue * 0.114
-  return brightness > 186 ? '#1F2937' : '#FFFFFF'
-}

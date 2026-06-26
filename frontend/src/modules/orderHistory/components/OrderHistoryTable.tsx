@@ -5,7 +5,7 @@ import { Box, CircularProgress, IconButton, Paper, Stack, Table, TableBody, Tabl
 
 import { formatMoney } from '../../../shared/utils/formatters'
 import type { ApiOrderRow } from '../types'
-import { formatCreated, getOrderTotals, getTableTextColor } from '../utils'
+import { formatCreated, getOrderTotals } from '../utils'
 
 const LOAD_MORE_OFFSET = 280
 
@@ -34,11 +34,10 @@ export function OrderHistoryTable({
     (acc, order) => {
       const orderTotals = getOrderTotals(order)
       acc.discountAmount += orderTotals.discountAmount
-      acc.waiterFee += order.waiter_fee ? order.waitress_wage : 0
       acc.paidAmount += order.paid_amount ?? 0
       return acc
     },
-    { discountAmount: 0, waiterFee: 0, paidAmount: 0 },
+    { discountAmount: 0, paidAmount: 0 },
   )
 
   if (!loading && rows.length === 0) {
@@ -112,12 +111,8 @@ export function OrderHistoryTable({
                 </TableCell>
                 <TableCell sx={{ fontWeight: 900 }}>Xodim</TableCell>
                 <TableCell sx={{ fontWeight: 900 }}>To'lov turi</TableCell>
-                <TableCell sx={{ fontWeight: 900 }}>Stol</TableCell>
                 <TableCell sx={{ fontWeight: 900 }} align="right">
                   Chegirma
-                </TableCell>
-                <TableCell sx={{ fontWeight: 900 }} align="right">
-                  Ofitsiant xizmati
                 </TableCell>
                 <TableCell sx={{ fontWeight: 900 }} align="right">
                   To'langan
@@ -141,9 +136,8 @@ export function OrderHistoryTable({
                     },
                   }}
                 >
-                  <TableCell colSpan={4}>Jami</TableCell>
+                  <TableCell colSpan={3}>Jami</TableCell>
                   <TableCell align="right">{formatMoneyValue(totals.discountAmount)}</TableCell>
-                  <TableCell align="right">{formatMoneyValue(totals.waiterFee)}</TableCell>
                   <TableCell align="right">{formatMoneyValue(totals.paidAmount)}</TableCell>
                   <TableCell align="right">-</TableCell>
                   <TableCell align="right">-</TableCell>
@@ -154,8 +148,6 @@ export function OrderHistoryTable({
                 const totals = getOrderTotals(order)
                 const username = order.user?.username ?? '-'
                 const paymentType = order.payment_type ?? '-'
-                const table = order.order_table
-                const finalTotal = totals.discountedTotal + (order.waiter_fee ? order.waitress_wage : 0)
 
                 return (
                   <TableRow
@@ -173,39 +165,14 @@ export function OrderHistoryTable({
                     </TableCell>
                     <TableCell>{username}</TableCell>
                     <TableCell>{paymentType}</TableCell>
-                    <TableCell>
-                      {table ? (
-                        <Box
-                          sx={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            px: 1.25,
-                            py: 0.5,
-                            borderRadius: 1.5,
-                            bgcolor: table.table_color,
-                            color: getTableTextColor(table.table_color),
-                            fontWeight: 1000,
-                            minWidth: 76,
-                            justifyContent: 'center',
-                          }}
-                        >
-                          Stol {table.table_number}
-                        </Box>
-                      ) : (
-                        '-'
-                      )}
-                    </TableCell>
                     <TableCell align="right" sx={{ fontWeight: 800 }}>
                       {formatMoneyValue(totals.discountAmount)}
-                    </TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 800 }}>
-                      {order.waiter_fee ? formatMoney(order.waitress_wage) : '-'}
                     </TableCell>
                     <TableCell align="right" sx={{ fontWeight: 900 }}>
                       {formatMoneyValue(order.paid_amount ?? 0)}
                     </TableCell>
                     <TableCell align="right" sx={{ fontWeight: 900 }}>
-                      {formatMoneyValue(finalTotal)}
+                      {formatMoneyValue(totals.discountedTotal)}
                     </TableCell>
                     <TableCell>{formatCreated(order.created_at)}</TableCell>
                     <TableCell align="right">
@@ -251,7 +218,7 @@ export function OrderHistoryTable({
               })}
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={10} align="center" sx={{ py: 2 }}>
+                  <TableCell colSpan={8} align="center" sx={{ py: 2 }}>
                     <CircularProgress size={24} />
                   </TableCell>
                 </TableRow>

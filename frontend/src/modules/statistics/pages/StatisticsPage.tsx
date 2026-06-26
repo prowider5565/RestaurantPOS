@@ -24,13 +24,12 @@ type ApiOrderItemRef = { product_id: number; quantity: number }
 type ApiOrderRow = {
   id: number
   total_price: number
-  waiter_fee: boolean
   created_at: string
   user?: ApiUserSummary
   items: ApiOrderItemRef[]
 }
 type ApiPage<T> = { items: T[]; total: number; page: number; size: number; pages: number }
-type ApiHistoryOverview = { total_orders: number; total_sum: number; total_waiter_fee_sum: number }
+type ApiHistoryOverview = { total_orders: number; total_sum: number }
 type ApiOrderHistoryResponse = { overview: ApiHistoryOverview; page: ApiPage<ApiOrderRow> }
 
 function toYmd(d: Date) {
@@ -120,7 +119,7 @@ export default function StatisticsPage({
 
   const rows = useMemo(() => stats?.page.items ?? [], [stats])
   const hasMore = stats ? stats.page.page < stats.page.pages : false
-  const overview = stats?.overview ?? { total_orders: 0, total_sum: 0, total_waiter_fee_sum: 0 }
+  const overview = stats?.overview ?? { total_orders: 0, total_sum: 0 }
   const loadNextPage = useCallback(() => {
     if (loading || !stats || stats.page.page >= stats.page.pages) return
     setPage(stats.page.page + 1)
@@ -282,16 +281,6 @@ export default function StatisticsPage({
             }}
           >
             <Stack spacing={2} sx={{ flex: '0 0 auto' }}>
-              <Box sx={{ textAlign: 'center', pb: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
-                <Typography sx={{ fontWeight: 700, color: 'text.secondary', mb: 1 }}>Buyurtmalaringiz</Typography>
-                <Typography sx={{ fontWeight: 1000, fontSize: 48, color: 'primary.main' }}>
-                  {new Intl.NumberFormat('uz-UZ').format(Math.round(overview.total_waiter_fee_sum))}
-                </Typography>
-                <Typography sx={{ fontWeight: 700, color: 'text.secondary', mt: 1, fontSize: 14 }}>
-                  ofitsiant xizmati so'm
-                </Typography>
-              </Box>
-
               <Box
                 sx={{
                   border: '1px solid',

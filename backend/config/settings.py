@@ -12,7 +12,6 @@ class Settings:
     database_url: str
     media_storage_path: str
     cors_allowed_origins: list[str]
-    SUPERVISOR_URL: str
     SECRET_KEY: str
     ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_DAYS: int
@@ -40,7 +39,6 @@ def get_settings() -> Settings:
     return Settings(
         database_url=_normalize_database_url(os.getenv("DATABASE_URL")),
         media_storage_path=str(media_dir),
-        SUPERVISOR_URL=(os.getenv("SUPERVISOR_URL") or "").rstrip("/"),
         SECRET_KEY=os.getenv("SECRET_KEY"),
         ALGORITHM=os.getenv("ALGORITHM"),
         ACCESS_TOKEN_EXPIRE_DAYS=int(os.getenv("ACCESS_TOKEN_EXPIRE_DAYS", 30)),

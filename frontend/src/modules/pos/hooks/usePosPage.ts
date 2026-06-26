@@ -1,28 +1,21 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { API_URL } from '../../../config/env'
-import { getCurrentUser } from '../../../shared/auth'
+import {getAuthHeaders,  getCurrentUser } from '../../../shared/auth'
 import { compressProductImage } from '../imageCompression'
-import { printReceipt } from '../receipt'
+
+
 import type {
   ApiCategory,
-  ApiOrderTable,
   ApiProduct,
   CartLine,
   Category,
   EditFoodForm,
   NewFoodForm,
-  NewOrderTableForm,
   PaymentType,
   UiProduct,
 } from '../types'
 import { DEFAULT_CATEGORY_IMAGE_SRC, toCategoryImageSrc, toImageSrc } from '../utils'
-
-const DEFAULT_WAITER_FEE_ENABLED_STORAGE_KEY = 'defaultWaiterFeeEnabled'
-
-function getDefaultWaiterFeeEnabled() {
-  return localStorage.getItem(DEFAULT_WAITER_FEE_ENABLED_STORAGE_KEY) === 'true'
-}
 
 type ProductMenuState = {
   product: UiProduct
@@ -37,13 +30,6 @@ export function usePosPage() {
   const [menuProducts, setMenuProducts] = useState<UiProduct[]>([])
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
   const [apiCategories, setApiCategories] = useState<ApiCategory[]>([])
-  const [orderTables, setOrderTables] = useState<ApiOrderTable[]>([])
-  const [selectedOrderTableId, setSelectedOrderTableId] = useState('')
-  const [createTableOpen, setCreateTableOpen] = useState(false)
-  const [newOrderTable, setNewOrderTable] = useState<NewOrderTableForm>({
-    tableNumberDigits: '',
-    tableColor: '#FFE5B4',
-  })
 
   const [createOpen, setCreateOpen] = useState(false)
   const [newFood, setNewFood] = useState<NewFoodForm>({
@@ -76,7 +62,6 @@ export function usePosPage() {
   const [isEditingTotal, setIsEditingTotal] = useState(false)
   const [discountDigits, setDiscountDigits] = useState('')
   const [discountedTotalOverride, setDiscountedTotalOverride] = useState<number | null>(null)
-  const [includeWaiterFee, setIncludeWaiterFee] = useState(getDefaultWaiterFeeEnabled)
   const [isDebt, setIsDebt] = useState(false)
   const [debtPaidAmountDigits, setDebtPaidAmountDigits] = useState('')
   const [paymentType, setPaymentType] = useState<PaymentType>('Naqd')
@@ -115,8 +100,6 @@ export function usePosPage() {
   const cartCount = useMemo(() => cartLines.reduce((sum, line) => sum + line.qty, 0), [cartLines])
   const subtotal = useMemo(() => cartLines.reduce((sum, line) => sum + line.qty * line.product.price, 0), [cartLines])
   const subtotalInt = useMemo(() => Math.round(subtotal), [subtotal])
-  const waitressWage = useMemo(() => (includeWaiterFee ? Math.round(subtotalInt * 0.1) : 0), [includeWaiterFee, subtotalInt])
-  const totalWithWaitressWage = useMemo(() => subtotalInt + waitressWage, [subtotalInt, waitressWage])
   const discountedSubtotal = useMemo(() => {
     const raw = discountedTotalOverride ?? subtotalInt
     if (!Number.isFinite(raw)) return subtotalInt
@@ -126,12 +109,12 @@ export function usePosPage() {
   const discountedTotal = useMemo(() => {
     if (isEditingTotal) {
       const nextValue = discountDigits ? Number(discountDigits) : 0
-      if (!Number.isFinite(nextValue)) return totalWithWaitressWage
-      return Math.min(Math.max(Math.round(nextValue), waitressWage), totalWithWaitressWage)
+      if (!Number.isFinite(nextValue)) return subtotalInt
+      return Math.min(Math.max(Math.round(nextValue), 0), subtotalInt)
     }
 
-    return discountedSubtotal + waitressWage
-  }, [discountDigits, discountedSubtotal, isEditingTotal, totalWithWaitressWage, waitressWage])
+    return discountedSubtotal
+  }, [discountDigits, discountedSubtotal, isEditingTotal, subtotalInt])
 
   const debtPaidAmount = useMemo(() => {
     const parsed = Number(debtPaidAmountDigits || '0')
@@ -150,10 +133,9 @@ export function usePosPage() {
 
     const nextValue = discountDigits ? Number(discountDigits) : 0
     const nextTotal = Number.isFinite(nextValue)
-      ? Math.min(Math.max(Math.round(nextValue), waitressWage), totalWithWaitressWage)
-      : totalWithWaitressWage
-    const nextSubtotal = Math.min(Math.max(nextTotal - waitressWage, 0), subtotalInt)
-    setDiscountedTotalOverride(nextSubtotal === subtotalInt ? null : nextSubtotal)
+      ? Math.min(Math.max(Math.round(nextValue), 0), subtotalInt)
+      : subtotalInt
+    setDiscountedTotalOverride(nextTotal === subtotalInt ? null : nextTotal)
     setIsEditingTotal(false)
   }
 
@@ -207,7 +189,7 @@ export function usePosPage() {
   }
 
   async function placeOrder() {
-    if (cartLines.length === 0 || isPlacingOrder || !selectedOrderTableId) return
+    if (cartLines.length === 0 || isPlacingOrder) return
 
     setIsPlacingOrder(true)
     try {
@@ -218,32 +200,15 @@ export function usePosPage() {
         total: subtotalInt,
         discounted_total: discountedSubtotal,
         user_id: currentUser.id,
-        order_table_id: Number(selectedOrderTableId),
-        waiter_fee: includeWaiterFee,
         payment_type: paymentType,
         is_debt: isDebt,
         paid_amount: isDebt ? debtPaidAmount : discountedTotal,
         items: cartLines.map((line) => ({ product: line.product.id, quantity: line.qty })),
       }
-
-      const response = await fetch(`${API_URL}/orders`, {
+      await fetch(`${API_URL}/orders`, {
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
-      })
-      if (!response.ok) return
-
-      const orderData = await response.json()
-      const selectedOrderTable = orderTables.find((table) => String(table.id) === selectedOrderTableId)
-      await printReceipt({
-        ...orderData,
-        order_table: selectedOrderTable
-          ? {
-              id: selectedOrderTable.id,
-              table_number: selectedOrderTable.table_number,
-              table_color: selectedOrderTable.table_color,
-            }
-          : orderData.order_table ?? null,
       })
       if (paymentType === 'Naqd' && !isDebt) {
         setCashbackTotalAmount(discountedTotal)
@@ -256,18 +221,6 @@ export function usePosPage() {
     }
   }
 
-  function openCreateTable() {
-    setNewOrderTable({
-      tableNumberDigits: '',
-      tableColor: '#FFE5B4',
-    })
-    setCreateTableOpen(true)
-  }
-
-  function closeCreateTable() {
-    setCreateTableOpen(false)
-  }
-
   function closeCashbackDialog() {
     setCashbackOpen(false)
   }
@@ -278,26 +231,6 @@ export function usePosPage() {
 
   function resetCashbackMoney() {
     setCashbackPaidValues([])
-  }
-
-  async function createOrderTable() {
-    const tableNumber = Number(newOrderTable.tableNumberDigits)
-    if (!Number.isInteger(tableNumber) || tableNumber <= 0) return
-
-    const response = await fetch(`${API_URL}/orders/tables/create`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        table_number: tableNumber,
-        table_color: newOrderTable.tableColor,
-      }),
-    })
-    if (!response.ok) return
-
-    const created = (await response.json()) as ApiOrderTable
-    setOrderTables((prev) => [...prev, created].sort((a, b) => a.table_number - b.table_number))
-    setSelectedOrderTableId(String(created.id))
-    setCreateTableOpen(false)
   }
 
   function resetNewFood() {
@@ -480,27 +413,6 @@ export function usePosPage() {
   useEffect(() => {
     let cancelled = false
 
-    async function loadOrderTables() {
-      const response = await fetch(`${API_URL}/orders/tables`)
-      if (!response.ok) return
-      const list = (await response.json()) as ApiOrderTable[]
-      if (cancelled) return
-      setOrderTables(list)
-      setSelectedOrderTableId((prev) => {
-        if (prev && list.some((table) => String(table.id) === prev)) return prev
-        return list[0] ? String(list[0].id) : ''
-      })
-    }
-
-    loadOrderTables()
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  useEffect(() => {
-    let cancelled = false
-
     async function loadCategories() {
       const response = await fetch(`${API_URL}/product-categories`)
       if (!response.ok) return
@@ -562,15 +474,6 @@ export function usePosPage() {
   return {
     search,
     setSearch,
-    orderTables,
-    selectedOrderTableId,
-    setSelectedOrderTableId,
-    createTableOpen,
-    openCreateTable,
-    closeCreateTable,
-    newOrderTable,
-    setNewOrderTable,
-    createOrderTable,
     selectedCategoryId,
     setSelectedCategoryId,
     cartLines,
@@ -587,9 +490,7 @@ export function usePosPage() {
     isEditingTotal,
     discountDigits,
     setDiscountDigits,
-    waitressWage,
     discountedTotal,
-    includeWaiterFee,
     isDebt,
     debtPaidAmountDigits,
     paymentType,
@@ -597,7 +498,6 @@ export function usePosPage() {
     cashbackTotalAmount,
     cashbackPaidAmount,
     cashbackAmount,
-    setIncludeWaiterFee,
     setIsDebt,
     setDebtPaidAmountDigits,
     setPaymentType,

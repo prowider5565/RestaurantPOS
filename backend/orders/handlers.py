@@ -1,15 +1,13 @@
 from __future__ import annotations
-import datetime
 from datetime import date, datetime, time
 
 from fastapi import HTTPException
 from fastapi_pagination import Params
 from fastapi_pagination.ext.sqlalchemy import paginate
-from sqlalchemy import case, func
+from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
 
-from .helpers import sync_order_table_to_supervisor 
-from .models import Order, OrderItem, OrderTable
+from .models import Order, OrderItem
 from products.models import Product
 
 from .schemas import (
@@ -17,37 +15,7 @@ from .schemas import (
     FoodAnalyticsRowOut,
     OrderHistoryOverviewOut,
     OrderHistoryResponseOut,
-    OrderTableCreate,
 )
-
-
-def list_order_tables(db: Session) -> list[OrderTable]:
-    return db.query(OrderTable).order_by(OrderTable.table_number.asc()).all()
-
-
-def create_order_table(db: Session, payload: OrderTableCreate) -> OrderTable:
-    table_color = payload.table_color.strip()
-    if not table_color:
-        raise HTTPException(status_code=400, detail="Table color is required")
-
-    existing = (
-        db.query(OrderTable)
-        .filter(OrderTable.table_number == payload.table_number)
-        .first()
-    )
-    if existing:
-        raise HTTPException(status_code=400, detail="Table number already exists")
-
-    order_table = OrderTable(
-        table_number=payload.table_number,
-        table_color=table_color,
-    )
-    db.add(order_table)
-    sync_order_table_to_supervisor(payload)
-    db.commit()
-    db.refresh(order_table)
-    return order_table
-
 
 
 def get_order_history(
@@ -88,28 +56,10 @@ def get_order_history(
     )
     total_net_sum = float(net_sum_query.scalar() or 0.0)
 
-    waiter_fee_sum_query = apply_filters(
-        db.query(
-            func.coalesce(
-                func.sum(
-                    case(
-                        (Order.waiter_fee.is_(True), Order.total_price * 0.1),
-                        else_=0.0,
-                    )
-                ),
-                0.0,
-            )
-        ).select_from(Order)
-    )
-    if exclude_debt_from_total_sum:
-        waiter_fee_sum_query = waiter_fee_sum_query.filter(Order.is_debt.is_(False))
-    total_waiter_fee_sum = float(waiter_fee_sum_query.scalar() or 0.0)
-
     query = apply_filters(
         db.query(Order).options(
             selectinload(Order.items),
             selectinload(Order.user),
-            selectinload(Order.order_table),
         )
     ).order_by(Order.created_at.desc())
     page = paginate(db, query, params)
@@ -119,7 +69,6 @@ def get_order_history(
         total_sum=total_sum,
         total_net_sum=total_net_sum,
         total_discount_sum=total_discount_sum,
-        total_waiter_fee_sum=total_waiter_fee_sum,
     )
     return OrderHistoryResponseOut(overview=overview, page=page)
 
@@ -206,28 +155,10 @@ def get_my_order_history(
     )
     total_net_sum = float(net_sum_query.scalar() or 0.0)
 
-    waiter_fee_sum_query = apply_filters(
-        db.query(
-            func.coalesce(
-                func.sum(
-                    case(
-                        (Order.waiter_fee.is_(True), Order.total_price * 0.1),
-                        else_=0.0,
-                    )
-                ),
-                0.0,
-            )
-        ).select_from(Order)
-    )
-    if exclude_debt_from_total_sum:
-        waiter_fee_sum_query = waiter_fee_sum_query.filter(Order.is_debt.is_(False))
-    total_waiter_fee_sum = float(waiter_fee_sum_query.scalar() or 0.0)
-
     query = apply_filters(
         db.query(Order).options(
             selectinload(Order.items),
             selectinload(Order.user),
-            selectinload(Order.order_table),
         )
     ).order_by(Order.created_at.desc())
     page = paginate(db, query, params)
@@ -237,7 +168,6 @@ def get_my_order_history(
         total_sum=total_sum,
         total_net_sum=total_net_sum,
         total_discount_sum=total_discount_sum,
-        total_waiter_fee_sum=total_waiter_fee_sum,
     )
     return OrderHistoryResponseOut(overview=overview, page=page)
 
@@ -248,7 +178,6 @@ def get_order_or_404(db: Session, order_id: int) -> Order:
         .options(
             selectinload(Order.items).selectinload(OrderItem.product),
             selectinload(Order.user),
-            selectinload(Order.order_table),
         )
         .filter(Order.id == order_id)
         .first()
@@ -278,7 +207,7 @@ def pay_debt(db: Session, amount: int, order_id: int) -> None:
     if amount <= 0:
         raise HTTPException(status_code=400, detail="Amount must be greater than 0")
 
-    final_total = int((order.total_price or 0) - (order.discount_amount or 0) + (order.waitress_wage or 0))
+    final_total = int((order.total_price or 0) - (order.discount_amount or 0))
     next_paid_amount = min(final_total, int(order.paid_amount or 0) + amount)
     order.paid_amount = next_paid_amount
     if next_paid_amount >= final_total:

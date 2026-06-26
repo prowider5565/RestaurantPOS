@@ -9,7 +9,6 @@ from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
 
-from cash_desk.helpers import sync_transaction_to_supervisor
 from cash_desk.models import CashDesk
 from cash_desk.schemas import (
     CashDeskSummaryOut,
@@ -67,8 +66,6 @@ def create_transaction_api(
         transaction_type=payload.transaction_type,
     )
     db.add(tx)
-    # token = get_bearer_token(request.headers.get("Authorization"))
-    # sync_transaction_to_supervisor(payload, token)
     db.commit()
     row = (
         db.query(CashDesk)

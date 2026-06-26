@@ -129,12 +129,6 @@ def generate_receipt(
     def framed_line(text: str) -> str:
         return vertical + center_text(text, table_width - 2) + vertical
 
-    def build_plain_summary_line(label: str, value: str) -> str:
-        combined = f"{label} {value}"
-        if len(combined) <= table_width:
-            return label.ljust(table_width - len(value)) + value
-        return combined[:table_width].ljust(table_width)
-
     def build_double_size_summary_line(label: str, value: str) -> str:
         effective_width = table_width // 2
         content_width = effective_width
@@ -185,18 +179,17 @@ def generate_receipt(
     lines.append(table_separator())
 
     total_amount = 0.0
-    for item in items:
-        product = item.get("product") or {}
-        quantity = _to_number(item.get("quantity"), 0.0)
-        price = _to_number(product.get("price"), 0.0)
-        subtotal = quantity * price
+    for idx, item in enumerate(items):
+        quantity = item["quantity"]
+        price = item["price"]
+        subtotal = item["subtotal"]
         total_amount += subtotal
 
-        name_lines = wrap_text(str(product.get("name") or ""), name_width)
+        name_lines = wrap_text(item["name"], name_width)
         lines.append(
             build_row(
                 [
-                    str(product.get("id") or ""),
+                    str(idx + 1),
                     name_lines[0],
                     str(int(round(quantity))),
                     format_number_plain(price),
@@ -208,23 +201,10 @@ def generate_receipt(
             lines.append(build_row(["", name_line, "", "", ""]))
 
     original_total = round(_to_number(order_data.get("total_price"), total_amount))
-    waiter_fee_enabled = bool(order_data.get("waiter_fee"))
-    waitress_wage = round(
-        _to_number(
-            order_data.get("waitress_wage"),
-            (original_total * 0.1) if waiter_fee_enabled else 0.0,
-        )
-    )
     discount_amount = max(0.0, _to_number(order_data.get("discount_amount"), 0.0))
-    final_total = max(0.0, original_total - discount_amount) + waitress_wage
+    final_total = max(0.0, original_total - discount_amount)
 
     lines.append(strong_bottom_separator())
-    if waiter_fee_enabled:
-        lines.append(
-            build_plain_summary_line(
-                "Ofitsiant xizmati:", f"{format_number_plain(waitress_wage)} so'm"
-            )
-        )
     lines.append(
         escpos_bold_on
         + escpos_double_size_on
@@ -236,15 +216,11 @@ def generate_receipt(
     )
     lines.append("")
 
-    company_name = str(requisites.get("company_name") or "").strip()
     address = str(requisites.get("address") or "").strip()
     phone = str(requisites.get("phone_number") or "").strip()
     stir = str(requisites.get("STIR") or requisites.get("stir") or "").strip()
     registry = str(requisites.get("registry_number") or "").strip()
 
-    if company_name:
-        for line in wrap_text(company_name, table_width):
-            lines.append(line.rjust(table_width))
 
     push_right("STIR:", stir)
     push_right("Telefon:", phone)
@@ -259,53 +235,3 @@ def generate_receipt(
     lines.append(center_text("Tashrifingizdan mamnunmiz!", table_width))
 
     return "\n".join(lines)
-
-
-if __name__ == "__main__":
-
-    program_name = "VPOS"
-
-    requisites = {
-        "company_name": "PARHEZ PLYUS MCHJ",
-        "address": "Toshkent sh., Yunusobod tumani, Amir Temur ko'chasi 12",
-        "phone_number": "+998 90 123 45 67",
-        "STIR": "309876543",
-        "registry_number": "AA-456789",
-    }
-
-    order_data = {
-        "id": 1024,
-        "total_price": 128000,
-        "waitress_wage": 12800,
-        "discount_amount": 10000,
-        "created_at": "2026-03-19T14:35:22",
-        "user": {
-            "id": 7,
-            "username": "Dilshod",
-            "position": "Kassir",
-        },
-        "order_table": {
-            "id": 3,
-            "table_number": 12,
-            "table_color": "#FFE5B4",
-        },
-        "items": [
-            {
-                "product": {"id": 11, "name": "Chicken Burger", "price": 32000},
-                "quantity": 2,
-            },
-            {
-                "product": {"id": 18, "name": "Coca Cola 1L", "price": 14000},
-                "quantity": 1,
-            },
-            {
-                "product": {"id": 25, "name": "Greek Salad", "price": 50000},
-                "quantity": 1,
-            },
-        ],
-    }
-
-    receipt_text = generate_receipt(
-        order_data, requisites=requisites, program_name=program_name
-    )
-    print(receipt_text)

@@ -6,7 +6,7 @@ import { API_URL } from '../../../config/env'
 import { DEFAULT_PRODUCT_IMAGE_SRC } from '../../../shared/utils/images'
 import { formatMoney } from '../../../shared/utils/formatters'
 import type { ApiOrderDetail } from '../types'
-import { formatCreated, getOrderTotals, getTableTextColor, toOrderHistoryImageSrc } from '../utils'
+import { formatCreated, getOrderTotals, toOrderHistoryImageSrc } from '../utils'
 
 export default function OrderDetailsDialog({
   open,
@@ -41,8 +41,6 @@ export default function OrderDetailsDialog({
   if (!open) return null
 
   const totals = order ? getOrderTotals(order) : { total: 0, discountAmount: 0, discountedTotal: 0 }
-  const waiterFeeAmount = order?.waiter_fee ? order.waitress_wage : 0
-  const finalTotal = totals.discountedTotal + waiterFeeAmount
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -63,43 +61,18 @@ export default function OrderDetailsDialog({
       <Divider />
 
       <DialogContent sx={{ pt: 2 }}>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-          {order?.order_table ? (
-            <Box
-              sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                px: 1.25,
-                py: 0.5,
-                borderRadius: 1.5,
-                bgcolor: order.order_table.table_color,
-                color: getTableTextColor(order.order_table.table_color),
-                fontWeight: 1000,
-              }}
-            >
-              Stol {order.order_table.table_number}
-            </Box>
-          ) : (
-            <Box />
-          )}
+        <Stack direction="row" alignItems="center" justifyContent="flex-end" sx={{ mb: 2 }}>
           {totals.discountAmount > 0 ? (
             <Stack alignItems="flex-end" spacing={0} sx={{ lineHeight: 1.15 }}>
               <Typography sx={{ fontWeight: 900, textDecoration: 'line-through', color: 'text.secondary' }}>
                 {formatMoney(totals.total)}
               </Typography>
-              <Typography sx={{ fontWeight: 1000 }}>{formatMoney(finalTotal)}</Typography>
+              <Typography sx={{ fontWeight: 1000 }}>{formatMoney(totals.discountedTotal)}</Typography>
             </Stack>
           ) : (
-            <Typography sx={{ fontWeight: 1000 }}>Jami: {formatMoney(finalTotal)}</Typography>
+            <Typography sx={{ fontWeight: 1000 }}>Jami: {formatMoney(totals.discountedTotal)}</Typography>
           )}
         </Stack>
-
-        {order ? (
-          <Stack direction="row" justifyContent="space-between" sx={{ mb: 2 }}>
-            <Typography sx={{ fontWeight: 800, color: 'text.secondary' }}>Ofitsiant xizmati</Typography>
-            <Typography sx={{ fontWeight: 900 }}>{order.waiter_fee ? formatMoney(order.waitress_wage) : '-'}</Typography>
-          </Stack>
-        ) : null}
 
         <Paper variant="outlined" sx={{ borderRadius: 2 }}>
           <List dense disablePadding>

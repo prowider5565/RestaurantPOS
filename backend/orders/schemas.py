@@ -9,6 +9,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from products.types import ProductMeasure
 
 
+
+
 class OrderItemCreate(BaseModel):
     product: int
     quantity: int = Field(gt=0)
@@ -18,8 +20,6 @@ class OrderCreate(BaseModel):
     total: float = Field(gt=0)
     discounted_total: float = Field(ge=0)
     user_id: int
-    order_table_id: int
-    waiter_fee: bool
     payment_type: Optional[str] = None
     is_debt: Optional[bool] = False
     items: list[OrderItemCreate] = Field(min_length=1)
@@ -51,19 +51,6 @@ class UserSummaryOut(BaseModel):
     position: str | None = None
 
 
-class OrderTableCreate(BaseModel):
-    table_number: int = Field(gt=0)
-    table_color: str = Field(min_length=1, max_length=50)
-
-
-class OrderTableOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    table_number: int
-    table_color: str
-
-
 class OrderItemDetailOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -76,15 +63,12 @@ class OrderOut(BaseModel):
 
     id: int
     total_price: float
-    waiter_fee: bool
-    waitress_wage: float
     discount_amount: int | None = 0
     is_debt: bool
     paid_amount: Optional[int] = 0
     payment_type: Optional[str] = None
     created_at: datetime
     user: UserSummaryOut | None = None
-    order_table: OrderTableOut | None = None
     items: list[OrderItemDetailOut]
 
 
@@ -93,15 +77,12 @@ class OrderHistoryRowOut(BaseModel):
 
     id: int
     total_price: float
-    waiter_fee: bool
-    waitress_wage: float
     discount_amount: int | None = 0
     is_debt: bool
     paid_amount: int | None = 0
     payment_type: str | None = None
     created_at: datetime
     user: UserSummaryOut | None = None
-    order_table: OrderTableOut | None = None
     items: list[OrderItemOut]
 
 
@@ -110,7 +91,6 @@ class OrderHistoryOverviewOut(BaseModel):
     total_sum: float
     total_net_sum: float
     total_discount_sum: float
-    total_waiter_fee_sum: float
 
 
 class OrderHistoryResponseOut(BaseModel):

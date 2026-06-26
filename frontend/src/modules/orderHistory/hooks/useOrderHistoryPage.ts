@@ -133,16 +133,14 @@ export function useOrderHistoryPage() {
   }, [foodAnalytics?.items, search])
 
   function exportToExcelCsv() {
-    const header = ['ID', 'Foydalanuvchi', 'Stol', 'Jami summa', 'Sana']
+    const header = ['ID', 'Foydalanuvchi', 'Jami summa', 'Sana']
     const lines = rows.map((order) => {
       const total = order.total_price
       const username = order.user?.username ?? '-'
-      const tableLabel = order.order_table ? `Stol ${order.order_table.table_number}` : '-'
 
       return [
         order.id,
         username,
-        tableLabel,
         total.toFixed(2),
         formatCreated(order.created_at),
       ]

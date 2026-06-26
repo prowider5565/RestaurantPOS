@@ -2,24 +2,13 @@ import AddIcon from '@mui/icons-material/Add'
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import CloseIcon from '@mui/icons-material/Close'
 import RemoveIcon from '@mui/icons-material/Remove'
-import { Box, Button, ButtonBase, Divider, FormControl, IconButton, List, MenuItem, Paper, Select, Stack, Tab, Tabs, TextField, Tooltip, Typography } from '@mui/material'
+import { Box, Button, ButtonBase, Divider, IconButton, List, Paper, Stack, Tab, Tabs, TextField, Typography } from '@mui/material'
 import type { MutableRefObject } from 'react'
 
 import { formatMoney } from '../../../shared/utils/formatters'
-import type { ApiOrderTable, CartLine, PaymentType } from '../types'
+import type { CartLine, PaymentType } from '../types'
 import { DEFAULT_PRODUCT_IMAGE_SRC } from '../utils'
 import SwipeToDeleteRow from './SwipeToDeleteRow'
-
-function getTableTextColor(color: string) {
-  const hex = color.replace('#', '')
-  if (hex.length !== 6) return '#1F2937'
-
-  const red = Number.parseInt(hex.slice(0, 2), 16)
-  const green = Number.parseInt(hex.slice(2, 4), 16)
-  const blue = Number.parseInt(hex.slice(4, 6), 16)
-  const brightness = red * 0.299 + green * 0.587 + blue * 0.114
-  return brightness > 186 ? '#1F2937' : '#FFFFFF'
-}
 
 function BarSwitch({
   label,
@@ -98,22 +87,15 @@ export default function PosCartPanel({
   cartItemsRef,
   isEditingTotal,
   discountDigits,
-  waitressWage,
   discountedTotal,
-  includeWaiterFee,
   isDebt,
   debtPaidAmountDigits,
   paymentType,
   isPlacingOrder,
-  orderTables,
-  selectedOrderTableId,
   onClearCart,
-  onSelectOrderTable,
-  onOpenCreateTable,
   onSetQty,
   onToggleEditTotal,
   onDiscountDigitsChange,
-  onIncludeWaiterFeeChange,
   onIsDebtChange,
   onDebtPaidAmountDigitsChange,
   onPaymentTypeChange,
@@ -124,28 +106,20 @@ export default function PosCartPanel({
   cartItemsRef: MutableRefObject<HTMLDivElement | null>
   isEditingTotal: boolean
   discountDigits: string
-  waitressWage: number
   discountedTotal: number
-  includeWaiterFee: boolean
   isDebt: boolean
   debtPaidAmountDigits: string
   paymentType: PaymentType
   isPlacingOrder: boolean
-  orderTables: ApiOrderTable[]
-  selectedOrderTableId: string
   onClearCart: () => void
-  onSelectOrderTable: (value: string) => void
-  onOpenCreateTable: () => void
   onSetQty: (productId: number, qty: number) => void
   onToggleEditTotal: () => void
   onDiscountDigitsChange: (value: string) => void
-  onIncludeWaiterFeeChange: (value: boolean) => void
   onIsDebtChange: (value: boolean) => void
   onDebtPaidAmountDigitsChange: (value: string) => void
   onPaymentTypeChange: (value: PaymentType) => void
   onPlaceOrder: () => void
 }) {
-  const selectedTable = orderTables.find((table) => String(table.id) === selectedOrderTableId) ?? null
 
   return (
     <Paper
@@ -255,81 +229,6 @@ export default function PosCartPanel({
       <Divider sx={{ my: 1 }} />
 
       <Stack sx={{ mb: 1.5, mt: 'auto' }}>
-        <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 1.25 }}>
-          <FormControl fullWidth size="small">
-            <Select
-              displayEmpty
-              value={selectedOrderTableId}
-              onChange={(e) => onSelectOrderTable(String(e.target.value))}
-              renderValue={() =>
-                selectedTable ? (
-                  <Box
-                    sx={{
-                      px: 1,
-                      py: 0.5,
-                      borderRadius: 1,
-                      bgcolor: selectedTable.table_color,
-                      color: getTableTextColor(selectedTable.table_color),
-                      fontWeight: 900,
-                    }}
-                  >
-                    Stol {selectedTable.table_number}
-                  </Box>
-                ) : (
-                  <Typography sx={{ color: 'text.secondary', fontWeight: 700, fontSize: 14 }}>
-                    Stol tanlang
-                  </Typography>
-                )
-              }
-              sx={{
-                '& .MuiSelect-select': {
-                  py: 1,
-                },
-              }}
-            >
-              {orderTables.map((table) => (
-                <MenuItem
-                  key={table.id}
-                  value={String(table.id)}
-                  sx={{
-                    bgcolor: table.table_color,
-                    color: getTableTextColor(table.table_color),
-                    fontWeight: 900,
-                    borderRadius: 1,
-                    mx: 0.5,
-                    my: 0.25,
-                  }}
-                >
-                  Stol {table.table_number}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <Tooltip title="Yangi stol qo'shish" placement="top">
-            <IconButton
-              aria-label="Yangi stol qo'shish"
-              onClick={onOpenCreateTable}
-              sx={{
-                width: 40,
-                height: 40,
-                borderRadius: 2,
-                border: '1px solid',
-                borderColor: 'divider',
-                flex: '0 0 auto',
-              }}
-            >
-              <AddIcon />
-            </IconButton>
-          </Tooltip>
-        </Stack>
-
-        {!selectedOrderTableId ? (
-          <Typography sx={{ mb: 1, color: 'error.main', fontSize: 12, fontWeight: 700 }}>
-            Buyurtma uchun stol tanlanishi shart.
-          </Typography>
-        ) : null}
-
         <Tabs
           value={paymentType}
           onChange={(_, value: PaymentType) => onPaymentTypeChange(value)}
@@ -359,7 +258,6 @@ export default function PosCartPanel({
 
         <Stack direction="row" gap={1} sx={{ mb: isDebt ? 1 : 0.5 }}>
           <BarSwitch label="Nasiya" checked={isDebt} onChange={onIsDebtChange} />
-          <BarSwitch label="Usluga" checked={includeWaiterFee} onChange={onIncludeWaiterFeeChange} />
         </Stack>
 
         {isDebt ? (
@@ -375,11 +273,6 @@ export default function PosCartPanel({
         ) : null}
 
         <Stack direction="row" justifyContent="space-between" alignItems="baseline">
-          <Typography sx={{ fontWeight: 900, fontSize: 14, color: 'text.secondary' }}>Ofitsiant xizmati</Typography>
-          <Typography sx={{ fontWeight: 1000, fontSize: 16, color: 'warning.dark' }}>{formatMoney(waitressWage)}</Typography>
-        </Stack>
-
-        <Stack direction="row" justifyContent="space-between" alignItems="baseline" sx={{ mt: 0.75 }}>
           <Typography sx={{ fontWeight: 1000, fontSize: 17 }}>Jami</Typography>
           {isEditingTotal ? (
             <TextField
@@ -439,7 +332,7 @@ export default function PosCartPanel({
         <Button
           color="success"
           variant="contained"
-          disabled={cartCount === 0 || isPlacingOrder || !selectedOrderTableId}
+          disabled={cartCount === 0 || isPlacingOrder}
           onClick={onPlaceOrder}
           startIcon={<CheckCircleOutlineIcon />}
           sx={{ py: 1.5, borderRadius: 2, fontSize: 14 }}

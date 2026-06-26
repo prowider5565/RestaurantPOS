@@ -3,14 +3,12 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 
 import bcrypt
-import requests
 from fastapi.exceptions import HTTPException
 from jose import JWTError, jwt
 
 from config.database import SessionLocal
 from config.settings import settings
 from users.models import User
-from users.schemas import AdminCreateUserIn
 
 
 def verify_token(token: str) -> str:
@@ -91,19 +89,4 @@ def authenticate_user(username: str, password: str) -> User | None:
         db.close()
 
 
-def sync_user_to_supervisor(payload: AdminCreateUserIn) -> None:
-    supervisor_url = settings.SUPERVISOR_URL.strip()
-    if not supervisor_url:
-        return
 
-    try:
-        requests.post(
-            f"{supervisor_url}/users/admin/create-user",
-            json=payload.model_dump(mode="json"),
-            timeout=30,
-        )
-    except requests.RequestException as exc:
-        raise HTTPException(
-            status_code=502,
-            detail="Failed to synchronize user with supervisor",
-        ) from exc
