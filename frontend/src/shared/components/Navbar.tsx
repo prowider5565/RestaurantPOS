@@ -7,8 +7,8 @@ import PeopleIcon from '@mui/icons-material/People'
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew'
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu'
 import SettingsIcon from '@mui/icons-material/Settings'
-import { AppBar, Button, IconButton, Stack, TextField, Toolbar, Tooltip, Typography } from '@mui/material'
-import { type ReactNode, useState } from 'react'
+import { AppBar, Box, Button, IconButton, Stack, TextField, Toolbar, Tooltip, Typography } from '@mui/material'
+import { type ReactNode, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 import { API_URL } from '../../config/env'
 
@@ -58,6 +58,55 @@ export default function Navbar({
   searchPlaceholder?: string
 }) {
   const [openingDrawer, setOpeningDrawer] = useState(false)
+  const [indicatorStyle, setIndicatorStyle] = useState<{ left: number; width: number }>({ left: 0, width: 0 })
+  const itemRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
+  const containerRef = useRef<HTMLDivElement>(null)
+  const prevStyleRef = useRef<{ left: number; width: number }>({ left: 0, width: 0 })
+
+  useLayoutEffect(() => {
+    const activeEl = itemRefs.current.get(active)
+    const container = containerRef.current
+    if (activeEl && container) {
+      const containerRect = container.getBoundingClientRect()
+      const itemRect = activeEl.getBoundingClientRect()
+      const next = {
+        left: itemRect.left - containerRect.left + container.scrollLeft,
+        width: itemRect.width,
+      }
+      if (next.left !== prevStyleRef.current.left || next.width !== prevStyleRef.current.width) {
+        prevStyleRef.current = next
+        setIndicatorStyle(next)
+      }
+    }
+  }, [active])
+
+  useEffect(() => {
+    function onResize() {
+      const activeEl = itemRefs.current.get(active)
+      const container = containerRef.current
+      if (activeEl && container) {
+        const containerRect = container.getBoundingClientRect()
+        const itemRect = activeEl.getBoundingClientRect()
+        const next = {
+          left: itemRect.left - containerRect.left + container.scrollLeft,
+          width: itemRect.width,
+        }
+        prevStyleRef.current = next
+        setIndicatorStyle(next)
+      }
+    }
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [active])
+
+  const measureItem = useCallback((id: string, el: HTMLButtonElement | null) => {
+    if (el) {
+      itemRefs.current.set(id, el)
+    } else {
+      itemRefs.current.delete(id)
+    }
+  }, [])
+
   const itemsBeforeStats = NAV_ITEMS.filter((item) => (showUsers || item.id !== 'users'))
 
   async function openDrawer() {
@@ -99,10 +148,11 @@ export default function Navbar({
           </Typography>
         ) : null}
 
-        <Stack direction="row" alignItems="center" spacing={0.75} sx={{ flex: 1, overflowX: 'auto' }}>
+        <Stack ref={containerRef} direction="row" alignItems="center" spacing={0.75} sx={{ flex: 1, overflowX: 'auto', position: 'relative' }}>
           {itemsBeforeStats.map((item) => (
             <Button
               key={item.id}
+              ref={(el) => measureItem(item.id, el)}
               color={item.id === active ? 'primary' : 'inherit'}
               startIcon={item.icon}
               onClick={() => onNavigate(item.id)}
@@ -118,18 +168,7 @@ export default function Navbar({
                 bgcolor: 'transparent',
                 color: item.id === active ? 'primary.main' : 'inherit',
                 position: 'relative',
-                '&::after': item.id === active
-                  ? {
-                      content: '""',
-                      position: 'absolute',
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      height: 3,
-                      borderRadius: '3px 3px 0 0',
-                      bgcolor: 'primary.main',
-                    }
-                  : undefined,
+                zIndex: 1,
                 '&:hover': {
                   bgcolor: 'action.hover',
                 },
@@ -145,6 +184,18 @@ export default function Navbar({
               {item.label}
             </Button>
           ))}
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: 0,
+              height: 3,
+              borderRadius: '3px 3px 0 0',
+              bgcolor: 'primary.main',
+              transition: 'left 0.25s ease, width 0.25s ease',
+              left: indicatorStyle.left,
+              width: indicatorStyle.width,
+            }}
+          />
 
 
           {onSearchChange ? (
