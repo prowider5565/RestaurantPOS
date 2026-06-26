@@ -100,6 +100,11 @@ function HoursBarChart({ data, selectedDay, onDayClick }: { data: { day: number;
             onClick={() => onDayClick(d.day)}
             sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 0, height: '100%', justifyContent: 'flex-end', cursor: 'pointer' }}
           >
+            {d.hours > 0 && (
+              <Typography sx={{ fontSize: 10, fontWeight: 700, color: 'text.secondary', mb: 0.25 }}>
+                {d.hours}
+              </Typography>
+            )}
             <Box
               sx={{
                 width: '100%',
@@ -143,7 +148,7 @@ function UptimeTimeline({ windows }: { windows: { start: number; end: number }[]
   const gap = 6
 
   return (
-    <Box sx={{ position: 'relative', py: 2 }}>
+    <Box sx={{ py: 2, width: '100%' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
         {hours.filter((_, i) => i % 3 === 0).map((h) => (
           <Typography key={h} sx={{ fontSize: 10, color: 'text.secondary', fontWeight: 600 }}>
@@ -158,6 +163,7 @@ function UptimeTimeline({ windows }: { windows: { start: number; end: number }[]
           height: windows.length * rowHeight + Math.max(0, windows.length - 1) * gap,
           bgcolor: 'grey.100',
           borderRadius: 1,
+          width: '100%',
         }}
       >
         {hours.map((h) => (
