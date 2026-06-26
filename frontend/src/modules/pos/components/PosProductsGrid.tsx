@@ -217,7 +217,6 @@ function PosProductsGrid({
           height: '100%',
           overflowY: 'auto',
           overflowX: 'hidden',
-          pr: { xs: 0, md: 0.5 },
           display: 'grid',
           gridTemplateColumns: {
             xs: '1fr',
@@ -251,7 +250,6 @@ function PosProductsGrid({
         height: '100%',
         overflowY: 'auto',
         overflowX: 'hidden',
-        pr: { xs: 0, md: 0.5 },
       }}
     >
       <Box sx={{ position: 'relative', height: totalHeight }}>
