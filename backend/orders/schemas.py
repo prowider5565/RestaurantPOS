@@ -50,6 +50,13 @@ class UserSummaryOut(BaseModel):
     position: str | None = None
 
 
+class OrderItemDetailOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    product: ProductSummaryOut
+    quantity: int
+
+
 class OrderOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -61,7 +68,7 @@ class OrderOut(BaseModel):
     payment_type: Optional[str] = None
     created_at: datetime
     user: UserSummaryOut | None = None
-    items: list[OrderItemOut]
+    items: list[OrderItemDetailOut]
 
 
 class OrderHistoryOverviewOut(BaseModel):
