@@ -87,7 +87,7 @@ const MOCK_WINDOWS_BY_DAY: Record<number, { start: number; end: number }[]> = {
 }
 
 function HoursBarChart({ data, selectedDay, onDayClick }: { data: { day: number; hours: number }[]; selectedDay: number; onDayClick: (day: number) => void }) {
-  const maxHours = 8
+  const maxHours = 24
   const chartHeight = 180
   const labelHeight = 20
 
@@ -143,14 +143,25 @@ function formatHour(h: number): string {
 }
 
 function UptimeTimeline({ windows }: { windows: { start: number; end: number }[] }) {
-  const hours = Array.from({ length: 25 }, (_, i) => i)
   const rowHeight = 44
   const gap = 6
+
+  let rangeStart = 0
+  let rangeEnd = 24
+  if (windows.length > 0) {
+    const earliest = Math.min(...windows.map((w) => w.start))
+    const latest = Math.max(...windows.map((w) => w.end))
+    rangeStart = Math.max(0, Math.floor(earliest) - 1)
+    rangeEnd = Math.min(24, Math.ceil(latest) + 1)
+  }
+
+  const hours = Array.from({ length: rangeEnd - rangeStart + 1 }, (_, i) => rangeStart + i)
+  const toPercent = (h: number) => ((h - rangeStart) / (rangeEnd - rangeStart)) * 100
 
   return (
     <Box sx={{ py: 2, width: '100%' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-        {hours.filter((_, i) => i % 3 === 0).map((h) => (
+        {hours.filter((_, i) => i % 2 === 0).map((h) => (
           <Typography key={h} sx={{ fontSize: 10, color: 'text.secondary', fontWeight: 600 }}>
             {h === 0 ? '12 AM' : h < 12 ? `${h} AM` : h === 12 ? '12 PM' : `${h - 12} PM`}
           </Typography>
@@ -171,7 +182,7 @@ function UptimeTimeline({ windows }: { windows: { start: number; end: number }[]
             key={h}
             sx={{
               position: 'absolute',
-              left: `${(h / 24) * 100}%`,
+              left: `${toPercent(h)}%`,
               top: 0,
               bottom: 0,
               width: '1px',
@@ -186,8 +197,8 @@ function UptimeTimeline({ windows }: { windows: { start: number; end: number }[]
             title={`${formatHour(w.start)} — ${formatHour(w.end)}`}
             sx={{
               position: 'absolute',
-              left: `${(w.start / 24) * 100}%`,
-              width: `${((w.end - w.start) / 24) * 100}%`,
+              left: `${toPercent(w.start)}%`,
+              width: `${((w.end - w.start) / (rangeEnd - rangeStart)) * 100}%`,
               top: i * (rowHeight + gap),
               height: rowHeight,
               bgcolor: 'primary.main',
@@ -221,25 +232,6 @@ function UptimeTab() {
       </Box>
 
       <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 2, flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        <Stack direction="row" alignItems="center" spacing={1} mb={1.5}>
-          {(['Oy', 'Hafta', 'Kun', 'Bugun'] as const).map((label) => (
-            <Tab
-              key={label}
-              label={label}
-              sx={{
-                minHeight: 32,
-                py: 0,
-                fontWeight: 700,
-                textTransform: 'none',
-                fontSize: 13,
-                bgcolor: label === 'Bugun' ? 'primary.main' : 'grey.100',
-                color: label === 'Bugun' ? 'common.white' : 'text.secondary',
-                borderRadius: 1,
-                '&:hover': { bgcolor: label === 'Bugun' ? 'primary.dark' : 'grey.200' },
-              }}
-            />
-          ))}
-        </Stack>
         <Typography sx={{ fontWeight: 800, fontSize: 15, mb: 1 }}>{selectedDay} Iyun</Typography>
         <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
           <UptimeTimeline windows={windows} />
