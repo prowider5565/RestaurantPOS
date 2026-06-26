@@ -52,14 +52,4 @@ export type EditFoodForm = {
   measure: 'unit' | 'gram' | 'portion'
 }
 
-export type ReceiptOrderData = {
-  id: number
-  total_price: number
-  discount_amount?: number | null
-  created_at: string
-  user: { id: number; username: string; position: string | null }
-  items: Array<{
-    product: { id: number; name: string; price: number }
-    quantity: number
-  }>
-}
+

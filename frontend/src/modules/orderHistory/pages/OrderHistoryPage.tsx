@@ -6,7 +6,6 @@ import { useAuth } from '../../../shared/authContext'
 import DateRangeFilterCard from '../../../shared/components/DateRangeFilterCard'
 import Navbar, { type NavItemId } from '../../../shared/components/Navbar'
 import DeleteOrderDialog from '../components/DeleteOrderDialog'
-import FoodAnalyticsTable from '../components/FoodAnalyticsTable'
 import OrderDetailsDialog from '../components/OrderDetailsDialog'
 import OrderHistoryTable from '../components/OrderHistoryTable'
 import { useOrderHistoryPage } from '../hooks/useOrderHistoryPage'
@@ -23,7 +22,6 @@ export default function OrderHistoryPage({
   const { me } = useAuth()
   const isAdmin = me?.is_admin === true || me?.is_admin === 1
   const historyPage = useOrderHistoryPage()
-  const [activeTab, setActiveTab] = useState<'orders' | 'food_analytics'>('orders')
 
   return (
     <Box sx={{ height: '100dvh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -33,7 +31,7 @@ export default function OrderHistoryPage({
         showUsers={showUsers}
         searchValue={historyPage.search}
         onSearchChange={historyPage.setSearch}
-        searchPlaceholder={activeTab === 'orders' ? 'Buyurtma qidirish...' : 'Ovqat qidirish...'}
+        searchPlaceholder="Buyurtma qidirish..."
         onSettings={() => onNavigate('settings')}
         onLogout={() => logout()}
       />
@@ -52,21 +50,6 @@ export default function OrderHistoryPage({
         }}
       >
         <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2} flexWrap="wrap">
-          <Tabs
-            value={activeTab}
-            onChange={(_, next: 'orders' | 'food_analytics') => setActiveTab(next)}
-            sx={{
-              minHeight: 44,
-              '& .MuiTab-root': {
-                minHeight: 44,
-                fontWeight: 900,
-              },
-            }}
-          >
-            <Tab value="orders" label="Buyurtmalarim" />
-            <Tab value="food_analytics" label="Ovqatlar savdo analitikasi" />
-          </Tabs>
-
           <DateRangeFilterCard
             preset={historyPage.preset}
             fromDate={historyPage.fromDate}
@@ -77,41 +60,32 @@ export default function OrderHistoryPage({
         </Stack>
 
         <Box sx={{ height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          {activeTab === 'orders' ? (
-            <OrderHistoryTable
-              isAdmin={historyPage.isAdmin}
-              loading={historyPage.loading}
-              rows={historyPage.rows}
-              hasMore={historyPage.hasMoreHistory}
-              onLoadMore={historyPage.loadNextPage}
-              onOpenDetails={historyPage.setSelectedOrderId}
-              onDelete={historyPage.requestDeleteOrder}
-            />
-          ) : (
-            <FoodAnalyticsTable loading={historyPage.analyticsLoading} rows={historyPage.foodAnalyticsRows} />
-          )}
+          <OrderHistoryTable
+            isAdmin={historyPage.isAdmin}
+            loading={historyPage.loading}
+            rows={historyPage.rows}
+            hasMore={historyPage.hasMoreHistory}
+            onLoadMore={historyPage.loadNextPage}
+            onOpenDetails={historyPage.setSelectedOrderId}
+            onDelete={historyPage.requestDeleteOrder}
+          />
         </Box>
       </Box>
-
-      {activeTab === 'orders' ? (
-        <>
-          <OrderDetailsDialog
-            open={Boolean(historyPage.selectedOrderId)}
-            orderId={historyPage.selectedOrderId}
-            onClose={() => historyPage.setSelectedOrderId(null)}
-          />
-          <DeleteOrderDialog
-            open={isAdmin && historyPage.deleteOpen}
-            orderId={historyPage.deleteTargetId}
-            deleting={historyPage.deleting}
-            error={historyPage.deleteError}
-            password={historyPage.deletePassword}
-            onPasswordChange={historyPage.setDeletePassword}
-            onClose={historyPage.closeDelete}
-            onConfirm={historyPage.confirmDelete}
-          />
-        </>
-      ) : null}
+      <OrderDetailsDialog
+        open={Boolean(historyPage.selectedOrderId)}
+        orderId={historyPage.selectedOrderId}
+        onClose={() => historyPage.setSelectedOrderId(null)}
+      />
+      <DeleteOrderDialog
+        open={isAdmin && historyPage.deleteOpen}
+        orderId={historyPage.deleteTargetId}
+        deleting={historyPage.deleting}
+        error={historyPage.deleteError}
+        password={historyPage.deletePassword}
+        onPasswordChange={historyPage.setDeletePassword}
+        onClose={historyPage.closeDelete}
+        onConfirm={historyPage.confirmDelete}
+      />
     </Box>
   )
 }

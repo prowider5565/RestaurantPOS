@@ -110,10 +110,6 @@ export function OrderHistoryTable({
                   ID
                 </TableCell>
                 <TableCell sx={{ fontWeight: 900 }}>Xodim</TableCell>
-                <TableCell sx={{ fontWeight: 900 }}>To'lov turi</TableCell>
-                <TableCell sx={{ fontWeight: 900 }} align="right">
-                  Chegirma
-                </TableCell>
                 <TableCell sx={{ fontWeight: 900 }} align="right">
                   To'langan
                 </TableCell>
@@ -136,8 +132,7 @@ export function OrderHistoryTable({
                     },
                   }}
                 >
-                  <TableCell colSpan={3}>Jami</TableCell>
-                  <TableCell align="right">{formatMoneyValue(totals.discountAmount)}</TableCell>
+                  <TableCell colSpan={2}>Jami</TableCell>
                   <TableCell align="right">{formatMoneyValue(totals.paidAmount)}</TableCell>
                   <TableCell align="right">-</TableCell>
                   <TableCell align="right">-</TableCell>
@@ -147,7 +142,6 @@ export function OrderHistoryTable({
               {rows.map((order) => {
                 const totals = getOrderTotals(order)
                 const username = order.user?.username ?? '-'
-                const paymentType = order.payment_type ?? '-'
 
                 return (
                   <TableRow
@@ -164,10 +158,6 @@ export function OrderHistoryTable({
                       {order.id}
                     </TableCell>
                     <TableCell>{username}</TableCell>
-                    <TableCell>{paymentType}</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 800 }}>
-                      {formatMoneyValue(totals.discountAmount)}
-                    </TableCell>
                     <TableCell align="right" sx={{ fontWeight: 900 }}>
                       {formatMoneyValue(order.paid_amount ?? 0)}
                     </TableCell>
@@ -218,7 +208,7 @@ export function OrderHistoryTable({
               })}
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={8} align="center" sx={{ py: 2 }}>
+                  <TableCell colSpan={7} align="center" sx={{ py: 2 }}>
                     <CircularProgress size={24} />
                   </TableCell>
                 </TableRow>

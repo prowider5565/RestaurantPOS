@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Depends, Query, Response, status
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from sqlalchemy.orm import Session, selectinload
 from datetime import date
 from fastapi_pagination import Params
 
@@ -13,14 +13,10 @@ from users.dependencies import get_current_user
 from users.models import User
 
 from .handlers import (
-    delete_order,
-    get_food_sales_analytics,
     get_my_order_history,
     get_order_history,
-    get_order_or_404,
 )
 from .schemas import (
-    FoodAnalyticsResponseOut,
     OrderCreate,
     OrderHistoryResponseOut,
     OrderOut,
@@ -127,18 +123,21 @@ def get_my_order_history_api(
     )
 
 
-@router.get("/food-analytics", response_model=FoodAnalyticsResponseOut)
-def get_food_sales_analytics_api(
-    from_date: date | None = Query(default=None),
-    to_date: date | None = Query(default=None),
-    db: Session = Depends(get_db),
-) -> FoodAnalyticsResponseOut:
-    return get_food_sales_analytics(db, from_date=from_date, to_date=to_date)
-
-
 @router.get("/{order_id}", response_model=OrderOut)
 def get_order_api(order_id: int, db: Session = Depends(get_db)) -> OrderOut:
-    return get_order_or_404(db, order_id)
+    order = (
+        db.query(Order)
+        .options(
+            selectinload(Order.items).selectinload(OrderItem.product),
+            selectinload(Order.user),
+        )
+        .filter(Order.id == order_id)
+        .first()
+    )
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return order
+
 
 
 @router.delete("/delete/{order_id}")
@@ -148,5 +147,10 @@ async def delete_order_api(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> None:
-    delete_order(db, order_id)
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    db.delete(order)
+    db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)

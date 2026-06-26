@@ -1,3 +1,5 @@
+import CreditCardIcon from '@mui/icons-material/CreditCard'
+import LocalAtmIcon from '@mui/icons-material/LocalAtm'
 import CloseIcon from '@mui/icons-material/Close'
 import { Box, Dialog, DialogContent, Divider, IconButton, List, ListItem, ListItemText, Paper, Stack, Typography } from '@mui/material'
 import { useEffect, useState } from 'react'
@@ -45,14 +47,7 @@ export default function OrderDetailsDialog({
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 2, py: 1.5 }}>
-        <Box>
-          <Typography sx={{ fontWeight: 1000 }}>{order ? `Buyurtma #${order.id}` : 'Buyurtma'}</Typography>
-          {order ? (
-            <Typography variant="body2" color="text.secondary">
-              ID {order.id} • {formatCreated(order.created_at)}
-            </Typography>
-          ) : null}
-        </Box>
+        <Typography sx={{ fontWeight: 1000 }}>{order ? `Buyurtma #${order.id}` : 'Buyurtma'}</Typography>
         <IconButton onClick={onClose} aria-label="Yopish">
           <CloseIcon />
         </IconButton>
@@ -61,17 +56,51 @@ export default function OrderDetailsDialog({
       <Divider />
 
       <DialogContent sx={{ pt: 2 }}>
-        <Stack direction="row" alignItems="center" justifyContent="flex-end" sx={{ mb: 2 }}>
-          {totals.discountAmount > 0 ? (
-            <Stack alignItems="flex-end" spacing={0} sx={{ lineHeight: 1.15 }}>
-              <Typography sx={{ fontWeight: 900, textDecoration: 'line-through', color: 'text.secondary' }}>
-                {formatMoney(totals.total)}
-              </Typography>
-              <Typography sx={{ fontWeight: 1000 }}>{formatMoney(totals.discountedTotal)}</Typography>
+        {order ? (
+          <Stack sx={{ mb: 2 }}>
+            <Stack direction="row" justifyContent="space-between">
+              <Typography variant="body2" color="text.secondary">Sana:</Typography>
+              <Typography variant="body2">{formatCreated(order.created_at)}</Typography>
             </Stack>
-          ) : (
-            <Typography sx={{ fontWeight: 1000 }}>Jami: {formatMoney(totals.discountedTotal)}</Typography>
-          )}
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
+              <Typography variant="body2" color="text.secondary">To'lov turi:</Typography>
+              {order.payment_type === 'Naqd' ? (
+                <Stack direction="row" alignItems="center" spacing={0.5}>
+                  <Typography variant="body2">Naqd</Typography>
+                  <LocalAtmIcon fontSize="small" color="action" />
+                </Stack>
+              ) : order.payment_type === 'Karta' ? (
+                <Stack direction="row" alignItems="center" spacing={0.5}>
+                  <Typography variant="body2">Karta</Typography>
+                  <CreditCardIcon fontSize="small" color="action" />
+                </Stack>
+              ) : (
+                <Typography variant="body2">{order.payment_type ?? '-'}</Typography>
+              )}
+            </Stack>
+          </Stack>
+        ) : null}
+
+        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+          <Stack spacing={0.25}>
+            {totals.discountAmount > 0 ? (
+              <Typography variant="body2" color="error" sx={{ fontWeight: 700 }}>
+                Chegirma: -{formatMoney(totals.discountAmount)}
+              </Typography>
+            ) : null}
+          </Stack>
+          <Stack direction="row" alignItems="center" gap={1}>
+            {totals.discountAmount > 0 ? (
+              <>
+                <Typography sx={{ fontWeight: 900, textDecoration: 'line-through', color: 'text.secondary' }}>
+                  {formatMoney(totals.total)}
+                </Typography>
+                <Typography sx={{ fontWeight: 1000 }}>{formatMoney(totals.discountedTotal)}</Typography>
+              </>
+            ) : (
+              <Typography sx={{ fontWeight: 1000 }}>Jami: {formatMoney(totals.discountedTotal)}</Typography>
+            )}
+          </Stack>
         </Stack>
 
         <Paper variant="outlined" sx={{ borderRadius: 2 }}>

@@ -4,7 +4,7 @@ import { API_URL } from '../../../config/env'
 import { getAuthHeaders } from '../../../shared/auth'
 import { useAuth } from '../../../shared/authContext'
 import type { DateRangePreset } from '../../../shared/components/DateRangeFilterCard'
-import type { ApiFoodAnalyticsResponse, ApiOrderHistoryResponse } from '../types'
+import type { ApiOrderHistoryResponse } from '../types'
 import { formatCreated, toYmd } from '../utils'
 
 async function getResponseError(response: Response, fallback: string) {
@@ -24,9 +24,7 @@ export function useOrderHistoryPage() {
   const [page, setPage] = useState(1)
   const size = 12
   const [history, setHistory] = useState<ApiOrderHistoryResponse | null>(null)
-  const [foodAnalytics, setFoodAnalytics] = useState<ApiFoodAnalyticsResponse | null>(null)
   const [loading, setLoading] = useState(false)
-  const [analyticsLoading, setAnalyticsLoading] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null)
@@ -82,55 +80,12 @@ export function useOrderHistoryPage() {
     }
   }, [fromDate, hasCompleteRange, page, preset, reloadKey, size, toDate])
 
-  useEffect(() => {
-    let cancelled = false
-
-    async function loadFoodAnalytics() {
-      if (!hasCompleteRange) {
-        setFoodAnalytics(null)
-        setAnalyticsLoading(false)
-        return
-      }
-
-      setAnalyticsLoading(true)
-      try {
-        const params = new URLSearchParams()
-        if (preset !== 'all') {
-          if (fromDate) params.set('from_date', fromDate)
-          if (toDate) params.set('to_date', toDate)
-        }
-
-        const response = await fetch(`${API_URL}/orders/food-analytics?${params.toString()}`, {
-          headers: getAuthHeaders(),
-        })
-        if (!response.ok) return
-        const data = (await response.json()) as ApiFoodAnalyticsResponse
-        if (cancelled) return
-        setFoodAnalytics(data)
-      } finally {
-        if (!cancelled) setAnalyticsLoading(false)
-      }
-    }
-
-    loadFoodAnalytics()
-    return () => {
-      cancelled = true
-    }
-  }, [fromDate, hasCompleteRange, preset, reloadKey, toDate])
-
   const rows = useMemo(() => {
     const items = history?.page.items ?? []
     const query = search.trim().toLowerCase()
     if (!query) return items
     return items.filter((order) => String(order.id).includes(query))
   }, [history?.page.items, search])
-
-  const foodAnalyticsRows = useMemo(() => {
-    const items = foodAnalytics?.items ?? []
-    const query = search.trim().toLowerCase()
-    if (!query) return items
-    return items.filter((item) => item.food_name.toLowerCase().includes(query))
-  }, [foodAnalytics?.items, search])
 
   function exportToExcelCsv() {
     const header = ['ID', 'Foydalanuvchi', 'Jami summa', 'Sana']
@@ -238,9 +193,6 @@ export function useOrderHistoryPage() {
     history,
     loading,
     rows,
-    foodAnalytics,
-    analyticsLoading,
-    foodAnalyticsRows,
     exportToExcelCsv,
     deleteOpen,
     deleteTargetId,
