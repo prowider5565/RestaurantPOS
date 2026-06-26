@@ -65,6 +65,7 @@ export default function OrderHistoryPage({
             loading={historyPage.loading}
             rows={historyPage.rows}
             hasMore={historyPage.hasMoreHistory}
+            overview={historyPage.overview}
             onLoadMore={historyPage.loadNextPage}
             onOpenDetails={historyPage.setSelectedOrderId}
             onDelete={historyPage.requestDeleteOrder}

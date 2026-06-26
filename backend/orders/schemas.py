@@ -88,7 +88,7 @@ class OrderHistoryRowOut(BaseModel):
 
 class OrderHistoryOverviewOut(BaseModel):
     total_orders: int
-    total_sum: float
+    total_paid_sum: float
     total_net_sum: float
     total_discount_sum: float
 

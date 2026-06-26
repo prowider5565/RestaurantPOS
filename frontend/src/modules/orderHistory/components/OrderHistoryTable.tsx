@@ -4,7 +4,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility'
 import { Box, CircularProgress, IconButton, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Typography } from '@mui/material'
 
 import { formatMoney } from '../../../shared/utils/formatters'
-import type { ApiOrderRow } from '../types'
+import type { ApiHistoryOverview, ApiOrderRow } from '../types'
 import { formatCreated, getOrderTotals } from '../utils'
 
 const LOAD_MORE_OFFSET = 280
@@ -18,6 +18,7 @@ export function OrderHistoryTable({
   loading,
   rows,
   hasMore,
+  overview,
   onLoadMore,
   onOpenDetails,
   onDelete,
@@ -26,19 +27,11 @@ export function OrderHistoryTable({
   loading: boolean
   rows: ApiOrderRow[]
   hasMore: boolean
+  overview: ApiHistoryOverview | null
   onLoadMore: () => void
   onOpenDetails: (orderId: number) => void
   onDelete: (orderId: number) => void
 }) {
-  const totals = rows.reduce(
-    (acc, order) => {
-      const orderTotals = getOrderTotals(order)
-      acc.discountAmount += orderTotals.discountAmount
-      acc.paidAmount += order.paid_amount ?? 0
-      return acc
-    },
-    { discountAmount: 0, paidAmount: 0 },
-  )
 
   if (!loading && rows.length === 0) {
     return (
@@ -133,8 +126,8 @@ export function OrderHistoryTable({
                   }}
                 >
                   <TableCell colSpan={2}>Jami</TableCell>
-                  <TableCell align="right">{formatMoneyValue(totals.paidAmount)}</TableCell>
-                  <TableCell align="right">-</TableCell>
+                  <TableCell align="right">{formatMoneyValue(overview?.total_paid_sum ?? 0)}</TableCell>
+                  <TableCell align="right">{formatMoneyValue(overview?.total_net_sum ?? 0)}</TableCell>
                   <TableCell align="right">-</TableCell>
                   <TableCell align="right">-</TableCell>
                 </TableRow>

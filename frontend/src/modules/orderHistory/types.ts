@@ -41,7 +41,7 @@ export type ApiPage<T> = {
 
 export type ApiHistoryOverview = {
   total_orders: number
-  total_sum: number
+  total_paid_sum: number
   total_net_sum: number
   total_discount_sum: number
 }

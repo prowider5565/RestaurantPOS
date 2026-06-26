@@ -48,7 +48,9 @@ export function useOrderHistoryPage() {
         const params = new URLSearchParams()
         params.set('page', String(page))
         params.set('size', String(size))
-        if (preset !== 'all') {
+        if (preset !== null) {
+          params.set('preset', preset)
+        } else {
           if (fromDate) params.set('from_date', fromDate)
           if (toDate) params.set('to_date', toDate)
         }
@@ -191,6 +193,7 @@ export function useOrderHistoryPage() {
     loadNextPage,
     hasMoreHistory: history ? history.page.page < history.page.pages : false,
     history,
+    overview: history?.overview ?? null,
     loading,
     rows,
     exportToExcelCsv,

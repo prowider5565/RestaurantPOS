@@ -89,38 +89,25 @@ def create_order_api(payload: OrderCreate, db: Session = Depends(get_db), curren
 
 @router.get("/history", response_model=OrderHistoryResponseOut)
 def get_order_history_api(
+    preset: str | None = Query(default=None),
     from_date: date | None = Query(default=None),
     to_date: date | None = Query(default=None),
-    exclude_debt_from_total_sum: bool = Query(default=False),
     params: Params = Depends(),
     db: Session = Depends(get_db),
 ) -> OrderHistoryResponseOut:
-    return get_order_history(
-        db,
-        from_date=from_date,
-        to_date=to_date,
-        params=params,
-        exclude_debt_from_total_sum=exclude_debt_from_total_sum,
-    )
+    return get_order_history(db, preset, from_date, to_date, params=params)
 
 
 @router.get("/my-history", response_model=OrderHistoryResponseOut)
 def get_my_order_history_api(
+    preset: str | None = Query(default=None),
     from_date: date | None = Query(default=None),
     to_date: date | None = Query(default=None),
-    exclude_debt_from_total_sum: bool = Query(default=False),
     params: Params = Depends(),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> OrderHistoryResponseOut:
-    return get_my_order_history(
-        db,
-        user_id=current_user.id,
-        params=params,
-        from_date=from_date,
-        to_date=to_date,
-        exclude_debt_from_total_sum=exclude_debt_from_total_sum,
-    )
+    return get_my_order_history(db, current_user.id, preset, from_date, to_date, params=params)
 
 
 @router.get("/{order_id}", response_model=OrderOut)

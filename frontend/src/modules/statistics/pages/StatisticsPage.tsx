@@ -29,7 +29,7 @@ type ApiOrderRow = {
   items: ApiOrderItemRef[]
 }
 type ApiPage<T> = { items: T[]; total: number; page: number; size: number; pages: number }
-type ApiHistoryOverview = { total_orders: number; total_sum: number }
+type ApiHistoryOverview = { total_orders: number; total_paid_sum: number }
 type ApiOrderHistoryResponse = { overview: ApiHistoryOverview; page: ApiPage<ApiOrderRow> }
 
 function toYmd(d: Date) {
@@ -59,7 +59,6 @@ export default function StatisticsPage({
   onNavigate: (next: NavItemId | 'settings') => void
   showUsers?: boolean
 }) {
-  const today = useMemo(() => toYmd(new Date()), [])
   const [stats, setStats] = useState<ApiOrderHistoryResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
@@ -68,7 +67,6 @@ export default function StatisticsPage({
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
   const hasCompleteRange = preset !== null || (!!fromDate && !!toDate)
-  const excludeDebtFromTotalSum = fromDate === today && toDate === today
 
   useEffect(() => {
     let cancelled = false
@@ -85,11 +83,12 @@ export default function StatisticsPage({
         const params = new URLSearchParams()
         params.set('page', String(page))
         params.set('size', String(size))
-        if (preset !== 'all') {
+        if (preset !== null) {
+          params.set('preset', preset)
+        } else {
           if (fromDate) params.set('from_date', fromDate)
           if (toDate) params.set('to_date', toDate)
         }
-        if (excludeDebtFromTotalSum) params.set('exclude_debt_from_total_sum', 'true')
         const res = await fetch(`${API_URL}/orders/my-history?${params.toString()}`, {
           headers: getAuthHeaders(),
         })
@@ -115,11 +114,11 @@ export default function StatisticsPage({
     return () => {
       cancelled = true
     }
-  }, [excludeDebtFromTotalSum, fromDate, hasCompleteRange, page, preset, size, toDate])
+  }, [fromDate, hasCompleteRange, page, preset, size, toDate])
 
   const rows = useMemo(() => stats?.page.items ?? [], [stats])
   const hasMore = stats ? stats.page.page < stats.page.pages : false
-  const overview = stats?.overview ?? { total_orders: 0, total_sum: 0 }
+  const overview = stats?.overview ?? { total_orders: 0, total_paid_sum: 0 }
   const loadNextPage = useCallback(() => {
     if (loading || !stats || stats.page.page >= stats.page.pages) return
     setPage(stats.page.page + 1)
@@ -304,7 +303,7 @@ export default function StatisticsPage({
                       Jami summa
                     </Typography>
                     <Typography sx={{ fontWeight: 1000, fontSize: 22 }}>
-                      {formatMoney(overview.total_sum)}
+                      {formatMoney(overview.total_paid_sum)}
                     </Typography>
                   </Box>
                 </Stack>

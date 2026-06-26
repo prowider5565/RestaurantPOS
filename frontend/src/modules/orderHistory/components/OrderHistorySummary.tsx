@@ -21,7 +21,7 @@ export default function OrderHistorySummary({ overview }: { overview: ApiHistory
         <Typography sx={{ fontWeight: 900, color: 'text.secondary', fontSize: 13 }}>Jami daromad</Typography>
         <Stack spacing={0} sx={{ mt: 0.25, lineHeight: 1.1 }}>
           <Typography sx={{ fontWeight: 900, textDecoration: 'line-through', color: 'text.secondary' }}>
-            {formatMoney(overview?.total_sum ?? 0)}
+            {formatMoney(overview?.total_paid_sum ?? 0)}
           </Typography>
           <Typography sx={{ fontWeight: 1100, fontSize: 24 }}>{formatMoney(overview?.total_net_sum ?? 0)}</Typography>
         </Stack>
