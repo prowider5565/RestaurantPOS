@@ -100,14 +100,17 @@ export function OrderHistoryTable({
             <TableHead>
               <TableRow>
                 <TableCell sx={{ fontWeight: 900 }} align="right">
-                  ID
+                  ID <Typography component="span" sx={{ color: 'info.main', fontWeight: 900, fontSize: 'inherit' }}>({overview?.total_orders ?? 0})</Typography>
                 </TableCell>
                 <TableCell sx={{ fontWeight: 900 }}>Xodim</TableCell>
                 <TableCell sx={{ fontWeight: 900 }} align="right">
-                  To'langan
+                  To'langan <Typography component="span" sx={{ color: 'success.main', fontWeight: 900, fontSize: 'inherit' }}>({formatMoneyValue(overview?.total_paid_sum ?? 0)})</Typography>
                 </TableCell>
                 <TableCell sx={{ fontWeight: 900 }} align="right">
-                  Jami
+                  Chegirma <Typography component="span" sx={{ color: 'error.main', fontWeight: 900, fontSize: 'inherit' }}>({formatMoneyValue(overview?.total_discount_sum ?? 0)})</Typography>
+                </TableCell>
+                <TableCell sx={{ fontWeight: 900 }} align="right">
+                  Jami <Typography component="span" sx={{ color: 'text.secondary', fontWeight: 900, fontSize: 'inherit' }}>({formatMoneyValue(overview?.total_net_sum ?? 0)})</Typography>
                 </TableCell>
                 <TableCell sx={{ fontWeight: 900 }}>Sana</TableCell>
                 <TableCell sx={{ fontWeight: 900 }} align="right">
@@ -116,22 +119,6 @@ export function OrderHistoryTable({
               </TableRow>
             </TableHead>
             <TableBody>
-              {rows.length ? (
-                <TableRow
-                  sx={{
-                    bgcolor: 'rgba(249, 115, 22, 0.08)',
-                    '& .MuiTableCell-root': {
-                      fontWeight: 1000,
-                    },
-                  }}
-                >
-                  <TableCell colSpan={2}>Jami</TableCell>
-                  <TableCell align="right">{formatMoneyValue(overview?.total_paid_sum ?? 0)}</TableCell>
-                  <TableCell align="right">{formatMoneyValue(overview?.total_net_sum ?? 0)}</TableCell>
-                  <TableCell align="right">-</TableCell>
-                  <TableCell align="right">-</TableCell>
-                </TableRow>
-              ) : null}
               {rows.map((order) => {
                 const totals = getOrderTotals(order)
                 const username = order.user?.username ?? '-'
@@ -153,6 +140,9 @@ export function OrderHistoryTable({
                     <TableCell>{username}</TableCell>
                     <TableCell align="right" sx={{ fontWeight: 900 }}>
                       {formatMoneyValue(order.paid_amount ?? 0)}
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 800 }}>
+                      {formatMoneyValue(totals.discountAmount)}
                     </TableCell>
                     <TableCell align="right" sx={{ fontWeight: 900 }}>
                       {formatMoneyValue(totals.discountedTotal)}
