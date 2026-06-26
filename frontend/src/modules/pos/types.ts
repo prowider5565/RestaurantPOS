@@ -13,7 +13,7 @@ export type ApiCategory = {
   image_path?: string | null
 }
 
-export type PaymentType = 'Karta' | 'Naqd'
+export type PaymentType = 'Karta' | 'Naqd' | 'Nasiya'
 
 export type UiProduct = {
   id: number

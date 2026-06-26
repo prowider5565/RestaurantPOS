@@ -1,17 +1,5 @@
 import win32print
-from config.settings import settings
-from .generator import generate_receipt
 from .constants import *
-
-
-def get_requisite_data():
-    return {
-        "company_name": settings.COMPANY_NAME,
-        "address": settings.ADDRESS,
-        "phone_number": settings.PHONE_NUMBER,
-        "stir": settings.STIR,
-        "registry_number": settings.REGISTRY_NUMBER,
-    }
 
 
 def print_cheque(text=None):
@@ -53,12 +41,3 @@ def open_drawer():
         win32print.EndDocPrinter(h)
     finally:
         win32print.ClosePrinter(h)
-
-
-def generate_cheque_content(order_data: dict, program_name: str) -> str:
-    requisites = get_requisite_data()
-    return generate_receipt(
-        order_data=order_data,
-        requisites=requisites,
-        program_name=program_name,
-    )

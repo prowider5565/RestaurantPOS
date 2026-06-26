@@ -9,8 +9,6 @@ from pydantic import BaseModel, ConfigDict, Field
 from products.types import ProductMeasure
 
 
-
-
 class OrderItemCreate(BaseModel):
     product: int
     quantity: int = Field(gt=0)
@@ -29,6 +27,7 @@ class OrderCreate(BaseModel):
 class OrderItemOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     product_id: int
+    price: Optional[int] = None
     quantity: int
 
 
@@ -51,13 +50,6 @@ class UserSummaryOut(BaseModel):
     position: str | None = None
 
 
-class OrderItemDetailOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    product: ProductSummaryOut
-    quantity: int
-
-
 class OrderOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -67,20 +59,6 @@ class OrderOut(BaseModel):
     is_debt: bool
     paid_amount: Optional[int] = 0
     payment_type: Optional[str] = None
-    created_at: datetime
-    user: UserSummaryOut | None = None
-    items: list[OrderItemDetailOut]
-
-
-class OrderHistoryRowOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    total_price: float
-    discount_amount: int | None = 0
-    is_debt: bool
-    paid_amount: int | None = 0
-    payment_type: str | None = None
     created_at: datetime
     user: UserSummaryOut | None = None
     items: list[OrderItemOut]
@@ -95,7 +73,4 @@ class OrderHistoryOverviewOut(BaseModel):
 
 class OrderHistoryResponseOut(BaseModel):
     overview: OrderHistoryOverviewOut
-    page: Page[OrderHistoryRowOut]
-
-
-
+    page: Page[OrderOut]

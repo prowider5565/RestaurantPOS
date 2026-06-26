@@ -12,7 +12,7 @@ from misc.startup import lifespan
 from config.database import Base, engine
 from config.settings import settings
 from cash_desk.router import router as cash_desk_router
-from orders.router import router as orders_router
+from orders.handlers import router as orders_router
 from products.categories_router import router as product_categories_router
 from products.router import router as products_router
 from users.handlers import router as users_router

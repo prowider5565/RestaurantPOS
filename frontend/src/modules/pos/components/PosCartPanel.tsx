@@ -2,84 +2,13 @@ import AddIcon from '@mui/icons-material/Add'
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import CloseIcon from '@mui/icons-material/Close'
 import RemoveIcon from '@mui/icons-material/Remove'
-import { Box, Button, ButtonBase, Divider, IconButton, List, Paper, Stack, Tab, Tabs, TextField, Typography } from '@mui/material'
+import { Box, Button, Divider, IconButton, List, Paper, Stack, Tab, Tabs, TextField, Typography } from '@mui/material'
 import type { MutableRefObject } from 'react'
 
 import { formatMoney } from '../../../shared/utils/formatters'
 import type { CartLine, PaymentType } from '../types'
 import { DEFAULT_PRODUCT_IMAGE_SRC } from '../utils'
 import SwipeToDeleteRow from './SwipeToDeleteRow'
-
-function BarSwitch({
-  label,
-  checked,
-  onChange,
-}: {
-  label: string
-  checked: boolean
-  onChange: (checked: boolean) => void
-}) {
-  return (
-    <Stack spacing={0.45} sx={{ flex: 1, minWidth: 0 }}>
-      <Typography sx={{ fontWeight: 900, fontSize: 13, color: 'text.secondary' }}>{label}</Typography>
-      <ButtonBase
-        role="switch"
-        aria-checked={checked}
-        onClick={() => onChange(!checked)}
-        sx={{
-          position: 'relative',
-          width: '100%',
-          height: 42,
-          borderRadius: 1,
-          border: '1px solid',
-          borderColor: checked ? 'primary.main' : 'divider',
-          bgcolor: checked ? 'rgba(249, 115, 22, 0.08)' : 'background.paper',
-          overflow: 'hidden',
-          transition: 'border-color 140ms ease, background-color 140ms ease',
-        }}
-      >
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 4,
-            bottom: 4,
-            left: checked ? 'calc(50% + 2px)' : 4,
-            width: 'calc(50% - 6px)',
-            borderRadius: 0.75,
-            bgcolor: checked ? 'primary.main' : 'action.selected',
-            transition: 'left 160ms ease, background-color 140ms ease',
-          }}
-        />
-        <Stack direction="row" sx={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
-          <Box
-            sx={{
-              flex: 1,
-              display: 'grid',
-              placeItems: 'center',
-              fontWeight: 1000,
-              fontSize: 12,
-              color: checked ? 'text.secondary' : 'text.primary',
-            }}
-          >
-            OFF
-          </Box>
-          <Box
-            sx={{
-              flex: 1,
-              display: 'grid',
-              placeItems: 'center',
-              fontWeight: 1000,
-              fontSize: 12,
-              color: checked ? 'common.white' : 'text.secondary',
-            }}
-          >
-            ON
-          </Box>
-        </Stack>
-      </ButtonBase>
-    </Stack>
-  )
-}
 
 export default function PosCartPanel({
   cartCount,
@@ -231,18 +160,25 @@ export default function PosCartPanel({
       <Stack sx={{ mb: 1.5, mt: 'auto' }}>
         <Tabs
           value={paymentType}
-          onChange={(_, value: PaymentType) => onPaymentTypeChange(value)}
+          onChange={(_, value: PaymentType) => {
+            onPaymentTypeChange(value)
+            if (value === 'Nasiya') {
+              onIsDebtChange(true)
+            } else {
+              onIsDebtChange(false)
+            }
+          }}
           variant="fullWidth"
           sx={{
             mb: 0.75,
             minHeight: 40,
             border: '1px solid',
             borderColor: 'divider',
-            borderRadius: 2,
+            borderRadius: 1,
             bgcolor: 'background.paper',
             '& .MuiTabs-indicator': {
               height: '100%',
-              borderRadius: 1.5,
+              borderRadius: 1,
               bgcolor: 'rgba(249, 115, 22, 0.14)',
             },
             '& .MuiTab-root': {
@@ -254,13 +190,10 @@ export default function PosCartPanel({
         >
           <Tab value="Karta" label="Karta" />
           <Tab value="Naqd" label="Naqd" />
+          <Tab value="Nasiya" label="Nasiya" />
         </Tabs>
 
-        <Stack direction="row" gap={1} sx={{ mb: isDebt ? 1 : 0.5 }}>
-          <BarSwitch label="Nasiya" checked={isDebt} onChange={onIsDebtChange} />
-        </Stack>
-
-        {isDebt ? (
+        {paymentType === 'Nasiya' ? (
           <TextField
             label="To'langan summa"
             value={debtPaidAmountDigits.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}

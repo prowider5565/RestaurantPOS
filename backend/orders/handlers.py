@@ -1,79 +1,145 @@
-from __future__ import annotations
-from datetime import date
-
-from fastapi_pagination import Params
-from fastapi_pagination.ext.sqlalchemy import paginate
-from sqlalchemy import func
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session, selectinload
+from datetime import date
+from fastapi_pagination import Params
+import asyncio
 
-from orders.helpers import apply_filters, get_date_range
+from products.models import Product
+from config.settings import settings
+from cheque.helpers.printer import print_cheque
+from cheque.helpers.generator import generate_receipt
+from orders.models import Order, OrderItem
+from config.database import get_db
+from misc.decorators import require_delete_password
+from users.dependencies import get_current_user
+from users.models import User
 
-from .models import Order, OrderItem
+from .helpers import _history_query
+from .schemas import OrderCreate, OrderHistoryResponseOut, OrderOut
 
-from .schemas import (
-    OrderHistoryOverviewOut,
-    OrderHistoryResponseOut,
-)
+router = APIRouter(prefix="/orders", tags=["orders"])
 
 
-def _history_query(
-    db: Session,
-    preset: str | None,
-    from_date: date | None,
-    to_date: date | None,
-    user_id: int | None = None,
-    params: Params | None = None,
-):
-    params = params or Params()
-    from_date, to_date = get_date_range(preset, from_date, to_date)
-    base = db.query(Order)
-    if user_id is not None:
-        base = base.filter(Order.user_id == user_id)
-    base = apply_filters(base, from_date, to_date)
+@router.post("", response_model=OrderOut)
+async def create_order_api(
+    payload: OrderCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> OrderOut:
+    receipt_content = {}
+    total_price = int(max(0, round(payload.total)))
+    final_total = int(max(0, min(round(payload.discounted_total), total_price)))
+    discount_amount = max(0, total_price - final_total)
+    paid_amount = int(max(0, round(payload.paid_amount or 0)))
 
-    stats = base.with_entities(
-        func.coalesce(func.sum(Order.paid_amount), 0).label("total_paid_sum"),
-        func.coalesce(func.sum(Order.discount_amount), 0).label("total_discount_sum"),
-        func.coalesce(
-            func.sum(Order.total_price - func.coalesce(Order.discount_amount, 0)), 0
-        ).label("total_net_sum"),
-    ).first()
+    if paid_amount > final_total:
+        paid_amount = final_total
+    is_debt = bool(payload.is_debt)
+    if not is_debt:
+        paid_amount = final_total
+    elif paid_amount >= final_total:
+        is_debt = False
 
-    page = paginate(
-        db,
-        base.options(selectinload(Order.items), selectinload(Order.user)).order_by(
-            Order.created_at.desc()
-        ),
-        params,
+    # Add user details, total price and discount amount in receipt content
+    receipt_content["total_price"] = total_price
+    receipt_content["discount_amount"] = discount_amount
+    receipt_content["user"] = {
+        "username": current_user.username,
+        "position": current_user.position,
+    }
+    receipt_content["payment_type"] = payload.payment_type
+    # Add items in receipt content
+    receipt_content["items"] = []
+
+    order = Order(
+        total_price=total_price,
+        discount_amount=discount_amount,
+        user_id=payload.user_id,
+        payment_type=payload.payment_type,
+        paid_amount=paid_amount,
+        is_debt=is_debt,
     )
+    db.add(order)
+    db.flush()
+    # Preload products beforehand.
+    product_ids = [i.product for i in payload.items]
+    products = {
+        p.id: p for p in db.query(Product).filter(Product.id.in_(product_ids)).all()
+    }
 
-    overview = OrderHistoryOverviewOut(
-        total_orders=int(page.total),
-        total_paid_sum=float(stats.total_paid_sum or 0),
-        total_net_sum=float(stats.total_net_sum or 0),
-        total_discount_sum=float(stats.total_discount_sum or 0),
+    for i in payload.items:
+        product = products.get(i.product)
+        item = OrderItem(order=order, product=product, quantity=i.quantity)
+        db.add(item)
+        receipt_content["items"].append(
+            {
+                "name": product.name,
+                "price": product.price,
+                "quantity": i.quantity,
+                "subtotal": product.price * i.quantity,
+            }
+        )
+    db.commit()
+    generated_receipt_content = generate_receipt(
+        order_data=receipt_content, program_name=settings.COMPANY_NAME
     )
-    return OrderHistoryResponseOut(overview=overview, page=page)
+    print(generated_receipt_content)
+    await asyncio.to_thread(print_cheque, generated_receipt_content)
+    return Response(status_code=status.HTTP_201_CREATED)
 
 
-def get_order_history(
-    db: Session,
-    preset: str | None,
-    from_date: date | None,
-    to_date: date | None,
-    params: Params,
-):
+@router.get("/history", response_model=OrderHistoryResponseOut)
+def get_order_history_api(
+    preset: str | None = Query(default=None),
+    from_date: date | None = Query(default=None),
+    to_date: date | None = Query(default=None),
+    params: Params = Depends(),
+    db: Session = Depends(get_db),
+) -> OrderHistoryResponseOut:
     return _history_query(db, preset, from_date, to_date, params=params)
 
 
-def get_my_order_history(
-    db: Session,
-    user_id: int,
-    preset: str | None,
-    from_date: date | None,
-    to_date: date | None,
-    params: Params,
-):
+@router.get("/my-history", response_model=OrderHistoryResponseOut)
+def get_my_order_history_api(
+    preset: str | None = Query(default=None),
+    from_date: date | None = Query(default=None),
+    to_date: date | None = Query(default=None),
+    params: Params = Depends(),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> OrderHistoryResponseOut:
     return _history_query(
-        db, preset, from_date, to_date, user_id=user_id, params=params
+        db, preset, from_date, to_date, user_id=current_user.id, params=params
     )
+
+
+@router.get("/{order_id}", response_model=OrderOut)
+def get_order_api(order_id: int, db: Session = Depends(get_db)) -> OrderOut:
+    order = (
+        db.query(Order)
+        .options(
+            selectinload(Order.items).selectinload(OrderItem.product),
+            selectinload(Order.user),
+        )
+        .filter(Order.id == order_id)
+        .first()
+    )
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return order
+
+
+@router.delete("/delete/{order_id}")
+@require_delete_password
+async def delete_order_api(
+    order_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> None:
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    db.delete(order)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

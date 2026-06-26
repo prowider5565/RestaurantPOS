@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
+from config.settings import settings
 from config.timezone import now_tashkent
 
 
@@ -54,9 +55,7 @@ def _to_number(value: Any, fallback: float = 0.0) -> float:
 
 
 def generate_receipt(
-    order_data: dict[str, Any],
-    requisites: dict[str, Any] | None = None,
-    program_name: str = "Restoran Cheki",
+    order_data: dict[str, Any], program_name: str = "Restoran Cheki"
 ) -> str:
     escpos_bold_on = "\x1bE\x01"
     escpos_bold_off = "\x1bE\x00"
@@ -72,7 +71,6 @@ def generate_receipt(
     price_width = 8
     subtotal_width = 7
 
-    requisites = requisites or {}
     program_name = (program_name or "").strip() or "Restoran Cheki"
     user = order_data.get("user") or {}
     items = order_data.get("items") or []
@@ -215,19 +213,11 @@ def generate_receipt(
         + escpos_bold_off
     )
     lines.append("")
-
-    address = str(requisites.get("address") or "").strip()
-    phone = str(requisites.get("phone_number") or "").strip()
-    stir = str(requisites.get("STIR") or requisites.get("stir") or "").strip()
-    registry = str(requisites.get("registry_number") or "").strip()
-
-
-    push_right("STIR:", stir)
-    push_right("Telefon:", phone)
-    push_right("Reestr Raqami:", registry)
-
-    if address:
-        for line in wrap_text(address, table_width):
+    push_right("STIR:", settings.STIR)
+    push_right("Telefon:", settings.PHONE_NUMBER)
+    push_right("Reestr Raqami:", settings.REGISTRY_NUMBER)
+    if settings.ADDRESS:
+        for line in wrap_text(settings.ADDRESS, table_width):
             lines.append(line)
 
     lines.append("")
